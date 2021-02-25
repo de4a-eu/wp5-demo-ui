@@ -25,6 +25,7 @@ import com.helger.photon.core.menu.IMenuTree;
 public final class MenuPublic
 {
   public static final String MENU_DEMO_CLIENT = "democlient";
+  public static final String MENU_EXAMPLE_MESSAGES = "examplemsgs";
 
   private MenuPublic ()
   {}
@@ -33,6 +34,7 @@ public final class MenuPublic
   {
     // Common stuff
     aMenuTree.createRootItem (new PagePublicDemoClient (MENU_DEMO_CLIENT));
+    aMenuTree.createRootItem (new PagePublicExampleMessage (MENU_EXAMPLE_MESSAGES));
 
     // Set default
     aMenuTree.setDefaultMenuItemID (MENU_DEMO_CLIENT);
