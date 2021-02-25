@@ -17,14 +17,18 @@
 package eu.de4a.demoui.pub;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.helger.commons.ValueEnforcer;
+import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
+import com.helger.commons.lang.GenericReflection;
 import com.helger.commons.math.MathHelper;
 import com.helger.commons.name.IHasDisplayName;
 
@@ -41,42 +45,60 @@ import eu.de4a.edm.xml.de4a.DE4AMarshaller;
 
 public enum EDemoMode implements IHasID <String>, IHasDisplayName
 {
-  DR_IM ("drim", "Request to DR (IM)", "/dr1/im/transferevidence", EDemoMode::createDemoDR_IM);
+  DR_IM ("dr-im",
+         "Request to DR (IM)",
+         "/dr1/im/transferevidence",
+         EDemoMode::createDemoDR_IM,
+         DE4AMarshaller.drImRequestMarshaller ().formatted ()::getAsString);
 
   private String m_sID;
   private String m_sDisplayName;
   private String m_sRelativeURL;
-  private Supplier <String> m_aDemoRequestCreator;
+  private Supplier <Object> m_aDemoRequestCreator;
+  private Function <Object, String> m_aRequestToString;
 
-  EDemoMode (final String sID, final String sDisplayName, final String sRelativeURL, final Supplier <String> aDemoRequestCreator)
+  <T> EDemoMode (@Nonnull @Nonempty final String sID,
+                 @Nonnull @Nonempty final String sDisplayName,
+                 @Nonnull @Nonempty final String sRelativeURL,
+                 @Nonnull final Supplier <T> aDemoRequestCreator,
+                 @Nonnull final Function <T, String> aRequestToString)
   {
     ValueEnforcer.isTrue (sRelativeURL.startsWith ("/"), "Relative URL must start with a slash");
     m_sID = sID;
     m_sDisplayName = sDisplayName;
     m_sRelativeURL = sRelativeURL;
-    m_aDemoRequestCreator = aDemoRequestCreator;
+    m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
+    m_aRequestToString = GenericReflection.uncheckedCast (aRequestToString);
   }
 
+  @Nonnull
+  @Nonempty
   public String getID ()
   {
     return m_sID;
   }
 
+  @Nonnull
+  @Nonempty
   public String getDisplayName ()
   {
     return m_sDisplayName;
   }
 
+  @Nonnull
+  @Nonempty
   public String getRelativeURL ()
   {
     return m_sRelativeURL;
   }
 
+  @Nonnull
   public String getDemoRequestString ()
   {
-    return m_aDemoRequestCreator.get ();
+    return m_aRequestToString.apply (m_aDemoRequestCreator.get ());
   }
 
+  @Nullable
   public static EDemoMode getFromIDOrNull (final String sID)
   {
     return EnumHelper.getFromIDOrNull (EDemoMode.class, sID);
@@ -162,7 +184,7 @@ public enum EDemoMode implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static String createDemoDR_IM ()
+  public static RequestTransferEvidenceIMType createDemoDR_IM ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestTransferEvidenceIMType req = new RequestTransferEvidenceIMType ();
@@ -177,9 +199,6 @@ public enum EDemoMode implements IHasID <String>, IHasDisplayName
     req.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     req.setEvidenceServiceData (_createEvidenceServiceData ());
     req.setReturnServiceId ("ReturnService-" + MathHelper.abs (aTLR.nextInt ()));
-
-    final DE4AMarshaller <RequestTransferEvidenceIMType> aMarshaller = DE4AMarshaller.drImRequestMarshaller ();
-    aMarshaller.setFormattedOutput (true);
-    return aMarshaller.getAsString (req);
+    return req;
   }
 }
