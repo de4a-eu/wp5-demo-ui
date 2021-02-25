@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.url.ISimpleURL;
 import com.helger.commons.url.SimpleURL;
+import com.helger.css.property.CCSSProperties;
 import com.helger.html.hc.IHCNode;
 import com.helger.html.hc.html.grouping.HCDiv;
 import com.helger.html.hc.html.grouping.HCP;
@@ -240,7 +241,9 @@ public final class LayoutAreaContentProviderPublic
       // left
       // We need a wrapper span for easy AJAX content replacement
       aCol1.addClass (CBootstrapCSS.D_PRINT_NONE)
-           .addChild (new HCSpan ().setID (CLayout.LAYOUT_AREAID_MENU).addChild (getMenuContent (aLEC)));
+           .addChild (new HCSpan ().setID (CLayout.LAYOUT_AREAID_MENU)
+                                   .addStyle (CCSSProperties.MIN_WIDTH.newValue ("15rem"))
+                                   .addChild (getMenuContent (aLEC)));
       aCol1.addChild (new HCDiv ().setID (CLayout.LAYOUT_AREAID_SPECIAL));
 
       // content
@@ -253,6 +256,7 @@ public final class LayoutAreaContentProviderPublic
       aFooter.addClass (CBootstrapCSS.BG_LIGHT);
       aFooter.addClass (CBootstrapCSS.PT_3);
       aFooter.addClass (CBootstrapCSS.PB_1);
+      aFooter.addClass (CBootstrapCSS.MT_3);
 
       aFooter.addChild (new HCP ().addChild ("This is a Demo page for DE4A internal develoment." + " The official DE4A website is ")
                                   .addChild (new HCA (new SimpleURL ("https://www.de4a.eu")).addChild ("www.de4a.eu").setTargetBlank ()));

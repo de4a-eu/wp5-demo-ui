@@ -70,6 +70,20 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>com.helger</groupId>
+        <artifactId>ph-commons-parent-pom</artifactId>
+        <version>9.5.4</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.helger.web</groupId>
+        <artifactId>ph-web-parent-pom</artifactId>
+        <version>9.5.2</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>com.helger.photon</groupId>
         <artifactId>ph-oton-parent-pom</artifactId>
         <version>8.2.9</version>
@@ -146,6 +160,14 @@
     
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>com.helger.maven</groupId>
         <artifactId>ph-jscompress-maven-plugin</artifactId>
         <version>2.2.3</version><!--$NO-MVN-MAN-VER$-->
@@ -187,14 +209,10 @@
           <excludes>
             <exclude>**/NOTICE</exclude>
             <exclude>**/LICENSE</exclude>
-            <exclude>src/main/resources/rules/**</exclude>
-            <exclude>src/main/webapp/*.jsp</exclude>
-            <!-- Minified CSS/JS files - usually generated -->
             <exclude>**/*.min.css</exclude>
             <exclude>**/*.min.js</exclude>
             <exclude>**/*.txt</exclude>
-            <exclude>**/*.jks</exclude>
-            <exclude>**/google*.html</exclude>
+            <exclude>runtime-data/**</exclude>
           </excludes>
         </configuration>
       </plugin>
