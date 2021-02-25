@@ -73,55 +73,64 @@ import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryOb
 
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
-  DO_IM ("do-im",
-         "Request to DO (IM)",
-         "/do1/im/extractevidence",
-         EDemoDocument::createDemoDO_IM,
-         DE4AMarshaller.doImRequestMarshaller ().formatted ()::getAsString),
-  DO_USI ("do-usi",
-          "Request to DO (USI)",
-          "/do1/usi/extractevidence",
-          EDemoDocument::createDemoDO_USI,
-          DE4AMarshaller.doUsiRequestMarshaller ().formatted ()::getAsString),
-  DR_IM ("dr-im",
-         "Request to DR (IM)",
-         "/dr1/im/transferevidence",
-         EDemoDocument::createDemoDR_IM,
-         DE4AMarshaller.drImRequestMarshaller ().formatted ()::getAsString),
-  DR_USI ("dr-usi",
-          "Request to DR (USI)",
-          "/dr1/usi/transferevidence",
-          EDemoDocument::createDemoDR_USI,
-          DE4AMarshaller.drUsiRequestMarshaller ().formatted ()::getAsString),
-  DE_USI ("de-usi",
-          "Request to DE (USI)",
-          "/de1/usi/forwardevidence",
-          EDemoDocument::createDemoDE_USI,
-          DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
-  DT_USI ("dt-usi",
-          "Request to DT (USI)",
-          "/dt1/usi/transferevidence",
-          EDemoDocument::createDemoDT_USI,
-          DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString);
+  DO_IM_REQ ("do-im-req",
+             "Request to DO (IM)",
+             "/do1/im/extractevidence",
+             true,
+             EDemoDocument::createDemoDO_IM,
+             DE4AMarshaller.doImRequestMarshaller ().formatted ()::getAsString),
+  DO_USI_REQ ("do-usi-req",
+              "Request to DO (USI)",
+              "/do1/usi/extractevidence",
+              true,
+              EDemoDocument::createDemoDO_USI,
+              DE4AMarshaller.doUsiRequestMarshaller ().formatted ()::getAsString),
+  DR_IM_REQ ("dr-im-req",
+             "Request to DR (IM)",
+             "/dr1/im/transferevidence",
+             true,
+             EDemoDocument::createDemoDR_IM,
+             DE4AMarshaller.drImRequestMarshaller ().formatted ()::getAsString),
+  DR_USI_REQ ("dr-usi-req",
+              "Request to DR (USI)",
+              "/dr1/usi/transferevidence",
+              true,
+              EDemoDocument::createDemoDR_USI,
+              DE4AMarshaller.drUsiRequestMarshaller ().formatted ()::getAsString),
+  DE_USI_REQ ("de-usi-req",
+              "Request to DE (USI)",
+              "/de1/usi/forwardevidence",
+              true,
+              EDemoDocument::createDemoDE_USI,
+              DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+  DT_USI_REQ ("dt-usi",
+              "Request to DT (USI)",
+              "/dt1/usi/transferevidence",
+              true,
+              EDemoDocument::createDemoDT_USI,
+              DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString);
 
   private String m_sID;
   private String m_sDisplayName;
   private String m_sRelativeURL;
+  private boolean m_bIsRequest;
   private Supplier <Object> m_aDemoRequestCreator;
-  private Function <Object, String> m_aRequestToString;
+  private Function <Object, String> m_aToString;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
                      @Nonnull @Nonempty final String sRelativeURL,
+                     final boolean bIsRequest,
                      @Nonnull final Supplier <T> aDemoRequestCreator,
-                     @Nonnull final Function <T, String> aRequestToString)
+                     @Nonnull final Function <T, String> aToString)
   {
     ValueEnforcer.isTrue (sRelativeURL.startsWith ("/"), "Relative URL must start with a slash");
     m_sID = sID;
     m_sDisplayName = sDisplayName;
     m_sRelativeURL = sRelativeURL;
+    m_bIsRequest = bIsRequest;
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
-    m_aRequestToString = GenericReflection.uncheckedCast (aRequestToString);
+    m_aToString = GenericReflection.uncheckedCast (aToString);
   }
 
   @Nonnull
@@ -145,10 +154,15 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     return m_sRelativeURL;
   }
 
-  @Nonnull
-  public String getDemoRequestString ()
+  public boolean isRequest ()
   {
-    return m_aRequestToString.apply (m_aDemoRequestCreator.get ());
+    return m_bIsRequest;
+  }
+
+  @Nonnull
+  public String getDemoMessageAsString ()
+  {
+    return m_aToString.apply (m_aDemoRequestCreator.get ());
   }
 
   @Nullable

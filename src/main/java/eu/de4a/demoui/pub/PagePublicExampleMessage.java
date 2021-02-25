@@ -63,7 +63,7 @@ public final class PagePublicExampleMessage extends AbstractAppWebPage
 
       if (aFormErrors.isEmpty ())
       {
-        final String sExampleDocument = eMode.getDemoRequestString ();
+        final String sExampleDocument = eMode.getDemoMessageAsString ();
 
         final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sExampleDocument)
                                                                       .addPlugin (new PrismPluginLineNumbers ())

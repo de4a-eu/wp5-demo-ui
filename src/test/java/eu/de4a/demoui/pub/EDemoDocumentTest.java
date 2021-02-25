@@ -35,7 +35,7 @@ public class EDemoDocumentTest
     {
       LOGGER.info (e.name ());
       assertSame (e, EDemoDocument.getFromIDOrNull (e.getID ()));
-      assertNotNull (e.getDemoRequestString ());
+      assertNotNull (e.getDemoMessageAsString ());
     }
   }
 }

@@ -113,7 +113,7 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
       if (aFormErrors.isEmpty ())
       {
         final String sFinalURL = sTargetBaseURL + eMode.getRelativeURL ();
-        final String sExampleDocument = eMode.getDemoRequestString ();
+        final String sExampleDocument = eMode.getDemoMessageAsString ();
 
         final StopWatch aSW = StopWatch.createdStarted ();
         String sResponse = null;
@@ -166,7 +166,8 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
-          aSelect.addOption (e.getID (), e.getDisplayName () + " (" + e.getRelativeURL () + ")");
+          if (e.isRequest ())
+            aSelect.addOption (e.getID (), e.getDisplayName () + " (" + e.getRelativeURL () + ")");
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")
                                                      .setCtrl (aSelect)
