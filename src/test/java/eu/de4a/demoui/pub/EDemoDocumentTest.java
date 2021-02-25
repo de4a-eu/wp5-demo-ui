@@ -20,14 +20,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EDemoDocumentTest
 {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger (EDemoDocumentTest.class);
+
   @Test
   public void testBasic ()
   {
     for (final EDemoDocument e : EDemoDocument.values ())
     {
+      LOGGER.info (e.name ());
       assertSame (e, EDemoDocument.getFromIDOrNull (e.getID ()));
       assertNotNull (e.getDemoRequestString ());
     }
