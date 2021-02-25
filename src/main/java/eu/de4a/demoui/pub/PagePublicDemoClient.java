@@ -163,6 +163,12 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
     {
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC)).setLeft (2);
 
+      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, DEFAULT_BASE_URL)))
+                                                   .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
+                                                   .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
+                                                                 " The suffix of the Interface to test is added to this path." +
+                                                                 " The endpoint must be able to handle HTTP POST calls."));
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
@@ -173,13 +179,6 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
                                                      .setCtrl (aSelect)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_MODE)));
       }
-
-      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, DEFAULT_BASE_URL)))
-                                                   .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
-                                                   .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
-                                                                 " The suffix of the Interface to test is added to this path." +
-                                                                 " The endpoint must be able to handle HTTP POST calls."));
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Mock request"));
