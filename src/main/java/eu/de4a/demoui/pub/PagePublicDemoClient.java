@@ -17,6 +17,7 @@
 package eu.de4a.demoui.pub;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
@@ -29,8 +30,11 @@ import org.apache.http.entity.StringEntity;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.collection.impl.CommonsArrayList;
 import com.helger.commons.collection.impl.ICommonsList;
+import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
+import com.helger.commons.url.URLHelper;
 import com.helger.css.property.CCSSProperties;
+import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.httpclient.HttpClientManager;
@@ -60,7 +64,9 @@ import eu.de4a.demoui.ui.AppCommonUI;
 
 public final class PagePublicDemoClient extends AbstractAppWebPage
 {
+  public static final String DEFAULT_BASE_URL = "https://de4a-dev-mock.egovlab.eu";
   private static final String FIELD_MODE = "mode";
+  private static final String FIELD_DEST_BASE_URL = "destbaseurl";
   private static final ICommonsList <IPrismPlugin> PRISM_PLUGINS = new CommonsArrayList <> (new PrismPluginLineNumbers (),
                                                                                             new PrismPluginCopyToClipboard ());
 
@@ -90,14 +96,23 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
     if (aWPEC.hasAction (CPageParam.ACTION_PERFORM))
     {
       final String sMode = aWPEC.params ().getAsStringTrimmed (FIELD_MODE);
-      final EDemoMode eMode = EDemoMode.getFromIDOrNull (sMode);
+      final EDemoDocument eMode = EDemoDocument.getFromIDOrNull (sMode);
+
+      final String sTargetBaseURL = aWPEC.params ().getAsStringTrimmed (FIELD_DEST_BASE_URL);
+      final URL aTargetBaseURL = URLHelper.getAsURL (sTargetBaseURL);
 
       if (eMode == null)
         aFormErrors.addFieldError (FIELD_MODE, "A valid test interface must be selected.");
 
+      if (StringHelper.hasNoText (sTargetBaseURL))
+        aFormErrors.addFieldError (FIELD_DEST_BASE_URL, "A target base URL must be provided");
+      else
+        if (aTargetBaseURL == null)
+          aFormErrors.addFieldError (FIELD_DEST_BASE_URL, "The provided target base URL is invalid");
+
       if (aFormErrors.isEmpty ())
       {
-        final String sFinalURL = "https://de4a-dev-mock.egovlab.eu" + eMode.getRelativeURL ();
+        final String sFinalURL = sTargetBaseURL + eMode.getRelativeURL ();
         final String sExampleDocument = eMode.getDemoRequestString ();
 
         final StopWatch aSW = StopWatch.createdStarted ();
@@ -150,13 +165,20 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
 
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
-        for (final EDemoMode e : EDemoMode.values ())
-          aSelect.addOption (e.getID (), e.getDisplayName ());
+        for (final EDemoDocument e : EDemoDocument.values ())
+          aSelect.addOption (e.getID (), e.getDisplayName () + " (" + e.getRelativeURL () + ")");
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")
                                                      .setCtrl (aSelect)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_MODE)));
       }
+
+      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, DEFAULT_BASE_URL)))
+                                                   .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
+                                                   .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
+                                                                 " The suffix of the Interface to test is added to this path." +
+                                                                 " The endpoint must be able to handle HTTP POST calls."));
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Mock request"));

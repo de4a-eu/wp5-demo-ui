@@ -21,14 +21,14 @@ import static org.junit.Assert.assertSame;
 
 import org.junit.Test;
 
-public class EDemoModeTest
+public class EDemoDocumentTest
 {
   @Test
   public void testBasic ()
   {
-    for (final EDemoMode e : EDemoMode.values ())
+    for (final EDemoDocument e : EDemoDocument.values ())
     {
-      assertSame (e, EDemoMode.getFromIDOrNull (e.getID ()));
+      assertSame (e, EDemoDocument.getFromIDOrNull (e.getID ()));
       assertNotNull (e.getDemoRequestString ());
     }
   }

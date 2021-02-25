@@ -43,12 +43,12 @@ import eu.de4a.edm.jaxb.common.types.RequestTransferEvidenceIMType;
 import eu.de4a.edm.jaxb.eidas.np.GenderType;
 import eu.de4a.edm.xml.de4a.DE4AMarshaller;
 
-public enum EDemoMode implements IHasID <String>, IHasDisplayName
+public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
   DR_IM ("dr-im",
          "Request to DR (IM)",
          "/dr1/im/transferevidence",
-         EDemoMode::createDemoDR_IM,
+         EDemoDocument::createDemoDR_IM,
          DE4AMarshaller.drImRequestMarshaller ().formatted ()::getAsString);
 
   private String m_sID;
@@ -57,7 +57,7 @@ public enum EDemoMode implements IHasID <String>, IHasDisplayName
   private Supplier <Object> m_aDemoRequestCreator;
   private Function <Object, String> m_aRequestToString;
 
-  <T> EDemoMode (@Nonnull @Nonempty final String sID,
+  <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                  @Nonnull @Nonempty final String sDisplayName,
                  @Nonnull @Nonempty final String sRelativeURL,
                  @Nonnull final Supplier <T> aDemoRequestCreator,
@@ -99,9 +99,9 @@ public enum EDemoMode implements IHasID <String>, IHasDisplayName
   }
 
   @Nullable
-  public static EDemoMode getFromIDOrNull (final String sID)
+  public static EDemoDocument getFromIDOrNull (final String sID)
   {
-    return EnumHelper.getFromIDOrNull (EDemoMode.class, sID);
+    return EnumHelper.getFromIDOrNull (EDemoDocument.class, sID);
   }
 
   @Nonnull
