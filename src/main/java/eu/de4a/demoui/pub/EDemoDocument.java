@@ -48,11 +48,13 @@ import com.helger.xml.XMLFactory;
 
 import eu.de4a.edm.jaxb.common.idtypes.LegalEntityIdentifierType;
 import eu.de4a.edm.jaxb.common.idtypes.NaturalPersonIdentifierType;
+import eu.de4a.edm.jaxb.common.types.AckType;
 import eu.de4a.edm.jaxb.common.types.AgentCVType;
 import eu.de4a.edm.jaxb.common.types.CanonicalEvidenceType;
 import eu.de4a.edm.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.edm.jaxb.common.types.DomesticEvidenceType;
 import eu.de4a.edm.jaxb.common.types.DomesticsEvidencesType;
+import eu.de4a.edm.jaxb.common.types.ErrorListType;
 import eu.de4a.edm.jaxb.common.types.EvidenceServiceDataType;
 import eu.de4a.edm.jaxb.common.types.ExplicitRequestType;
 import eu.de4a.edm.jaxb.common.types.IssuingTypeType;
@@ -64,27 +66,29 @@ import eu.de4a.edm.jaxb.common.types.RequestGroundsType;
 import eu.de4a.edm.jaxb.common.types.RequestTransferEvidenceIMType;
 import eu.de4a.edm.jaxb.common.types.RequestTransferEvidenceUSIDRType;
 import eu.de4a.edm.jaxb.common.types.RequestTransferEvidenceUSIDTType;
+import eu.de4a.edm.jaxb.common.types.ResponseErrorType;
 import eu.de4a.edm.jaxb.eidas.np.GenderType;
 import eu.de4a.edm.jaxb.t42.ContactPointType;
 import eu.de4a.edm.xml.de4a.DE4AMarshaller;
+import eu.de4a.edm.xml.de4a.DE4AResponseDocumentHelper;
 import eu.de4a.edm.xml.de4a.EDE4ACanonicalEvidenceType;
 import eu.de4a.edm.xml.de4a.t42.DE4AT42Marshaller;
 import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryObjectMimeCodeContentType;
 
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
-  DO_IM_REQ ("do-im-req",
-             "Request to DO (IM)",
-             "/do1/im/extractevidence",
-             true,
-             EDemoDocument::createDemoDO_IM,
-             DE4AMarshaller.doImRequestMarshaller ().formatted ()::getAsString),
-  DO_USI_REQ ("do-usi-req",
-              "Request to DO (USI)",
-              "/do1/usi/extractevidence",
+  DE_USI_REQ ("de-usi-req",
+              "Request to DE (USI)",
+              "/de1/usi/forwardevidence",
               true,
-              EDemoDocument::createDemoDO_USI,
-              DE4AMarshaller.doUsiRequestMarshaller ().formatted ()::getAsString),
+              EDemoDocument::createDemoDE_USI,
+              DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+  DE_USI_RESP ("de-usi-resp",
+               "Response from DE",
+               null,
+               false,
+               EDemoDocument::createResponseError,
+               DE4AMarshaller.deUsiResponseMarshaller ().formatted ()::getAsString),
   DR_IM_REQ ("dr-im-req",
              "Request to DR (IM)",
              "/dr1/im/transferevidence",
@@ -97,18 +101,24 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
               true,
               EDemoDocument::createDemoDR_USI,
               DE4AMarshaller.drUsiRequestMarshaller ().formatted ()::getAsString),
-  DE_USI_REQ ("de-usi-req",
-              "Request to DE (USI)",
-              "/de1/usi/forwardevidence",
-              true,
-              EDemoDocument::createDemoDE_USI,
-              DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
   DT_USI_REQ ("dt-usi",
               "Request to DT (USI)",
               "/dt1/usi/transferevidence",
               true,
               EDemoDocument::createDemoDT_USI,
-              DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString);
+              DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+  DO_IM_REQ ("do-im-req",
+             "Request to DO (IM)",
+             "/do1/im/extractevidence",
+             true,
+             EDemoDocument::createDemoDO_IM,
+             DE4AMarshaller.doImRequestMarshaller ().formatted ()::getAsString),
+  DO_USI_REQ ("do-usi-req",
+              "Request to DO (USI)",
+              "/do1/usi/extractevidence",
+              true,
+              EDemoDocument::createDemoDO_USI,
+              DE4AMarshaller.doUsiRequestMarshaller ().formatted ()::getAsString);
 
   private String m_sID;
   private String m_sDisplayName;
@@ -124,7 +134,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                      @Nonnull final Supplier <T> aDemoRequestCreator,
                      @Nonnull final Function <T, String> aToString)
   {
-    ValueEnforcer.isTrue (sRelativeURL.startsWith ("/"), "Relative URL must start with a slash");
+    if (bIsRequest)
+      ValueEnforcer.isTrue (sRelativeURL.startsWith ("/"), "Relative URL must start with a slash");
     m_sID = sID;
     m_sDisplayName = sDisplayName;
     m_sRelativeURL = sRelativeURL;
@@ -147,10 +158,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     return m_sDisplayName;
   }
 
-  @Nonnull
-  @Nonempty
+  @Nullable
   public String getRelativeURL ()
   {
+    // Only for requests
     return m_sRelativeURL;
   }
 
@@ -431,6 +442,36 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     ret.setPreviewResponse (_createPreviewResponse ());
     ret.setCanonicalEvidence (_createCanonicalEvidence ());
     ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
+    return ret;
+  }
+
+  @Nonnull
+  private static ErrorListType _createErrorList ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ErrorListType ret = new ErrorListType ();
+    // Max length 10
+    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something went wrong"));
+    if (aTLR.nextBoolean ())
+      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something else also went wrong"));
+    return ret;
+  }
+
+  @Nonnull
+  public static ResponseErrorType createResponseError ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ResponseErrorType ret = new ResponseErrorType ();
+    if (aTLR.nextBoolean ())
+    {
+      ret.setAck (AckType.OK);
+      ret.setErrorList (_createErrorList ());
+    }
+    else
+    {
+      ret.setAck (AckType.KO);
+      ret.setErrorList (_createErrorList ());
+    }
     return ret;
   }
 }
