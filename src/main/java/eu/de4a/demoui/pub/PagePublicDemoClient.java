@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.w3c.dom.Document;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.collection.impl.CommonsArrayList;
@@ -46,7 +47,7 @@ import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.core.form.FormErrorList;
-import com.helger.photon.core.form.RequestField;
+import com.helger.photon.core.form.SessionBackedRequestField;
 import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
@@ -58,9 +59,14 @@ import com.helger.photon.uictrls.prism.HCPrismJS;
 import com.helger.photon.uictrls.prism.IPrismPlugin;
 import com.helger.photon.uictrls.prism.PrismPluginCopyToClipboard;
 import com.helger.photon.uictrls.prism.PrismPluginLineNumbers;
+import com.helger.xml.serialize.read.DOMReader;
+import com.helger.xml.serialize.read.DOMReaderSettings;
+import com.helger.xml.serialize.write.XMLWriter;
+import com.helger.xml.serialize.write.XMLWriterSettings;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
+import eu.de4a.edm.xml.de4a.DE4ANamespaceContext;
 
 public final class PagePublicDemoClient extends AbstractAppWebPage
 {
@@ -151,7 +157,33 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
 
         if (sResponse != null)
         {
-          aResNL.addChild (success ().addChild (div ("Response content received")).addChild (div (pre (sResponse))));
+          final boolean isFormatted = StringHelper.getLineCount (sResponse) > 1;
+          aResNL.addChild (success ().addChild (div ("Response content received (" +
+                                                     sResponse.length () +
+                                                     " chars)" +
+                                                     (isFormatted ? "" : " - displayed re-formatted"))));
+          final DOMReaderSettings aDRS = new DOMReaderSettings ();
+          aDRS.exceptionCallbacks ().removeAll ();
+          final Document aDoc = DOMReader.readXMLDOM (sResponse, aDRS);
+          if (aDoc != null)
+          {
+            // Its XML
+
+            // Reformat if necessary
+            final String sFormatted = isFormatted ? sResponse
+                                                  : XMLWriter.getNodeAsString (aDoc,
+                                                                               new XMLWriterSettings ().setNamespaceContext (DE4ANamespaceContext.getInstance ()));
+            final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sFormatted);
+            for (final IPrismPlugin p : PRISM_PLUGINS)
+              aPrism.addPlugin (p);
+
+            aResNL.addChild (div ().addStyle (CCSSProperties.MAX_WIDTH.newValue ("75vw")).addChild (aPrism));
+          }
+          else
+          {
+            // Non-XML
+            aResNL.addChild (div (pre (sResponse)));
+          }
         }
 
         aWPEC.postRedirectGetInternal (aResNL);
@@ -163,14 +195,8 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
     {
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC)).setLeft (2);
 
-      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, DEFAULT_BASE_URL)))
-                                                   .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
-                                                   .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
-                                                                 " The suffix of the Interface to test is added to this path." +
-                                                                 " The endpoint must be able to handle HTTP POST calls."));
       {
-        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
+        final HCExtSelect aSelect = new HCExtSelect (new SessionBackedRequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
           if (e.isRequest ())
             aSelect.addOption (e.getID (), e.getDisplayName () + " (" + e.getRelativeURL () + ")");
@@ -180,6 +206,13 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_MODE)));
       }
 
+      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
+                                                   .setCtrl (new HCEdit (new SessionBackedRequestField (FIELD_DEST_BASE_URL,
+                                                                                                        DEFAULT_BASE_URL)))
+                                                   .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
+                                                   .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
+                                                                 " The suffix of the Interface to test is added to this path." +
+                                                                 " The endpoint must be able to handle HTTP POST calls."));
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Mock request"));
     }
