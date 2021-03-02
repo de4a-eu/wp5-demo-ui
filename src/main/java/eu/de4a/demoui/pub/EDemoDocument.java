@@ -38,6 +38,7 @@ import com.helger.commons.id.IHasID;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.lang.GenericReflection;
+import com.helger.commons.locale.country.ECountry;
 import com.helger.commons.math.MathHelper;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.pdflayout4.PDFCreationException;
@@ -132,7 +133,19 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                null,
                EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.doUsiResponseMarshaller ());
+               DE4AMarshaller.doUsiResponseMarshaller ()),
+  IDK_LOOKUP_ROUTING_INFO_REQUEST ("idk-lri-req",
+                                   "IDK routing information lookup request",
+                                   null,
+                                   EDemoDocumentType.IDK_REQUEST,
+                                   EDemoDocument::createIDKRequestLookupRoutingInformation,
+                                   DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ()),
+  IDK_LOOKUP_ROUTING_INFO_RESPONSE ("idk-lri-resp",
+                                    "IDK routing information lookup response",
+                                    null,
+                                    EDemoDocumentType.IDK_RESPONSE,
+                                    EDemoDocument::createIDKResponseLookupRoutingInformation,
+                                    DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ());
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -536,6 +549,158 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     }
     else
       ret.setErrorList (_createErrorList ());
+    return ret;
+  }
+
+  @Nonnull
+  public static RequestLookupRoutingInformationType createIDKRequestLookupRoutingInformation ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestLookupRoutingInformationType ret = new RequestLookupRoutingInformationType ();
+    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCountry (_random (ECountry.values ()).getISOCountryCode ());
+    return ret;
+  }
+
+  @Nonnull
+  private static IaOrganisationalStructureType _createOrganisationalStructure ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ElementType e = new ElementType ();
+    e.setAtuLevel (_random (AtuLevelType.values ()));
+    e.setAtuPath ("Path-" + MathHelper.abs (aTLR.nextInt ()));
+    e.setAtuCode ("Code-" + MathHelper.abs (aTLR.nextInt ()));
+    e.setAtuName ("Name-" + MathHelper.abs (aTLR.nextInt ()));
+    e.setAtuLatinName ("LatinName-" + MathHelper.abs (aTLR.nextInt ()));
+
+    final IaOrganisationalStructureType ret = new IaOrganisationalStructureType ();
+    ret.setElement (e);
+    return ret;
+  }
+
+  @Nonnull
+  private static IssuingAuthorityType _createIssuingAuthority ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final IssuingAuthorityType ret = new IssuingAuthorityType ();
+    ret.setEvidenceTypeId (_random (EvidenceTypeIdType.values ()));
+    ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
+    ret.setIaLevelPath ("IaLevel-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setIaTotalNum (aTLR.nextInt (101));
+    ret.setIaOrganisationalStructure (_createOrganisationalStructure ());
+    return ret;
+  }
+
+  @Nonnull
+  public static DataOwnerType _createDataOwner ()
+  {
+    final DataOwnerType ret = new DataOwnerType ();
+    ret.setAgent (_createAgent ());
+    return ret;
+  }
+
+  @Nonnull
+  public static DataTransferorType _createDataTransferor ()
+  {
+    final DataTransferorType ret = new DataTransferorType ();
+    ret.setAgent (_createAgent ());
+    return ret;
+  }
+
+  @Nonnull
+  public static TextType _createText ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final TextType ret = new TextType ();
+    ret.setLang ("Lang-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setLabel ("Label" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setDefinition ("Def-" + MathHelper.abs (aTLR.nextInt ()));
+    return ret;
+  }
+
+  @Nonnull
+  public static TextsType _createTexts ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final TextsType ret = new TextsType ();
+    ret.addText (_createText ());
+    if (aTLR.nextBoolean ())
+      ret.addText (_createText ());
+    return ret;
+  }
+
+  @Nonnull
+  public static ParameterType _createParameter ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ParameterType ret = new ParameterType ();
+    ret.setItemId ("ItemId-" + MathHelper.abs (aTLR.nextInt ()));
+    if (aTLR.nextBoolean ())
+      ret.setItemType ("ItemType-" + MathHelper.abs (aTLR.nextInt ()));
+    if (aTLR.nextBoolean ())
+      ret.setDataType (_random (DataTypeType.values ()));
+    if (aTLR.nextBoolean ())
+      ret.setConstraints ("Constraints-" + MathHelper.abs (aTLR.nextInt ()));
+    if (aTLR.nextBoolean ())
+      ret.setTexts (_createTexts ());
+    return ret;
+  }
+
+  @Nonnull
+  public static ParametersType _createParameters ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ParametersType ret = new ParametersType ();
+    ret.addParameter (_createParameter ());
+    if (aTLR.nextBoolean ())
+      ret.addParameter (_createParameter ());
+    if (aTLR.nextBoolean ())
+      ret.addParameter (_createParameter ());
+    return ret;
+  }
+
+  @Nonnull
+  public static InputParameterSetsType _createInputParameterSets ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final InputParameterSetsType ret = new InputParameterSetsType ();
+    ret.setSerialNumber (aTLR.nextInt (101));
+    ret.setTitle ("Title-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRecordMatchingAssurance (_random (RecordMatchingAssuranceType.values ()));
+    ret.setParameters (_createParameters ());
+    return ret;
+  }
+
+  @Nonnull
+  public static EvidenceServiceType _createEvidenceService ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final EvidenceServiceType ret = new EvidenceServiceType ();
+    ret.setService ("Service-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCanonicalEvidenceType ("CanonEvidenceType-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setDataOwner (_createDataOwner ());
+    ret.setDataTransferor (_createDataTransferor ());
+    ret.setInputParameterSets (_createInputParameterSets ());
+    return ret;
+  }
+
+  @Nonnull
+  public static ResponseLookupRoutingInformationType createIDKResponseLookupRoutingInformation ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ResponseLookupRoutingInformationType ret = new ResponseLookupRoutingInformationType ();
+    switch (aTLR.nextInt (3))
+    {
+      case 0:
+        ret.setIssuingAuthority (_createIssuingAuthority ());
+        break;
+      case 1:
+        ret.setEvidenceService (_createEvidenceService ());
+        break;
+      case 2:
+        ret.setErrorList (_createErrorList ());
+        break;
+    }
     return ret;
   }
 }

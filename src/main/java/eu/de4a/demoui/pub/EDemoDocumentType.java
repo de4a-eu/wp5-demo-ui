@@ -4,5 +4,6 @@ public enum EDemoDocumentType
 {
   REQUEST,
   RESPONSE,
-  IDK
+  IDK_REQUEST,
+  IDK_RESPONSE
 }
