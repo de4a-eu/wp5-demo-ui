@@ -46,15 +46,15 @@ import com.helger.pdflayout4.spec.FontSpec;
 import com.helger.pdflayout4.spec.PreloadFont;
 import com.helger.xml.XMLFactory;
 
-import eu.de4a.edm.jaxb.common.idtypes.LegalEntityIdentifierType;
-import eu.de4a.edm.jaxb.common.idtypes.NaturalPersonIdentifierType;
-import eu.de4a.edm.jaxb.common.types.*;
-import eu.de4a.edm.jaxb.eidas.np.GenderType;
-import eu.de4a.edm.jaxb.t42.ContactPointType;
-import eu.de4a.edm.xml.de4a.DE4AMarshaller;
-import eu.de4a.edm.xml.de4a.DE4AResponseDocumentHelper;
-import eu.de4a.edm.xml.de4a.EDE4ACanonicalEvidenceType;
-import eu.de4a.edm.xml.de4a.t42.DE4AT42Marshaller;
+import eu.de4a.iem.jaxb.common.idtypes.LegalEntityIdentifierType;
+import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
+import eu.de4a.iem.jaxb.common.types.*;
+import eu.de4a.iem.jaxb.eidas.np.GenderType;
+import eu.de4a.iem.jaxb.t42.ContactPointType;
+import eu.de4a.iem.xml.de4a.DE4AMarshaller;
+import eu.de4a.iem.xml.de4a.DE4AResponseDocumentHelper;
+import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
+import eu.de4a.iem.xml.de4a.t42.DE4AT42Marshaller;
 import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryObjectMimeCodeContentType;
 
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
