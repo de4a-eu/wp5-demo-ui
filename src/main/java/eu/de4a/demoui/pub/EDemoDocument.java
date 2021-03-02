@@ -18,6 +18,7 @@ package eu.de4a.demoui.pub;
 
 import java.awt.Color;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -28,10 +29,11 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.base64.Base64;
 import com.helger.commons.datetime.PDTFactory;
+import com.helger.commons.error.list.ErrorList;
+import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.lang.EnumHelper;
@@ -59,78 +61,78 @@ import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryOb
 
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
-  DE_USI_REQ ("de-usi-req",
-              "Request to DE (USI)",
-              "/de1/usi/forwardevidence",
-              true,
-              EDemoDocument::createDemoDE_USI,
-              DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+  DE_USI_REQ_DBA ("de-usi-req-dba",
+                  "Request to DE (USI) - DBA",
+                  "/de1/usi/forwardevidence",
+                  true,
+                  EDemoDocument::createDemoDE_USI,
+                  DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DE_USI_RESP ("de-usi-resp",
                "Response from DE (USI)",
                null,
                false,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.deUsiResponseMarshaller ().formatted ()::getAsString),
+               DE4AMarshaller.deUsiResponseMarshaller ()),
   DR_IM_REQ ("dr-im-req",
              "Request to DR (IM)",
              "/dr1/im/transferevidence",
              true,
              EDemoDocument::createDemoDR_IM,
-             DE4AMarshaller.drImRequestMarshaller ().formatted ()::getAsString),
-  DR_IM_RESP ("dr-im-resp",
-              "Response from DR (IM)",
-              null,
-              false,
-              EDemoDocument::createResponseTransferEvidence,
-              DE4AMarshaller.drImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+             DE4AMarshaller.drImRequestMarshaller ()),
+  DR_IM_RESP_DBA ("dr-im-resp-dba",
+                  "Response from DR (IM) - DBA",
+                  null,
+                  false,
+                  EDemoDocument::createResponseTransferEvidence,
+                  DE4AMarshaller.drImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DR_USI_REQ ("dr-usi-req",
               "Request to DR (USI)",
               "/dr1/usi/transferevidence",
               true,
               EDemoDocument::createDemoDR_USI,
-              DE4AMarshaller.drUsiRequestMarshaller ().formatted ()::getAsString),
+              DE4AMarshaller.drUsiRequestMarshaller ()),
   DR_USI_RESP ("dr-usi-resp",
                "Response from DR (USI)",
                null,
                false,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.drUsiResponseMarshaller ().formatted ()::getAsString),
-  DT_USI_REQ ("dt-usi",
-              "Request to DT (USI)",
-              "/dt1/usi/transferevidence",
-              true,
-              EDemoDocument::createDemoDT_USI,
-              DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+               DE4AMarshaller.drUsiResponseMarshaller ()),
+  DT_USI_REQ_DBA ("dt-usi-req-dba",
+                  "Request to DT (USI) - DBA",
+                  "/dt1/usi/transferevidence",
+                  true,
+                  EDemoDocument::createDemoDT_USI,
+                  DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DT_USI_RESP ("dt-usi-resp",
                "Response from DT (USI)",
                null,
                false,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.dtUsiResponseMarshaller ().formatted ()::getAsString),
+               DE4AMarshaller.dtUsiResponseMarshaller ()),
   DO_IM_REQ ("do-im-req",
              "Request to DO (IM)",
              "/do1/im/extractevidence",
              true,
              EDemoDocument::createDemoDO_IM,
-             DE4AMarshaller.doImRequestMarshaller ().formatted ()::getAsString),
-  DO_IM_RESP ("do-im-resp",
-              "Response from DO (IM)",
-              null,
-              false,
-              EDemoDocument::createResponseExtractEvidence,
-              DE4AMarshaller.doImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+             DE4AMarshaller.doImRequestMarshaller ()),
+  DO_IM_RESP_DBA ("do-im-resp-dba",
+                  "Response from DO (IM) - DBA",
+                  null,
+                  false,
+                  EDemoDocument::createResponseExtractEvidence,
+                  DE4AMarshaller.doImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DO_USI_REQ ("do-usi-req",
               "Request to DO (USI)",
               "/do1/usi/extractevidence",
               true,
               EDemoDocument::createDemoDO_USI,
-              DE4AMarshaller.doUsiRequestMarshaller ().formatted ()::getAsString),
+              DE4AMarshaller.doUsiRequestMarshaller ()),
   DO_USI_RESP ("do-usi-resp",
                "Response from DO (USI)",
                null,
                false,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.doUsiResponseMarshaller ().formatted ()::getAsString);
+               DE4AMarshaller.doUsiResponseMarshaller ());
 
   private String m_sID;
   private String m_sDisplayName;
@@ -138,22 +140,23 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   private boolean m_bIsRequest;
   private Supplier <Object> m_aDemoRequestCreator;
   private Function <Object, String> m_aToString;
+  private BiConsumer <String, ErrorList> m_aValidator;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
                      @Nonnull @Nonempty final String sRelativeURL,
                      final boolean bIsRequest,
                      @Nonnull final Supplier <T> aDemoRequestCreator,
-                     @Nonnull final Function <T, String> aToString)
+                     @Nonnull final DE4AMarshaller <T> aMarshaller)
   {
-    if (bIsRequest)
-      ValueEnforcer.isTrue (sRelativeURL.startsWith ("/"), "Relative URL must start with a slash");
+    final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_sID = sID;
     m_sDisplayName = sDisplayName;
     m_sRelativeURL = sRelativeURL;
     m_bIsRequest = bIsRequest;
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
     m_aToString = GenericReflection.uncheckedCast (aToString);
+    m_aValidator = aMarshaller::validateOnly;
   }
 
   @Nonnull
@@ -186,6 +189,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   public String getDemoMessageAsString ()
   {
     return m_aToString.apply (m_aDemoRequestCreator.get ());
+  }
+
+  @Nonnull
+  public IErrorList validateMessage (@Nonnull final String sMsg)
+  {
+    final ErrorList ret = new ErrorList ();
+    m_aValidator.accept (sMsg, ret);
+    return ret;
   }
 
   @Nullable
