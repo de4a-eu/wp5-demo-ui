@@ -66,7 +66,7 @@ import com.helger.xml.serialize.write.XMLWriterSettings;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.edm.xml.de4a.DE4ANamespaceContext;
+import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
 
 public final class PagePublicDemoClient extends AbstractAppWebPage
 {
