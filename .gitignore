@@ -4,3 +4,5 @@
 bin/
 target/
 runtime-data/
+/.idea/
+/de4a-wp5-demoui.iml
