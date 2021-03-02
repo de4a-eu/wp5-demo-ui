@@ -145,7 +145,19 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                                     null,
                                     EDemoDocumentType.IDK_RESPONSE,
                                     EDemoDocument::createIDKResponseLookupRoutingInformation,
-                                    DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ());
+                                    DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ()),
+  IDK_LOOKUP_EVIDENCE_SERVICE_DATA_REQUEST ("idk-lesd-req",
+                                            "IDK evidence service data lookup request",
+                                            null,
+                                            EDemoDocumentType.IDK_REQUEST,
+                                            EDemoDocument::createIDKRequestLookupEvidenceServiceData,
+                                            DE4AMarshaller.idkRequestLookupEvidenceServiceDataMarshaller ()),
+  IDK_LOOKUP_EVIDENCE_SERVICE_DATA_RESPONSE ("idk-lesd-resp",
+                                             "IDK evidence service data lookup response",
+                                             null,
+                                             EDemoDocumentType.IDK_RESPONSE,
+                                             EDemoDocument::createIDKResponseLookupEvidenceServiceData,
+                                             DE4AMarshaller.idkResponseLookupEvidenceServiceDataMarshaller ());
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -664,7 +676,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final InputParameterSetsType ret = new InputParameterSetsType ();
-    ret.setSerialNumber (aTLR.nextInt (101));
+    ret.setSerialNumber (aTLR.nextInt (1, 101));
     ret.setTitle ("Title-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setRecordMatchingAssurance (_random (RecordMatchingAssuranceType.values ()));
     ret.setParameters (_createParameters ());
@@ -698,6 +710,34 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
         ret.setEvidenceService (_createEvidenceService ());
         break;
       case 2:
+        ret.setErrorList (_createErrorList ());
+        break;
+    }
+    return ret;
+  }
+
+  @Nonnull
+  public static RequestLookupEvidenceServiceDataType createIDKRequestLookupEvidenceServiceData ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestLookupEvidenceServiceDataType ret = new RequestLookupEvidenceServiceDataType ();
+    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCountry (_random (ECountry.values ()).getISOCountryCode ());
+    ret.setAdminTerritorialUnit ("ATU-" + MathHelper.abs (aTLR.nextInt ()));
+    return ret;
+  }
+
+  @Nonnull
+  public static ResponseLookupEvidenceServiceDataType createIDKResponseLookupEvidenceServiceData ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ResponseLookupEvidenceServiceDataType ret = new ResponseLookupEvidenceServiceDataType ();
+    switch (aTLR.nextInt (2))
+    {
+      case 0:
+        ret.setEvidenceService (_createEvidenceService ());
+        break;
+      case 1:
         ret.setErrorList (_createErrorList ());
         break;
     }
