@@ -198,7 +198,7 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
       {
         final HCExtSelect aSelect = new HCExtSelect (new SessionBackedRequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
-          if (e.isRequest ())
+          if (e.getDocumentType () == EDemoDocumentType.REQUEST)
             aSelect.addOption (e.getID (), e.getDisplayName () + " (" + e.getRelativeURL () + ")");
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")

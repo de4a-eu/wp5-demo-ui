@@ -64,88 +64,88 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   DE_USI_REQ_DBA ("de-usi-req-dba",
                   "Request to DE (USI) - DBA",
                   "/de1/usi/forwardevidence",
-                  true,
+                  EDemoDocumentType.REQUEST,
                   EDemoDocument::createDemoDE_USI,
                   DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DE_USI_RESP ("de-usi-resp",
                "Response from DE (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.deUsiResponseMarshaller ()),
   DR_IM_REQ ("dr-im-req",
              "Request to DR (IM)",
              "/dr1/im/transferevidence",
-             true,
+             EDemoDocumentType.REQUEST,
              EDemoDocument::createDemoDR_IM,
              DE4AMarshaller.drImRequestMarshaller ()),
   DR_IM_RESP_DBA ("dr-im-resp-dba",
                   "Response from DR (IM) - DBA",
                   null,
-                  false,
+                  EDemoDocumentType.RESPONSE,
                   EDemoDocument::createResponseTransferEvidence,
                   DE4AMarshaller.drImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DR_USI_REQ ("dr-usi-req",
               "Request to DR (USI)",
               "/dr1/usi/transferevidence",
-              true,
+              EDemoDocumentType.REQUEST,
               EDemoDocument::createDemoDR_USI,
               DE4AMarshaller.drUsiRequestMarshaller ()),
   DR_USI_RESP ("dr-usi-resp",
                "Response from DR (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.drUsiResponseMarshaller ()),
   DT_USI_REQ_DBA ("dt-usi-req-dba",
                   "Request to DT (USI) - DBA",
                   "/dt1/usi/transferevidence",
-                  true,
+                  EDemoDocumentType.REQUEST,
                   EDemoDocument::createDemoDT_USI,
                   DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DT_USI_RESP ("dt-usi-resp",
                "Response from DT (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.dtUsiResponseMarshaller ()),
   DO_IM_REQ ("do-im-req",
              "Request to DO (IM)",
              "/do1/im/extractevidence",
-             true,
+             EDemoDocumentType.REQUEST,
              EDemoDocument::createDemoDO_IM,
              DE4AMarshaller.doImRequestMarshaller ()),
   DO_IM_RESP_DBA ("do-im-resp-dba",
                   "Response from DO (IM) - DBA",
                   null,
-                  false,
+                  EDemoDocumentType.RESPONSE,
                   EDemoDocument::createResponseExtractEvidence,
                   DE4AMarshaller.doImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DO_USI_REQ ("do-usi-req",
               "Request to DO (USI)",
               "/do1/usi/extractevidence",
-              true,
+              EDemoDocumentType.REQUEST,
               EDemoDocument::createDemoDO_USI,
               DE4AMarshaller.doUsiRequestMarshaller ()),
   DO_USI_RESP ("do-usi-resp",
                "Response from DO (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.doUsiResponseMarshaller ());
 
-  private String m_sID;
-  private String m_sDisplayName;
-  private String m_sRelativeURL;
-  private boolean m_bIsRequest;
-  private Supplier <Object> m_aDemoRequestCreator;
-  private Function <Object, String> m_aToString;
-  private BiConsumer <String, ErrorList> m_aValidator;
+  private final String m_sID;
+  private final String m_sDisplayName;
+  private final String m_sRelativeURL;
+  private final EDemoDocumentType m_eDocType;
+  private final Supplier <Object> m_aDemoRequestCreator;
+  private final Function <Object, String> m_aToString;
+  private final BiConsumer <String, ErrorList> m_aValidator;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
                      @Nonnull @Nonempty final String sRelativeURL,
-                     final boolean bIsRequest,
+                     @Nonnull final EDemoDocumentType eDocType,
                      @Nonnull final Supplier <T> aDemoRequestCreator,
                      @Nonnull final DE4AMarshaller <T> aMarshaller)
   {
@@ -153,7 +153,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     m_sID = sID;
     m_sDisplayName = sDisplayName;
     m_sRelativeURL = sRelativeURL;
-    m_bIsRequest = bIsRequest;
+    m_eDocType = eDocType;
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
     m_aToString = GenericReflection.uncheckedCast (aToString);
     m_aValidator = aMarshaller::validateOnly;
@@ -180,9 +180,9 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     return m_sRelativeURL;
   }
 
-  public boolean isRequest ()
+  public EDemoDocumentType getDocumentType ()
   {
-    return m_bIsRequest;
+    return m_eDocType;
   }
 
   @Nonnull
