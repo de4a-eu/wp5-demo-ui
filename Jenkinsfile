@@ -2,6 +2,11 @@ pipeline {
     agent none
     stages {
         stage('Test') {
+            when {
+                anyOf {
+                    branch 'development'; branch pattern: 'PR-\\d+', comparator: 'REGEXP'
+                }
+            }
             agent {
                 docker {
                     image 'maven:3.6.3-jdk-11'
@@ -14,6 +19,9 @@ pipeline {
         }
 
         stage('Build'){
+            when{
+                branch 'main'
+            }
             agent {
                 docker {
                     image 'maven:3.6.3-jdk-11'
