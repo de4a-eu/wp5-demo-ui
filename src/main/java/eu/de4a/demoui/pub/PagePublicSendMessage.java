@@ -31,12 +31,15 @@ import org.w3c.dom.Document;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.collection.impl.CommonsArrayList;
 import com.helger.commons.collection.impl.ICommonsList;
+import com.helger.commons.error.IError;
+import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
 import com.helger.css.property.CCSSProperties;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
+import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.httpclient.HttpClientManager;
 import com.helger.httpclient.HttpClientSettings;
@@ -69,16 +72,17 @@ import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
 
-public final class PagePublicSendRandomMessage extends AbstractAppWebPage
+public final class PagePublicSendMessage extends AbstractAppWebPage
 {
   private static final String FIELD_MODE = "mode";
   private static final String FIELD_DEST_BASE_URL = "destbaseurl";
+  private static final String FIELD_PAYLOAD = "payload";
   private static final ICommonsList <IPrismPlugin> PRISM_PLUGINS = new CommonsArrayList <> (new PrismPluginLineNumbers (),
                                                                                             new PrismPluginCopyToClipboard ());
 
-  public PagePublicSendRandomMessage (@Nonnull @Nonempty final String sID)
+  public PagePublicSendMessage (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Send Random Message");
+    super (sID, "Send Message");
   }
 
   @Override
@@ -107,6 +111,8 @@ public final class PagePublicSendRandomMessage extends AbstractAppWebPage
       final String sTargetBaseURL = aWPEC.params ().getAsStringTrimmed (FIELD_DEST_BASE_URL);
       final URL aTargetBaseURL = URLHelper.getAsURL (sTargetBaseURL);
 
+      final String sPayload = aWPEC.params ().getAsString (FIELD_PAYLOAD);
+
       if (eMode == null)
         aFormErrors.addFieldError (FIELD_MODE, "A valid test interface must be selected.");
 
@@ -116,76 +122,93 @@ public final class PagePublicSendRandomMessage extends AbstractAppWebPage
         if (aTargetBaseURL == null)
           aFormErrors.addFieldError (FIELD_DEST_BASE_URL, "The provided target base URL is invalid");
 
+      if (StringHelper.hasNoText (sPayload))
+        aFormErrors.addFieldError (FIELD_PAYLOAD, "You need to provide the payload to be send.");
+
       if (aFormErrors.isEmpty ())
       {
-        final String sFinalURL = sTargetBaseURL + eMode.getRelativeURL ();
-        final String sExampleDocument = eMode.getDemoMessageAsString ();
-
-        final StopWatch aSW = StopWatch.createdStarted ();
-        String sResponse = null;
-        Exception aResponseEx = null;
-        final HttpClientSettings aHCS = new HttpClientSettings ();
-        try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
-        {
-          final HttpPost aPost = new HttpPost (sFinalURL);
-          aPost.setEntity (new StringEntity (sExampleDocument, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-          sResponse = aHCM.execute (aPost, new ResponseHandlerString ());
-        }
-        catch (final IOException ex)
-        {
-          aResponseEx = ex;
-        }
-        aSW.stop ();
-
         final HCNodeList aResNL = new HCNodeList ();
-        {
-          final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sExampleDocument);
-          for (final IPrismPlugin p : PRISM_PLUGINS)
-            aPrism.addPlugin (p);
 
-          aResNL.addChild (h2 ("Sent request"))
-                .addChild (div ("Target URL: ").addChild (code (sFinalURL)))
-                .addChild (div ("Execution time: ").addChild (code (aSW.getMillis () + " milliseconds")))
-                .addChild (div ().addStyle (CCSSProperties.MAX_WIDTH.newValue ("75vw")).addChild (aPrism));
+        // Check if document is valid
+        final IErrorList aEL = eMode.validateMessage (sPayload);
+        if (aEL.containsAtLeastOneError ())
+        {
+          aResNL.addChild (error ("The provided document is not XSD compliant"));
+          for (final IError e : aEL)
+            if (e.getErrorLevel ().isError ())
+              aResNL.addChild (error (e.getAsString (aDisplayLocale)));
+            else
+              aResNL.addChild (warn (e.getAsString (aDisplayLocale)));
         }
-
-        if (aResponseEx != null)
+        else
         {
-          aResNL.addChild (error ().addChild (div ("Error sending Mock request to ").addChild (code (sFinalURL)))
-                                   .addChild (AppCommonUI.getTechnicalDetailsUI (aResponseEx, true)));
-        }
+          // Send only valid documents
+          final StopWatch aSW = StopWatch.createdStarted ();
 
-        if (sResponse != null)
-        {
-          final boolean isFormatted = StringHelper.getLineCount (sResponse) > 1;
-          aResNL.addChild (success ().addChild (div ("Response content received (" +
-                                                     sResponse.length () +
-                                                     " chars)" +
-                                                     (isFormatted ? "" : " - displayed re-formatted"))));
-          final DOMReaderSettings aDRS = new DOMReaderSettings ();
-          aDRS.exceptionCallbacks ().removeAll ();
-          final Document aDoc = DOMReader.readXMLDOM (sResponse, aDRS);
-          if (aDoc != null)
+          final String sFinalURL = sTargetBaseURL + eMode.getRelativeURL ();
+          String sResponse = null;
+          Exception aResponseEx = null;
+          final HttpClientSettings aHCS = new HttpClientSettings ();
+          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
-            // Its XML
+            final HttpPost aPost = new HttpPost (sFinalURL);
+            aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            sResponse = aHCM.execute (aPost, new ResponseHandlerString ());
+          }
+          catch (final IOException ex)
+          {
+            aResponseEx = ex;
+          }
+          aSW.stop ();
 
-            // Reformat if necessary
-            final String sFormatted = isFormatted ? sResponse
-                                                  : XMLWriter.getNodeAsString (aDoc,
-                                                                               new XMLWriterSettings ().setNamespaceContext (DE4ANamespaceContext.getInstance ()));
-            final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sFormatted);
+          {
+            final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sPayload);
             for (final IPrismPlugin p : PRISM_PLUGINS)
               aPrism.addPlugin (p);
 
-            aResNL.addChild (div ().addStyle (CCSSProperties.MAX_WIDTH.newValue ("75vw")).addChild (aPrism));
+            aResNL.addChild (h2 ("Sent request"))
+                  .addChild (div ("Target URL: ").addChild (code (sFinalURL)))
+                  .addChild (div ("Execution time: ").addChild (code (aSW.getMillis () + " milliseconds")))
+                  .addChild (div ().addStyle (CCSSProperties.MAX_WIDTH.newValue ("75vw")).addChild (aPrism));
           }
-          else
+
+          if (aResponseEx != null)
           {
-            // Non-XML
-            aResNL.addChild (div (pre (sResponse)));
+            aResNL.addChild (error ().addChild (div ("Error sending Mock request to ").addChild (code (sFinalURL)))
+                                     .addChild (AppCommonUI.getTechnicalDetailsUI (aResponseEx, true)));
+          }
+
+          if (sResponse != null)
+          {
+            final boolean isFormatted = StringHelper.getLineCount (sResponse) > 1;
+            aResNL.addChild (success ().addChild (div ("Response content received (" +
+                                                       sResponse.length () +
+                                                       " chars)" +
+                                                       (isFormatted ? "" : " - displayed re-formatted"))));
+            final DOMReaderSettings aDRS = new DOMReaderSettings ();
+            aDRS.exceptionCallbacks ().removeAll ();
+            final Document aDoc = DOMReader.readXMLDOM (sResponse, aDRS);
+            if (aDoc != null)
+            {
+              // Its XML
+
+              // Reformat if necessary
+              final String sFormatted = isFormatted ? sResponse
+                                                    : XMLWriter.getNodeAsString (aDoc,
+                                                                                 new XMLWriterSettings ().setNamespaceContext (DE4ANamespaceContext.getInstance ()));
+              final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sFormatted);
+              for (final IPrismPlugin p : PRISM_PLUGINS)
+                aPrism.addPlugin (p);
+
+              aResNL.addChild (div ().addStyle (CCSSProperties.MAX_WIDTH.newValue ("75vw")).addChild (aPrism));
+            }
+            else
+            {
+              // Non-XML
+              aResNL.addChild (div (pre (sResponse)));
+            }
           }
         }
-
         if (true)
           aNodeList.addChild (aResNL);
         else
@@ -215,6 +238,11 @@ public final class PagePublicSendRandomMessage extends AbstractAppWebPage
                                                    .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
                                                                  " The suffix of the Interface to test is added to this path." +
                                                                  " The endpoint must be able to handle HTTP POST calls."));
+
+      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("XML message to send")
+                                                   .setCtrl (new HCTextArea (new RequestField (FIELD_PAYLOAD)).setRows (8))
+                                                   .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
+
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Mock request"));
     }

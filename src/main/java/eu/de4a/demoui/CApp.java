@@ -52,6 +52,8 @@ public final class CApp
   public static final Locale USER_ADMINISTRATOR_LOCALE = CApp.DEFAULT_LOCALE;
   public static final ICommonsMap <String, String> USER_ADMINISTRATOR_CUSTOMATTRS = null;
 
+  public static final String DEFAULT_BASE_URL = "https://de4a-dev-mock.egovlab.eu";
+
   private CApp ()
   {}
 }

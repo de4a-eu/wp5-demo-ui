@@ -38,13 +38,13 @@ import com.helger.photon.uictrls.prism.PrismPluginLineNumbers;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 
-public final class PagePublicExampleMessage extends AbstractAppWebPage
+public final class PagePublicCreateRandomMessage extends AbstractAppWebPage
 {
   private static final String FIELD_MODE = "mode";
 
-  public PagePublicExampleMessage (@Nonnull @Nonempty final String sID)
+  public PagePublicCreateRandomMessage (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Example Messages");
+    super (sID, "Create Random Message");
   }
 
   @Override

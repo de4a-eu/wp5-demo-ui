@@ -165,7 +165,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   private final EDemoDocumentType m_eDocType;
   private final Supplier <Object> m_aDemoRequestCreator;
   private final Function <Object, String> m_aToString;
-  private final BiConsumer <String, ErrorList> m_aValidator;
+  private final BiConsumer <String, ErrorList> m_aReader;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
@@ -174,14 +174,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                      @Nonnull final Supplier <T> aDemoRequestCreator,
                      @Nonnull final DE4AMarshaller <T> aMarshaller)
   {
-    final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_sID = sID;
     m_sDisplayName = sDisplayName;
     m_sRelativeURL = sRelativeURL;
     m_eDocType = eDocType;
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
+    final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_aToString = GenericReflection.uncheckedCast (aToString);
-    m_aValidator = aMarshaller::validateOnly;
+    m_aReader = aMarshaller::readAndValidate;
   }
 
   @Nonnull
@@ -220,7 +220,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   public IErrorList validateMessage (@Nonnull final String sMsg)
   {
     final ErrorList ret = new ErrorList ();
-    m_aValidator.accept (sMsg, ret);
+    m_aReader.accept (sMsg, ret);
     return ret;
   }
 

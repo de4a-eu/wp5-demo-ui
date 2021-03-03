@@ -46,7 +46,7 @@ public final class PagePublicValidateMessage extends AbstractAppWebPage
 
   public PagePublicValidateMessage (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Validate Messages");
+    super (sID, "Validate Message");
   }
 
   @Override
