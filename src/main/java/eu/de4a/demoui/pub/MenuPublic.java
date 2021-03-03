@@ -24,7 +24,7 @@ import com.helger.photon.core.menu.IMenuTree;
 @Immutable
 public final class MenuPublic
 {
-  public static final String MENU_DEMO_CLIENT = "democlient";
+  public static final String MENU_SEND_RANDOM_MESSAGES = "sendrandommessages";
   public static final String MENU_EXAMPLE_MESSAGES = "examplemsgs";
   public static final String MENU_VALIDATE_MESSAGES = "validatemsgs";
 
@@ -34,11 +34,11 @@ public final class MenuPublic
   public static void init (@Nonnull final IMenuTree aMenuTree)
   {
     // Common stuff
-    aMenuTree.createRootItem (new PagePublicDemoClient (MENU_DEMO_CLIENT));
+    aMenuTree.createRootItem (new PagePublicSendRandomMessage (MENU_SEND_RANDOM_MESSAGES));
     aMenuTree.createRootItem (new PagePublicExampleMessage (MENU_EXAMPLE_MESSAGES));
     aMenuTree.createRootItem (new PagePublicValidateMessage (MENU_VALIDATE_MESSAGES));
 
     // Set default
-    aMenuTree.setDefaultMenuItemID (MENU_DEMO_CLIENT);
+    aMenuTree.setDefaultMenuItemID (MENU_SEND_RANDOM_MESSAGES);
   }
 }

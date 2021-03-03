@@ -68,7 +68,7 @@ import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
 
-public final class PagePublicDemoClient extends AbstractAppWebPage
+public final class PagePublicSendRandomMessage extends AbstractAppWebPage
 {
   public static final String DEFAULT_BASE_URL = "https://de4a-dev-mock.egovlab.eu";
   private static final String FIELD_MODE = "mode";
@@ -76,9 +76,9 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
   private static final ICommonsList <IPrismPlugin> PRISM_PLUGINS = new CommonsArrayList <> (new PrismPluginLineNumbers (),
                                                                                             new PrismPluginCopyToClipboard ());
 
-  public PagePublicDemoClient (@Nonnull @Nonempty final String sID)
+  public PagePublicSendRandomMessage (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "WP5 Demo Client");
+    super (sID, "Send Random Message");
   }
 
   @Override
