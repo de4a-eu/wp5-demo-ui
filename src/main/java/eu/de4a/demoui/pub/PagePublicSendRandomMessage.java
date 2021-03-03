@@ -1,6 +1,5 @@
 /**
- * Copyright (C) 2021 Philip Helger (www.helger.com)
- * philip[at]helger[dot]com
+ * Copyright (C) 2021 DE4A
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +46,7 @@ import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.core.form.FormErrorList;
-import com.helger.photon.core.form.SessionBackedRequestField;
+import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
@@ -64,21 +63,26 @@ import com.helger.xml.serialize.read.DOMReaderSettings;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
+import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
 
-public final class PagePublicDemoClient extends AbstractAppWebPage
+/**
+ * Create random message send send it
+ *
+ * @author Philip Helger
+ */
+public final class PagePublicSendRandomMessage extends AbstractAppWebPage
 {
-  public static final String DEFAULT_BASE_URL = "https://de4a-dev-mock.egovlab.eu";
   private static final String FIELD_MODE = "mode";
   private static final String FIELD_DEST_BASE_URL = "destbaseurl";
   private static final ICommonsList <IPrismPlugin> PRISM_PLUGINS = new CommonsArrayList <> (new PrismPluginLineNumbers (),
                                                                                             new PrismPluginCopyToClipboard ());
 
-  public PagePublicDemoClient (@Nonnull @Nonempty final String sID)
+  public PagePublicSendRandomMessage (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "WP5 Demo Client");
+    super (sID, "Send Random Message");
   }
 
   @Override
@@ -186,7 +190,10 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
           }
         }
 
-        aWPEC.postRedirectGetInternal (aResNL);
+        if (true)
+          aNodeList.addChild (aResNL);
+        else
+          aWPEC.postRedirectGetInternal (aResNL);
         bShowForm = false;
       }
     }
@@ -196,9 +203,9 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC)).setLeft (2);
 
       {
-        final HCExtSelect aSelect = new HCExtSelect (new SessionBackedRequestField (FIELD_MODE));
+        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
-          if (e.isRequest ())
+          if (e.getDocumentType () == EDemoDocumentType.REQUEST)
             aSelect.addOption (e.getID (), e.getDisplayName () + " (" + e.getRelativeURL () + ")");
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")
@@ -207,8 +214,7 @@ public final class PagePublicDemoClient extends AbstractAppWebPage
       }
 
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
-                                                   .setCtrl (new HCEdit (new SessionBackedRequestField (FIELD_DEST_BASE_URL,
-                                                                                                        DEFAULT_BASE_URL)))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, CApp.DEFAULT_BASE_URL)))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
                                                    .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
                                                                  " The suffix of the Interface to test is added to this path." +

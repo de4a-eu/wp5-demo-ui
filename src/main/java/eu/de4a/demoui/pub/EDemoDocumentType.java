@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.servlet;
+package eu.de4a.demoui.pub;
 
-import com.helger.commons.http.EHttpMethod;
-import com.helger.photon.core.servlet.AbstractPublicApplicationServlet;
-import com.helger.photon.core.servlet.RootXServletHandler;
-import com.helger.xservlet.AbstractXServlet;
-
-public class AppRootServlet extends AbstractXServlet
+public enum EDemoDocumentType
 {
-  public AppRootServlet ()
-  {
-    handlerRegistry ().registerHandler (EHttpMethod.GET, new RootXServletHandler (AbstractPublicApplicationServlet.SERVLET_DEFAULT_PATH));
-    handlerRegistry ().copyHandlerToAll (EHttpMethod.GET);
-  }
+  REQUEST,
+  RESPONSE,
+  IDK_REQUEST,
+  IDK_RESPONSE
 }

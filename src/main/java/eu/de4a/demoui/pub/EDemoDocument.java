@@ -1,6 +1,5 @@
 /**
- * Copyright (C) 2021 Philip Helger (www.helger.com)
- * philip[at]helger[dot]com
+ * Copyright (C) 2021 DE4A
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,7 @@ package eu.de4a.demoui.pub;
 
 import java.awt.Color;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -28,14 +28,16 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.base64.Base64;
 import com.helger.commons.datetime.PDTFactory;
+import com.helger.commons.error.list.ErrorList;
+import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.lang.GenericReflection;
+import com.helger.commons.locale.country.ECountry;
 import com.helger.commons.math.MathHelper;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.pdflayout4.PDFCreationException;
@@ -59,101 +61,126 @@ import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryOb
 
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
-  DE_USI_REQ ("de-usi-req",
-              "Request to DE (USI)",
-              "/de1/usi/forwardevidence",
-              true,
-              EDemoDocument::createDemoDE_USI,
-              DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+  DE_USI_REQ_DBA ("de-usi-req-dba",
+                  "Request to DE (USI) - DBA",
+                  "/de1/usi/forwardevidence",
+                  EDemoDocumentType.REQUEST,
+                  EDemoDocument::createDemoDE_USI,
+                  DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DE_USI_RESP ("de-usi-resp",
                "Response from DE (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.deUsiResponseMarshaller ().formatted ()::getAsString),
+               DE4AMarshaller.deUsiResponseMarshaller ()),
   DR_IM_REQ ("dr-im-req",
              "Request to DR (IM)",
              "/dr1/im/transferevidence",
-             true,
-             EDemoDocument::createDemoDR_IM,
-             DE4AMarshaller.drImRequestMarshaller ().formatted ()::getAsString),
-  DR_IM_RESP ("dr-im-resp",
-              "Response from DR (IM)",
-              null,
-              false,
-              EDemoDocument::createResponseTransferEvidence,
-              DE4AMarshaller.drImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+             EDemoDocumentType.REQUEST,
+             EDemoDocument::createDemoDR,
+             DE4AMarshaller.drImRequestMarshaller ()),
+  DR_IM_RESP_DBA ("dr-im-resp-dba",
+                  "Response from DR (IM) - DBA",
+                  null,
+                  EDemoDocumentType.RESPONSE,
+                  EDemoDocument::createResponseTransferEvidence,
+                  DE4AMarshaller.drImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DR_USI_REQ ("dr-usi-req",
               "Request to DR (USI)",
               "/dr1/usi/transferevidence",
-              true,
-              EDemoDocument::createDemoDR_USI,
-              DE4AMarshaller.drUsiRequestMarshaller ().formatted ()::getAsString),
+              EDemoDocumentType.REQUEST,
+              EDemoDocument::createDemoDR,
+              DE4AMarshaller.drUsiRequestMarshaller ()),
   DR_USI_RESP ("dr-usi-resp",
                "Response from DR (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.drUsiResponseMarshaller ().formatted ()::getAsString),
-  DT_USI_REQ ("dt-usi",
-              "Request to DT (USI)",
-              "/dt1/usi/transferevidence",
-              true,
-              EDemoDocument::createDemoDT_USI,
-              DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+               DE4AMarshaller.drUsiResponseMarshaller ()),
+  DT_USI_REQ_DBA ("dt-usi-req-dba",
+                  "Request to DT (USI) - DBA",
+                  "/dt1/usi/transferevidence",
+                  EDemoDocumentType.REQUEST,
+                  EDemoDocument::createDemoDT_USI,
+                  DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DT_USI_RESP ("dt-usi-resp",
                "Response from DT (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.dtUsiResponseMarshaller ().formatted ()::getAsString),
+               DE4AMarshaller.dtUsiResponseMarshaller ()),
   DO_IM_REQ ("do-im-req",
              "Request to DO (IM)",
              "/do1/im/extractevidence",
-             true,
+             EDemoDocumentType.REQUEST,
              EDemoDocument::createDemoDO_IM,
-             DE4AMarshaller.doImRequestMarshaller ().formatted ()::getAsString),
-  DO_IM_RESP ("do-im-resp",
-              "Response from DO (IM)",
-              null,
-              false,
-              EDemoDocument::createResponseExtractEvidence,
-              DE4AMarshaller.doImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO).formatted ()::getAsString),
+             DE4AMarshaller.doImRequestMarshaller ()),
+  DO_IM_RESP_DBA ("do-im-resp-dba",
+                  "Response from DO (IM) - DBA",
+                  null,
+                  EDemoDocumentType.RESPONSE,
+                  EDemoDocument::createResponseExtractEvidence,
+                  DE4AMarshaller.doImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
   DO_USI_REQ ("do-usi-req",
               "Request to DO (USI)",
               "/do1/usi/extractevidence",
-              true,
+              EDemoDocumentType.REQUEST,
               EDemoDocument::createDemoDO_USI,
-              DE4AMarshaller.doUsiRequestMarshaller ().formatted ()::getAsString),
+              DE4AMarshaller.doUsiRequestMarshaller ()),
   DO_USI_RESP ("do-usi-resp",
                "Response from DO (USI)",
                null,
-               false,
+               EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
-               DE4AMarshaller.doUsiResponseMarshaller ().formatted ()::getAsString);
+               DE4AMarshaller.doUsiResponseMarshaller ()),
+  IDK_LOOKUP_ROUTING_INFO_REQUEST ("idk-lri-req",
+                                   "IDK routing information lookup request",
+                                   null,
+                                   EDemoDocumentType.IDK_REQUEST,
+                                   EDemoDocument::createIDKRequestLookupRoutingInformation,
+                                   DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ()),
+  IDK_LOOKUP_ROUTING_INFO_RESPONSE ("idk-lri-resp",
+                                    "IDK routing information lookup response",
+                                    null,
+                                    EDemoDocumentType.IDK_RESPONSE,
+                                    EDemoDocument::createIDKResponseLookupRoutingInformation,
+                                    DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ()),
+  IDK_LOOKUP_EVIDENCE_SERVICE_DATA_REQUEST ("idk-lesd-req",
+                                            "IDK evidence service data lookup request",
+                                            null,
+                                            EDemoDocumentType.IDK_REQUEST,
+                                            EDemoDocument::createIDKRequestLookupEvidenceServiceData,
+                                            DE4AMarshaller.idkRequestLookupEvidenceServiceDataMarshaller ()),
+  IDK_LOOKUP_EVIDENCE_SERVICE_DATA_RESPONSE ("idk-lesd-resp",
+                                             "IDK evidence service data lookup response",
+                                             null,
+                                             EDemoDocumentType.IDK_RESPONSE,
+                                             EDemoDocument::createIDKResponseLookupEvidenceServiceData,
+                                             DE4AMarshaller.idkResponseLookupEvidenceServiceDataMarshaller ());
 
-  private String m_sID;
-  private String m_sDisplayName;
-  private String m_sRelativeURL;
-  private boolean m_bIsRequest;
-  private Supplier <Object> m_aDemoRequestCreator;
-  private Function <Object, String> m_aToString;
+  private final String m_sID;
+  private final String m_sDisplayName;
+  private final String m_sRelativeURL;
+  private final EDemoDocumentType m_eDocType;
+  private final Supplier <Object> m_aDemoRequestCreator;
+  private final Function <Object, String> m_aToString;
+  private final BiConsumer <String, ErrorList> m_aReader;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
                      @Nonnull @Nonempty final String sRelativeURL,
-                     final boolean bIsRequest,
+                     @Nonnull final EDemoDocumentType eDocType,
                      @Nonnull final Supplier <T> aDemoRequestCreator,
-                     @Nonnull final Function <T, String> aToString)
+                     @Nonnull final DE4AMarshaller <T> aMarshaller)
   {
-    if (bIsRequest)
-      ValueEnforcer.isTrue (sRelativeURL.startsWith ("/"), "Relative URL must start with a slash");
     m_sID = sID;
     m_sDisplayName = sDisplayName;
     m_sRelativeURL = sRelativeURL;
-    m_bIsRequest = bIsRequest;
+    m_eDocType = eDocType;
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
+    final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_aToString = GenericReflection.uncheckedCast (aToString);
+    m_aReader = aMarshaller::readAndValidate;
   }
 
   @Nonnull
@@ -177,15 +204,23 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     return m_sRelativeURL;
   }
 
-  public boolean isRequest ()
+  public EDemoDocumentType getDocumentType ()
   {
-    return m_bIsRequest;
+    return m_eDocType;
   }
 
   @Nonnull
   public String getDemoMessageAsString ()
   {
     return m_aToString.apply (m_aDemoRequestCreator.get ());
+  }
+
+  @Nonnull
+  public IErrorList validateMessage (@Nonnull final String sMsg)
+  {
+    final ErrorList ret = new ErrorList ();
+    m_aReader.accept (sMsg, ret);
+    return ret;
   }
 
   @Nullable
@@ -311,29 +346,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static RequestTransferEvidenceIMType createDemoDR_IM ()
+  public static RequestTransferEvidenceUSIIMDRType createDemoDR ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestTransferEvidenceIMType ret = new RequestTransferEvidenceIMType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
-    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataEvaluator (_createAgent ());
-    ret.setDataOwner (_createAgent ());
-    ret.setDataRequestSubject (_createDRS ());
-    ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setEvidenceServiceData (_createEvidenceServiceData ());
-    ret.setReturnServiceId ("ReturnService-" + MathHelper.abs (aTLR.nextInt ()));
-    return ret;
-  }
-
-  @Nonnull
-  public static RequestTransferEvidenceUSIDRType createDemoDR_USI ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestTransferEvidenceUSIDRType ret = new RequestTransferEvidenceUSIDRType ();
+    final RequestTransferEvidenceUSIIMDRType ret = new RequestTransferEvidenceUSIIMDRType ();
     ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
@@ -477,8 +493,6 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     if (aTLR.nextBoolean ())
     {
       ret.setAck (AckType.OK);
-      // TODO remove - should be optional
-      ret.setErrorList (_createErrorList ());
     }
     else
     {
@@ -525,6 +539,186 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     }
     else
       ret.setErrorList (_createErrorList ());
+    return ret;
+  }
+
+  @Nonnull
+  public static RequestLookupRoutingInformationType createIDKRequestLookupRoutingInformation ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestLookupRoutingInformationType ret = new RequestLookupRoutingInformationType ();
+    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
+    return ret;
+  }
+
+  @Nonnull
+  private static IaOrganisationalStructureType _createOrganisationalStructure ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ElementType e = new ElementType ();
+    e.setAtuLevel (_random (AtuLevelType.values ()));
+    e.setAtuPath ("Path-" + MathHelper.abs (aTLR.nextInt ()));
+    e.setAtuCode ("Code-" + MathHelper.abs (aTLR.nextInt ()));
+    e.setAtuName ("Name-" + MathHelper.abs (aTLR.nextInt ()));
+    e.setAtuLatinName ("LatinName-" + MathHelper.abs (aTLR.nextInt ()));
+
+    final IaOrganisationalStructureType ret = new IaOrganisationalStructureType ();
+    ret.setElement (e);
+    return ret;
+  }
+
+  @Nonnull
+  private static IssuingAuthorityType _createIssuingAuthority ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final IssuingAuthorityType ret = new IssuingAuthorityType ();
+    ret.setEvidenceTypeId (_random (EvidenceTypeIdType.values ()));
+    ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
+    ret.setIaLevelPath ("IaLevel-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setIaTotalNum (aTLR.nextInt (101));
+    ret.setIaOrganisationalStructure (_createOrganisationalStructure ());
+    return ret;
+  }
+
+  @Nonnull
+  public static DataOwnerType _createDataOwner ()
+  {
+    final DataOwnerType ret = new DataOwnerType ();
+    ret.setAgent (_createAgent ());
+    return ret;
+  }
+
+  @Nonnull
+  public static DataTransferorType _createDataTransferor ()
+  {
+    final DataTransferorType ret = new DataTransferorType ();
+    ret.setAgent (_createAgent ());
+    return ret;
+  }
+
+  @Nonnull
+  public static TextType _createText ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final TextType ret = new TextType ();
+    ret.setLang ("Lang-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setLabel ("Label" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setDefinition ("Def-" + MathHelper.abs (aTLR.nextInt ()));
+    return ret;
+  }
+
+  @Nonnull
+  public static TextsType _createTexts ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final TextsType ret = new TextsType ();
+    ret.addText (_createText ());
+    if (aTLR.nextBoolean ())
+      ret.addText (_createText ());
+    return ret;
+  }
+
+  @Nonnull
+  public static ParameterType _createParameter ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ParameterType ret = new ParameterType ();
+    ret.setItemId ("ItemId-" + MathHelper.abs (aTLR.nextInt ()));
+    if (aTLR.nextBoolean ())
+      ret.setItemType ("ItemType-" + MathHelper.abs (aTLR.nextInt ()));
+    if (aTLR.nextBoolean ())
+      ret.setDataType (_random (DataTypeType.values ()));
+    if (aTLR.nextBoolean ())
+      ret.setConstraints ("Constraints-" + MathHelper.abs (aTLR.nextInt ()));
+    if (aTLR.nextBoolean ())
+      ret.setTexts (_createTexts ());
+    return ret;
+  }
+
+  @Nonnull
+  public static ParametersType _createParameters ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ParametersType ret = new ParametersType ();
+    ret.addParameter (_createParameter ());
+    if (aTLR.nextBoolean ())
+      ret.addParameter (_createParameter ());
+    if (aTLR.nextBoolean ())
+      ret.addParameter (_createParameter ());
+    return ret;
+  }
+
+  @Nonnull
+  public static InputParameterSetsType _createInputParameterSets ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final InputParameterSetsType ret = new InputParameterSetsType ();
+    ret.setSerialNumber (aTLR.nextInt (1, 101));
+    ret.setTitle ("Title-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRecordMatchingAssurance (_random (RecordMatchingAssuranceType.values ()));
+    ret.setParameters (_createParameters ());
+    return ret;
+  }
+
+  @Nonnull
+  public static EvidenceServiceType _createEvidenceService ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final EvidenceServiceType ret = new EvidenceServiceType ();
+    ret.setService ("Service-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCanonicalEvidenceType ("CanonEvidenceType-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setDataOwner (_createDataOwner ());
+    ret.setDataTransferor (_createDataTransferor ());
+    ret.setInputParameterSets (_createInputParameterSets ());
+    return ret;
+  }
+
+  @Nonnull
+  public static ResponseLookupRoutingInformationType createIDKResponseLookupRoutingInformation ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ResponseLookupRoutingInformationType ret = new ResponseLookupRoutingInformationType ();
+    switch (aTLR.nextInt (3))
+    {
+      case 0:
+        ret.setIssuingAuthority (_createIssuingAuthority ());
+        break;
+      case 1:
+        ret.setEvidenceService (_createEvidenceService ());
+        break;
+      case 2:
+        ret.setErrorList (_createErrorList ());
+        break;
+    }
+    return ret;
+  }
+
+  @Nonnull
+  public static RequestLookupEvidenceServiceDataType createIDKRequestLookupEvidenceServiceData ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestLookupEvidenceServiceDataType ret = new RequestLookupEvidenceServiceDataType ();
+    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
+    ret.setAdminTerritorialUnit ("ATU-" + MathHelper.abs (aTLR.nextInt ()));
+    return ret;
+  }
+
+  @Nonnull
+  public static ResponseLookupEvidenceServiceDataType createIDKResponseLookupEvidenceServiceData ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ResponseLookupEvidenceServiceDataType ret = new ResponseLookupEvidenceServiceDataType ();
+    switch (aTLR.nextInt (2))
+    {
+      case 0:
+        ret.setEvidenceService (_createEvidenceService ());
+        break;
+      case 1:
+        ret.setErrorList (_createErrorList ());
+        break;
+    }
     return ret;
   }
 }

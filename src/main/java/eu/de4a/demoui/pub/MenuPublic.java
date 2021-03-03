@@ -1,6 +1,5 @@
 /**
- * Copyright (C) 2021 Philip Helger (www.helger.com)
- * philip[at]helger[dot]com
+ * Copyright (C) 2021 DE4A
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +20,18 @@ import javax.annotation.concurrent.Immutable;
 
 import com.helger.photon.core.menu.IMenuTree;
 
+/**
+ * Menu for the Demo UI.
+ *
+ * @author Philip Helger
+ */
 @Immutable
 public final class MenuPublic
 {
-  public static final String MENU_DEMO_CLIENT = "democlient";
-  public static final String MENU_EXAMPLE_MESSAGES = "examplemsgs";
+  public static final String MENU_SEND_RANDOM_MESSAGE = "sendrandommessage";
+  public static final String MENU_SEND_MESSAGE = "sendmessage";
+  public static final String MENU_EXAMPLE_MESSAGE = "examplemsg";
+  public static final String MENU_VALIDATE_MESSAGE = "validatemsg";
 
   private MenuPublic ()
   {}
@@ -33,10 +39,12 @@ public final class MenuPublic
   public static void init (@Nonnull final IMenuTree aMenuTree)
   {
     // Common stuff
-    aMenuTree.createRootItem (new PagePublicDemoClient (MENU_DEMO_CLIENT));
-    aMenuTree.createRootItem (new PagePublicExampleMessage (MENU_EXAMPLE_MESSAGES));
+    aMenuTree.createRootItem (new PagePublicSendRandomMessage (MENU_SEND_RANDOM_MESSAGE));
+    aMenuTree.createRootItem (new PagePublicSendMessage (MENU_SEND_MESSAGE));
+    aMenuTree.createRootItem (new PagePublicCreateRandomMessage (MENU_EXAMPLE_MESSAGE));
+    aMenuTree.createRootItem (new PagePublicValidateMessage (MENU_VALIDATE_MESSAGE));
 
     // Set default
-    aMenuTree.setDefaultMenuItemID (MENU_DEMO_CLIENT);
+    aMenuTree.setDefaultMenuItemID (MENU_SEND_RANDOM_MESSAGE);
   }
 }

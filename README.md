@@ -1,6 +1,11 @@
 # wp5-demo-ui
 
 A simple demo UI to trigger sending to the Mock Connector - see https://github.com/de4a-wp5/de4a-connector-mock
+Other functionality:
+* Create random example messages of all document types
+* Validate arbitrary messages against all supported document types
+
+A live version can be found at https://de4a-dev-mock.egovlab.eu
 
 ## Building
 

@@ -1,6 +1,5 @@
 /**
- * Copyright (C) 2021 Philip Helger (www.helger.com)
- * philip[at]helger[dot]com
+ * Copyright (C) 2021 DE4A
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +37,18 @@ import com.helger.photon.uictrls.prism.PrismPluginLineNumbers;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 
-public final class PagePublicExampleMessage extends AbstractAppWebPage
+/**
+ * Create a random message and show it.
+ *
+ * @author Philip Helger
+ */
+public final class PagePublicCreateRandomMessage extends AbstractAppWebPage
 {
   private static final String FIELD_MODE = "mode";
 
-  public PagePublicExampleMessage (@Nonnull @Nonempty final String sID)
+  public PagePublicCreateRandomMessage (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Example Messages");
+    super (sID, "Create Random Message");
   }
 
   @Override
