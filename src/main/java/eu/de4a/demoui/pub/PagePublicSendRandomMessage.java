@@ -69,6 +69,11 @@ import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
 
+/**
+ * Create random message send send it
+ *
+ * @author Philip Helger
+ */
 public final class PagePublicSendRandomMessage extends AbstractAppWebPage
 {
   private static final String FIELD_MODE = "mode";

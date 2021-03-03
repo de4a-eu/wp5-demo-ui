@@ -21,6 +21,11 @@ import javax.annotation.concurrent.Immutable;
 
 import com.helger.photon.core.menu.IMenuTree;
 
+/**
+ * Menu for the Demo UI.
+ *
+ * @author Philip Helger
+ */
 @Immutable
 public final class MenuPublic
 {

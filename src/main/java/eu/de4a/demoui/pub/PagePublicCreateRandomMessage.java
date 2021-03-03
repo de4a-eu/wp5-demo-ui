@@ -38,6 +38,11 @@ import com.helger.photon.uictrls.prism.PrismPluginLineNumbers;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 
+/**
+ * Create a random message and show it.
+ *
+ * @author Philip Helger
+ */
 public final class PagePublicCreateRandomMessage extends AbstractAppWebPage
 {
   private static final String FIELD_MODE = "mode";

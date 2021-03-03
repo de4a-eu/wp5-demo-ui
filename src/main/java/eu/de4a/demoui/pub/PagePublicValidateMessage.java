@@ -39,6 +39,11 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 
+/**
+ * Take a user provided message and validate it.
+ *
+ * @author Philip Helger
+ */
 public final class PagePublicValidateMessage extends AbstractAppWebPage
 {
   private static final String FIELD_MODE = "mode";

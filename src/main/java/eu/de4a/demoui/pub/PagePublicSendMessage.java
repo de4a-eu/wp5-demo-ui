@@ -72,6 +72,11 @@ import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
 
+/**
+ * Take a user provided message and send it
+ *
+ * @author Philip Helger
+ */
 public final class PagePublicSendMessage extends AbstractAppWebPage
 {
   private static final String FIELD_MODE = "mode";
