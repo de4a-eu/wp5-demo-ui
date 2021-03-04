@@ -52,25 +52,27 @@ import eu.de4a.iem.jaxb.common.idtypes.LegalEntityIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.*;
 import eu.de4a.iem.jaxb.eidas.np.GenderType;
-import eu.de4a.iem.jaxb.t42.ActivityType;
-import eu.de4a.iem.jaxb.t42.AddressType;
-import eu.de4a.iem.jaxb.t42.LegalEntityType;
-import eu.de4a.iem.jaxb.t42.NamesType;
-import eu.de4a.iem.jaxb.w3.cv.bc.AddressPostOfficeBoxType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.DE4AResponseDocumentHelper;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
-import eu.de4a.iem.xml.de4a.t42.DE4AT42Marshaller;
 import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryObjectMimeCodeContentType;
 
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
-  DE_USI_REQ_DBA ("de-usi-req-dba",
-                  "Request to DE (USI) - DBA",
-                  "/de1/usi/forwardevidence",
-                  EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoDE_USI,
-                  DE4AMarshaller.deUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
+  DE_USI_REQ_DBA_V04 ("de-usi-req-dba-v04",
+                      "Request to DE (USI) - DBA v0.4",
+                      "/de1/usi/forwardevidence",
+                      EDemoDocumentType.REQUEST,
+                      EDemoCE.T42_COMPANY_INFO_V04,
+                      EDemoDocument::createDemoDE_USI,
+                      DE4AMarshaller::deUsiRequestMarshaller),
+  DE_USI_REQ_DBA_V05 ("de-usi-req-dba-v05",
+                      "Request to DE (USI) - DBA v0.5",
+                      "/de1/usi/forwardevidence",
+                      EDemoDocumentType.REQUEST,
+                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoDocument::createDemoDE_USI,
+                      DE4AMarshaller::deUsiRequestMarshaller),
   DE_USI_RESP ("de-usi-resp",
                "Response from DE (USI)",
                null,
@@ -83,12 +85,20 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
              EDemoDocumentType.REQUEST,
              EDemoDocument::createDemoDR,
              DE4AMarshaller.drImRequestMarshaller ()),
-  DR_IM_RESP_DBA ("dr-im-resp-dba",
-                  "Response from DR (IM) - DBA",
-                  null,
-                  EDemoDocumentType.RESPONSE,
-                  EDemoDocument::createResponseTransferEvidence,
-                  DE4AMarshaller.drImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
+  DR_IM_RESP_DBA_V04 ("dr-im-resp-dba-v04",
+                      "Response from DR (IM) - DBA v0.4",
+                      null,
+                      EDemoDocumentType.RESPONSE,
+                      EDemoCE.T42_COMPANY_INFO_V04,
+                      EDemoDocument::createResponseTransferEvidence,
+                      DE4AMarshaller::drImResponseMarshaller),
+  DR_IM_RESP_DBA_V05 ("dr-im-resp-dba-v05",
+                      "Response from DR (IM) - DBA v0.5",
+                      null,
+                      EDemoDocumentType.RESPONSE,
+                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoDocument::createResponseTransferEvidence,
+                      DE4AMarshaller::drImResponseMarshaller),
   DR_USI_REQ ("dr-usi-req",
               "Request to DR (USI)",
               "/dr1/usi/transferevidence",
@@ -101,12 +111,20 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.drUsiResponseMarshaller ()),
-  DT_USI_REQ_DBA ("dt-usi-req-dba",
-                  "Request to DT (USI) - DBA",
-                  "/dt1/usi/transferevidence",
-                  EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoDT_USI,
-                  DE4AMarshaller.dtUsiRequestMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
+  DT_USI_REQ_DBA_V04 ("dt-usi-req-dba-v04",
+                      "Request to DT (USI) - DBA v0.4",
+                      "/dt1/usi/transferevidence",
+                      EDemoDocumentType.REQUEST,
+                      EDemoCE.T42_COMPANY_INFO_V04,
+                      EDemoDocument::createDemoDT_USI,
+                      DE4AMarshaller::dtUsiRequestMarshaller),
+  DT_USI_REQ_DBA_V05 ("dt-usi-req-dba-v05",
+                      "Request to DT (USI) - DBA v0.5",
+                      "/dt1/usi/transferevidence",
+                      EDemoDocumentType.REQUEST,
+                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoDocument::createDemoDT_USI,
+                      DE4AMarshaller::dtUsiRequestMarshaller),
   DT_USI_RESP ("dt-usi-resp",
                "Response from DT (USI)",
                null,
@@ -119,12 +137,20 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
              EDemoDocumentType.REQUEST,
              EDemoDocument::createDemoDO_IM,
              DE4AMarshaller.doImRequestMarshaller ()),
-  DO_IM_RESP_DBA ("do-im-resp-dba",
-                  "Response from DO (IM) - DBA",
-                  null,
-                  EDemoDocumentType.RESPONSE,
-                  EDemoDocument::createResponseExtractEvidence,
-                  DE4AMarshaller.doImResponseMarshaller (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO)),
+  DO_IM_RESP_DBA_V04 ("do-im-resp-dba-v04",
+                      "Response from DO (IM) - DBA v0.4",
+                      null,
+                      EDemoDocumentType.RESPONSE,
+                      EDemoCE.T42_COMPANY_INFO_V04,
+                      EDemoDocument::createResponseExtractEvidence,
+                      DE4AMarshaller::doImResponseMarshaller),
+  DO_IM_RESP_DBA_V05 ("do-im-resp-dba-v05",
+                      "Response from DO (IM) - DBA v0.5",
+                      null,
+                      EDemoDocumentType.RESPONSE,
+                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoDocument::createResponseExtractEvidence,
+                      DE4AMarshaller::doImResponseMarshaller),
   DO_USI_REQ ("do-usi-req",
               "Request to DO (USI)",
               "/do1/usi/extractevidence",
@@ -169,6 +195,22 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   private final Supplier <Object> m_aDemoRequestCreator;
   private final Function <Object, String> m_aToString;
   private final BiConsumer <String, ErrorList> m_aReader;
+
+  <T> EDemoDocument (@Nonnull @Nonempty final String sID,
+                     @Nonnull @Nonempty final String sDisplayName,
+                     @Nonnull @Nonempty final String sRelativeURL,
+                     @Nonnull final EDemoDocumentType eDocType,
+                     @Nonnull final EDemoCE eCE,
+                     @Nonnull final Function <Element, T> aDemoRequestCreator,
+                     @Nonnull final Function <EDE4ACanonicalEvidenceType, DE4AMarshaller <T>> aMarshallerProvider)
+  {
+    this (sID,
+          sDisplayName,
+          sRelativeURL,
+          eDocType,
+          () -> aDemoRequestCreator.apply (eCE.createExampleElement ()),
+          aMarshallerProvider.apply (eCE.getCEType ()));
+  }
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
@@ -411,36 +453,11 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  private static CanonicalEvidenceType _createCanonicalEvidence ()
+  private static CanonicalEvidenceType _createCanonicalEvidence (@Nonnull final Element aCanonicalEvidence)
   {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final CanonicalEvidenceType ret = new CanonicalEvidenceType ();
-    {
-      // Strict
-      final LegalEntityType p = new LegalEntityType ();
-      {
-        final NamesType a = new NamesType ();
-        a.setLegalEntityName ("LegalEntity-" + MathHelper.abs (aTLR.nextInt ()));
-        p.addCompanyName (a);
-      }
-      p.setCompanyType ("CompanyType-" + MathHelper.abs (aTLR.nextInt ()));
-      p.setCompanyStatus ("CompanyStatus-" + MathHelper.abs (aTLR.nextInt ()));
-      {
-        final ActivityType a = new ActivityType ();
-        a.addNaceCode ("Nace-" + MathHelper.abs (aTLR.nextInt ()));
-        p.setCompanyActivity (a);
-      }
-      p.setRegistrationDate (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextInt (100)));
-      p.setCompanyEUID ("CompanyEUID-" + MathHelper.abs (aTLR.nextInt ()));
-      {
-        final AddressType a = new AddressType ();
-        final AddressPostOfficeBoxType a2 = new AddressPostOfficeBoxType ();
-        a2.setValue ("PostBox-" + MathHelper.abs (aTLR.nextInt ()));
-        a.setAddressPostOfficeBox (a2);
-        p.addRegisteredAddress (a);
-      }
-      ret.setAny (DE4AT42Marshaller.legalEntity ().getAsDocument (p).getDocumentElement ());
-    }
+    // Strict
+    ret.setAny (aCanonicalEvidence);
     return ret;
   }
 
@@ -467,20 +484,20 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static RequestForwardEvidenceType createDemoDE_USI ()
+  public static RequestForwardEvidenceType createDemoDE_USI (@Nonnull final Element aCanonicalEvidence)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestForwardEvidenceType ret = new RequestForwardEvidenceType ();
     ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setPreviewResponse (_createPreviewResponse ());
-    ret.setCanonicalEvidence (_createCanonicalEvidence ());
+    ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
     ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
     return ret;
   }
 
   @Nonnull
-  public static RequestTransferEvidenceUSIDTType createDemoDT_USI ()
+  public static RequestTransferEvidenceUSIDTType createDemoDT_USI (@Nonnull final Element aCanonicalEvidence)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestTransferEvidenceUSIDTType ret = new RequestTransferEvidenceUSIDTType ();
@@ -492,7 +509,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     ret.setDataOwner (_createAgent ());
     ret.setDataRequestSubject (_createDRS ());
     ret.setPreviewResponse (_createPreviewResponse ());
-    ret.setCanonicalEvidence (_createCanonicalEvidence ());
+    ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
     ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
     return ret;
   }
@@ -527,7 +544,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static ResponseTransferEvidenceType createResponseTransferEvidence ()
+  public static ResponseTransferEvidenceType createResponseTransferEvidence (@Nonnull final Element aCanonicalEvidence)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseTransferEvidenceType ret = new ResponseTransferEvidenceType ();
@@ -541,7 +558,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     if (aTLR.nextBoolean ())
     {
-      ret.setCanonicalEvidence (_createCanonicalEvidence ());
+      ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
       if (aTLR.nextBoolean ())
         ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
     }
@@ -551,13 +568,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static ResponseExtractEvidenceType createResponseExtractEvidence ()
+  public static ResponseExtractEvidenceType createResponseExtractEvidence (@Nonnull final Element aCanonicalEvidence)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseExtractEvidenceType ret = new ResponseExtractEvidenceType ();
     if (aTLR.nextBoolean ())
     {
-      ret.setCanonicalEvidence (_createCanonicalEvidence ());
+      ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
       if (aTLR.nextBoolean ())
         ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
     }
