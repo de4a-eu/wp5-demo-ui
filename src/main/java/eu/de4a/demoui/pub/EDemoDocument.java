@@ -52,7 +52,11 @@ import eu.de4a.iem.jaxb.common.idtypes.LegalEntityIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.*;
 import eu.de4a.iem.jaxb.eidas.np.GenderType;
-import eu.de4a.iem.jaxb.t42.ContactPointType;
+import eu.de4a.iem.jaxb.t42.ActivityType;
+import eu.de4a.iem.jaxb.t42.AddressType;
+import eu.de4a.iem.jaxb.t42.LegalEntityType;
+import eu.de4a.iem.jaxb.t42.NamesType;
+import eu.de4a.iem.jaxb.w3.cv.bc.AddressPostOfficeBoxType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.DE4AResponseDocumentHelper;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
@@ -413,9 +417,29 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     final CanonicalEvidenceType ret = new CanonicalEvidenceType ();
     {
       // Strict
-      final ContactPointType p = new ContactPointType ();
-      p.addEmail ("example@example_" + MathHelper.abs (aTLR.nextInt ()) + ".org");
-      ret.setAny (DE4AT42Marshaller.contactPoint ().getAsDocument (p).getDocumentElement ());
+      final LegalEntityType p = new LegalEntityType ();
+      {
+        final NamesType a = new NamesType ();
+        a.setLegalEntityName ("LegalEntity-" + MathHelper.abs (aTLR.nextInt ()));
+        p.addCompanyName (a);
+      }
+      p.setCompanyType ("CompanyType-" + MathHelper.abs (aTLR.nextInt ()));
+      p.setCompanyStatus ("CompanyStatus-" + MathHelper.abs (aTLR.nextInt ()));
+      {
+        final ActivityType a = new ActivityType ();
+        a.addNaceCode ("Nace-" + MathHelper.abs (aTLR.nextInt ()));
+        p.setCompanyActivity (a);
+      }
+      p.setRegistrationDate (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextInt (100)));
+      p.setCompanyEUID ("CompanyEUID-" + MathHelper.abs (aTLR.nextInt ()));
+      {
+        final AddressType a = new AddressType ();
+        final AddressPostOfficeBoxType a2 = new AddressPostOfficeBoxType ();
+        a2.setValue ("PostBox-" + MathHelper.abs (aTLR.nextInt ()));
+        a.setAddressPostOfficeBox (a2);
+        p.addRegisteredAddress (a);
+      }
+      ret.setAny (DE4AT42Marshaller.legalEntity ().getAsDocument (p).getDocumentElement ());
     }
     return ret;
   }
