@@ -11,7 +11,7 @@ import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.math.MathHelper;
 
 import eu.de4a.iem.jaxb.t42.v0_4.LegalEntityType;
-import eu.de4a.iem.jaxb.w3.cv.bc.AddressPostOfficeBoxType;
+import eu.de4a.iem.jaxb.w3.cv.bc.LegalEntityLegalNameType;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
 
 /**
@@ -79,7 +79,9 @@ public enum EDemoCE
     final eu.de4a.iem.jaxb.t42.v0_5.LegalEntityType p = new eu.de4a.iem.jaxb.t42.v0_5.LegalEntityType ();
     {
       final eu.de4a.iem.jaxb.t42.v0_5.NamesType a = new eu.de4a.iem.jaxb.t42.v0_5.NamesType ();
-      a.setLegalEntityName ("LegalEntity-" + MathHelper.abs (aTLR.nextInt ()));
+      final LegalEntityLegalNameType aLegalName = new LegalEntityLegalNameType ();
+      aLegalName.setValue ("LegalEntity-" + MathHelper.abs (aTLR.nextInt ()));
+      a.setLegalEntityLegalName (aLegalName);
       p.addCompanyName (a);
     }
     p.setCompanyType ("CompanyType-" + MathHelper.abs (aTLR.nextInt ()));
@@ -93,9 +95,7 @@ public enum EDemoCE
     p.setCompanyEUID ("CompanyEUID-" + MathHelper.abs (aTLR.nextInt ()));
     {
       final eu.de4a.iem.jaxb.t42.v0_5.AddressType a = new eu.de4a.iem.jaxb.t42.v0_5.AddressType ();
-      final AddressPostOfficeBoxType a2 = new AddressPostOfficeBoxType ();
-      a2.setValue ("POBox-" + MathHelper.abs (aTLR.nextInt ()));
-      a.setAddressPostOfficeBox (a2);
+      a.setPoBox ("POBox-" + MathHelper.abs (aTLR.nextInt ()));
       p.addRegisteredAddress (a);
     }
     return eu.de4a.iem.xml.de4a.t42.v0_5.DE4AT42Marshaller.legalEntity ().getAsDocument (p).getDocumentElement ();
