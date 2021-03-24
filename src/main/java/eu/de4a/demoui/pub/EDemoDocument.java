@@ -16,6 +16,7 @@
 package eu.de4a.demoui.pub;
 
 import java.awt.Color;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -337,7 +338,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestExtractEvidenceIMType ret = new RequestExtractEvidenceIMType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -354,7 +355,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestExtractEvidenceUSIType ret = new RequestExtractEvidenceUSIType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -371,7 +372,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestTransferEvidenceUSIIMDRType ret = new RequestTransferEvidenceUSIIMDRType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -449,9 +450,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   @Nonnull
   public static RequestForwardEvidenceType createDemoDE_USI (@Nonnull final Element aCanonicalEvidence)
   {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestForwardEvidenceType ret = new RequestForwardEvidenceType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
     ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
@@ -463,7 +463,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestTransferEvidenceUSIDTType ret = new RequestTransferEvidenceUSIDTType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -509,7 +509,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseTransferEvidenceType ret = new ResponseTransferEvidenceType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -547,8 +547,9 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   @Nonnull
   public static RequestLookupRoutingInformationType createIDKRequestLookupRoutingInformation ()
   {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestLookupRoutingInformationType ret = new RequestLookupRoutingInformationType ();
-    ret.setCanonicalEvidenceTypeId (_random (CanonicalEvidenceidkType.values ()));
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
     return ret;
   }
@@ -618,21 +619,21 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static SourcesType _createSource ()
+  public static SourceType _createSource ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final SourcesType ret = new SourcesType ();
+    final SourceType ret = new SourceType ();
     ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
     ret.setAtuLevel (_random (AtuLevelType.values ()));
-    ret.setNumProvisions (Integer.valueOf (+MathHelper.abs (aTLR.nextInt ())));
+    ret.setNumProvisions (Integer.valueOf (aTLR.nextInt (10_000)));
     return ret;
   }
 
   @Nonnull
-  public static AvaliableSourcesType _createAvaliableSources ()
+  public static AvailableSourcesType _createAvaliableSources ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final AvaliableSourcesType ret = new AvaliableSourcesType ();
+    final AvailableSourcesType ret = new AvailableSourcesType ();
     ret.addSource (_createSource ());
     if (aTLR.nextBoolean ())
       ret.addSource (_createSource ());
@@ -647,7 +648,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     switch (aTLR.nextInt (2))
     {
       case 0:
-        ret.setAvaliableSources (_createAvaliableSources ());
+        ret.setAvailableSources (_createAvaliableSources ());
         break;
       case 1:
         ret.setErrorList (_createErrorList ());
