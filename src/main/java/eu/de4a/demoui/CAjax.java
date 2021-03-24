@@ -31,10 +31,10 @@ import com.helger.photon.uictrls.datatables.ajax.AjaxExecutorDataTablesI18N;
 public final class CAjax
 {
   public static final IAjaxFunctionDeclaration DATATABLES = AjaxFunctionDeclaration.builder ("dataTables")
-                                                                                   .withExecutor (AjaxExecutorDataTables.class)
+                                                                                   .executor (AjaxExecutorDataTables.class)
                                                                                    .build ();
   public static final IAjaxFunctionDeclaration DATATABLES_I18N = AjaxFunctionDeclaration.builder ("datatables-i18n")
-                                                                                        .withExecutor (new AjaxExecutorDataTablesI18N (CApp.DEFAULT_LOCALE))
+                                                                                        .executor (new AjaxExecutorDataTablesI18N (CApp.DEFAULT_LOCALE))
                                                                                         .build ();
 
   private CAjax ()
