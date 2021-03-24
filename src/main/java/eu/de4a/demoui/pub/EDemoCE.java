@@ -22,7 +22,8 @@ import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
 public enum EDemoCE
 {
   T42_COMPANY_INFO_V04 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V04, EDemoCE::createDBA_v04),
-  T42_COMPANY_INFO_V05 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V05, EDemoCE::createDBA_v05);
+  T42_COMPANY_INFO_V05 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V05, EDemoCE::createDBA_v05),
+  T42_COMPANY_INFO_V06 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V06, EDemoCE::createDBA_v06);
 
   private final EDE4ACanonicalEvidenceType m_eCEType;
   private final Supplier <Element> m_aAnyCreator;
@@ -99,5 +100,34 @@ public enum EDemoCE
       p.addRegisteredAddress (a);
     }
     return eu.de4a.iem.xml.de4a.t42.v0_5.DE4AT42Marshaller.legalEntity ().getAsDocument (p).getDocumentElement ();
+  }
+
+  @Nonnull
+  public static Element createDBA_v06 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t42.v0_6.LegalEntityType p = new eu.de4a.iem.jaxb.t42.v0_6.LegalEntityType ();
+    {
+      final eu.de4a.iem.jaxb.t42.v0_6.NamesType a = new eu.de4a.iem.jaxb.t42.v0_6.NamesType ();
+      final LegalEntityLegalNameType aLegalName = new LegalEntityLegalNameType ();
+      aLegalName.setValue ("LegalEntity-" + MathHelper.abs (aTLR.nextInt ()));
+      a.setLegalEntityLegalName (aLegalName);
+      p.addCompanyName (a);
+    }
+    p.setCompanyType ("CompanyType-" + MathHelper.abs (aTLR.nextInt ()));
+    p.setCompanyStatus ("CompanyStatus-" + MathHelper.abs (aTLR.nextInt ()));
+    {
+      final eu.de4a.iem.jaxb.t42.v0_6.ActivityType a = new eu.de4a.iem.jaxb.t42.v0_6.ActivityType ();
+      a.addNaceCode ("Nace-" + MathHelper.abs (aTLR.nextInt ()));
+      p.setCompanyActivity (a);
+    }
+    p.setRegistrationDate (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextInt (100)));
+    p.setCompanyEUID ("CompanyEUID-" + MathHelper.abs (aTLR.nextInt ()));
+    {
+      final eu.de4a.iem.jaxb.t42.v0_6.AddressType a = new eu.de4a.iem.jaxb.t42.v0_6.AddressType ();
+      a.setPoBox ("POBox-" + MathHelper.abs (aTLR.nextInt ()));
+      p.addRegisteredAddress (a);
+    }
+    return eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller.legalEntity ().getAsDocument (p).getDocumentElement ();
   }
 }
