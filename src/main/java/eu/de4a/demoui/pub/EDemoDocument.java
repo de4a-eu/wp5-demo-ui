@@ -18,7 +18,6 @@ package eu.de4a.demoui.pub;
 import java.awt.Color;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -41,6 +40,8 @@ import com.helger.commons.lang.GenericReflection;
 import com.helger.commons.locale.country.ECountry;
 import com.helger.commons.math.MathHelper;
 import com.helger.commons.name.IHasDisplayName;
+import com.helger.jaxb.validation.IValidationEventHandlerFactory;
+import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.pdflayout4.PDFCreationException;
 import com.helger.pdflayout4.PageLayoutPDF;
 import com.helger.pdflayout4.base.PLPageSet;
@@ -183,7 +184,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   private final EDemoDocumentType m_eDocType;
   private final Supplier <Object> m_aDemoRequestCreator;
   private final Function <Object, String> m_aToString;
-  private final BiConsumer <String, ErrorList> m_aReader;
+  private final DE4AMarshaller <Object> m_aMarshaller;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
@@ -215,7 +216,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
     final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_aToString = GenericReflection.uncheckedCast (aToString);
-    m_aReader = aMarshaller::readAndValidate;
+    m_aMarshaller = GenericReflection.uncheckedCast (aMarshaller);
   }
 
   @Nonnull
@@ -254,7 +255,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   public IErrorList validateMessage (@Nonnull final String sMsg)
   {
     final ErrorList ret = new ErrorList ();
-    m_aReader.accept (sMsg, ret);
+    final IValidationEventHandlerFactory aOld = m_aMarshaller.getValidationEventHandlerFactory ();
+    m_aMarshaller.setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (ret));
+    m_aMarshaller.read (sMsg);
+    m_aMarshaller.setValidationEventHandlerFactory (aOld);
     return ret;
   }
 
