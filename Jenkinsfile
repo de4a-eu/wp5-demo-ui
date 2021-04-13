@@ -25,11 +25,11 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3-adoptopenjdk-11'
-                    args '-v $HOME/.m2:/root/.m2 --network docker-ci_default -DGITHUB_ACCESS_TOKEN=$GITHUB_ACCESS_TOKEN --settings jenkins-settings.xml'
+                    args '-v $HOME/.m2:/root/.m2 --network docker-ci_default'
                 }
             }
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package -DGITHUB_ACCESS_TOKEN=$GITHUB_ACCESS_TOKEN --settings jenkins-settings.xml'
             }
         }
         stage('Docker') {
