@@ -1,7 +1,7 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
     <servers>
         <server>
-            <id>github.de4a-iem</id>
+            <id>github.de4a-commons-parent-pom</id>
             <username>phax</username>
             <password>${GITHUB_ACCESS_TOKEN}</password>
         </server>
