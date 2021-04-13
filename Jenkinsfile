@@ -10,11 +10,11 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3.6.3-jdk-11'
-                    args '-v $HOME/.m2:/root/.m2 --network docker-ci_default'
+                    args '-v $HOME/.m2:/root/.m2 --network docker-ci_default -DGITHUB_ACCESS_TOKEN=$GITHUB_ACCESS_TOKEN --settings jenkins-settings.xml'
                 }
             }
             steps {
-                sh 'mvn clean test sonar:sonar -Dsonar.host.url=http://sonarqube:9000/sonarqube -Dsonar.login=$SONAR_TOKEN'
+                sh 'mvn clean test sonar:sonar -Dsonar.host.url=http://sonarqube:9000/sonarqube -Dsonar.login=$SONAR_TOKEN  -DGITHUB_ACCESS_TOKEN=$GITHUB_ACCESS_TOKEN --settings jenkins-settings.xml'
             }
         }
 
@@ -32,7 +32,29 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
-    }
+        stage('Docker') {
+            when{
+                branch 'main'
+            }
+            agent { label 'master' }
+            environment {
+                VERSION=readMavenPom().getVersion()
+            }
+            steps {
+                script{
+                    def img
+                    if (env.BRANCH_NAME == 'main') {
+                        dir('tc-webapp') {
+                            img = docker.build('de4a/demo-ui','--build-arg VERSION=$VERSION .')
+                            docker.withRegistry('','docker-hub-token') {
+                                img.push('latest')
+                                img.push('$VERSION')
+                            }
+                        }
+                    }
+                }
+            }
+        }
     post {
         failure {
             node('master') {
