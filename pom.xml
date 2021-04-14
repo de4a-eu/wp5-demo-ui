@@ -97,7 +97,7 @@
       <dependency>
         <groupId>eu.de4a</groupId>
         <artifactId>de4a-commons-parent-pom</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.1.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -233,17 +233,4 @@
       </plugin>      
     </plugins>
   </build>
-
-  <repositories>
-    <repository>
-      <id>github.de4a-commons-parent-pom</id>
-      <url>https://maven.pkg.github.com/de4a-wp5/de4a-commons/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-    </repository>
-  </repositories>
 </project>
