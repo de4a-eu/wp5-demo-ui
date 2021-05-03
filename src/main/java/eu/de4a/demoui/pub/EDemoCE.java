@@ -13,10 +13,13 @@ import com.helger.commons.math.MathHelper;
 
 import eu.de4a.iem.jaxb.t41.uc1.v2021_02_11.ModeOfStudy;
 import eu.de4a.iem.jaxb.w3.cv.bc.LegalEntityLegalNameType;
+import eu.de4a.iem.xml.XSDDataTypeHelper;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
+import eu.europa.data.europass.model.credentials_.IscedFOetCodeType;
 import eu.europa.data.europass.model.credentials_.LanguageCharCodeEnumType;
 import eu.europa.data.europass.model.credentials_.LanguageStringType;
 import eu.europa.data.europass.model.credentials_.LegalIdentifierType;
+import eu.europa.data.europass.model.credentials_.LocationType;
 import eu.europa.data.europass.model.credentials_.PersonType;
 import eu.europa.data.europass.model.credentials_.TextContentTypeCodeEnumType;
 import eu.europa.data.europass.model.credentials_.TextType;
@@ -31,6 +34,7 @@ import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.DateTyp
 public enum EDemoCE
 {
   T41_UC1_2021_02_11 (EDE4ACanonicalEvidenceType.T41_UC1_2021_02_11, EDemoCE::createT41_UC1_v2021_02_11),
+  T41_UC1_2021_04_13 (EDE4ACanonicalEvidenceType.T41_UC1_2021_04_13, EDemoCE::createT41_UC1_v2021_04_13),
   T42_COMPANY_INFO_V06 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V06, EDemoCE::createDBA_v06);
 
   private final EDE4ACanonicalEvidenceType m_eCEType;
@@ -109,7 +113,73 @@ public enum EDemoCE
       p.setHolderOfAchievement (a);
     }
 
-    return eu.de4a.iem.xml.de4a.t41.v2021_02_11.DE4AT41Marshaller.higherEducationEvidence ().getAsDocument (p).getDocumentElement ();
+    return eu.de4a.iem.xml.de4a.t41.v2021_02_11.DE4AT41Marshaller.higherEducationEvidence ()
+                                                                 .getAsDocument (p)
+                                                                 .getDocumentElement ();
+  }
+
+  @Nonnull
+  public static Element createT41_UC1_v2021_04_13 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t41.uc1.v2021_04_13.HigherEducationDiplomaType p = new eu.de4a.iem.jaxb.t41.uc1.v2021_04_13.HigherEducationDiplomaType ();
+    p.setId ("urn:credential:" + UUID.randomUUID ().toString ());
+    {
+      final LanguageStringType a = new LanguageStringType ();
+      a.setText (_createText ());
+      p.addTitle (a);
+    }
+    p.addDegree (_createText ());
+    p.setCountry ("http://publications.europa.eu/resource/authority/country/NZL");
+    p.addInstitutionName (_createText ());
+    p.addStudyProgramme (_createText ());
+    {
+      final IscedFOetCodeType a = new IscedFOetCodeType ();
+      a.setUri ("http://data.europa.eu/snb/isced-f/0610");
+      p.setMainFieldOfStudy (a);
+    }
+    p.setModeOfStudy ("http://data.europa.eu/europass/learningScheduleType/fullTime");
+    p.addDurationOfEducation (XSDDataTypeHelper.getFactory ()
+                                               .newDurationYearMonth (true,
+                                                                      MathHelper.abs (aTLR.nextInt (10)),
+                                                                      MathHelper.abs (aTLR.nextInt (12))));
+    p.setScope (MathHelper.toBigDecimal (MathHelper.abs (aTLR.nextInt ())));
+    p.setDateOfIssue (new DateType (PDTFactory.getCurrentLocalDate ()));
+    {
+      final LocationType l = new LocationType ();
+      {
+        final LanguageStringType b = new LanguageStringType ();
+        b.setText (_createText ());
+        l.addName (b);
+      }
+      p.setPlaceOfIssue (l);
+    }
+    {
+      final PersonType a = new PersonType ();
+      a.setId ("id-" + MathHelper.abs (aTLR.nextInt ()));
+      {
+        final LegalIdentifierType b = new LegalIdentifierType ();
+        b.setValue ("NationalID-" + MathHelper.abs (aTLR.nextInt ()));
+        b.setSpatialID ("SpatialID-" + MathHelper.abs (aTLR.nextInt ()));
+        a.setNationalId (b);
+      }
+      {
+        final LanguageStringType b = new LanguageStringType ();
+        b.setText (_createText ());
+        a.setGivenNames (b);
+      }
+      {
+        final LanguageStringType b = new LanguageStringType ();
+        b.setText (_createText ());
+        a.setFamilyName (b);
+      }
+      a.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (80)));
+      p.setHolderOfAchievement (a);
+    }
+
+    return eu.de4a.iem.xml.de4a.t41.v2021_04_13.DE4AT41Marshaller.higherEducationDiploma ()
+                                                                 .getAsDocument (p)
+                                                                 .getDocumentElement ();
   }
 
   @Nonnull

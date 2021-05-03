@@ -68,6 +68,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                                   EDemoCE.T41_UC1_2021_02_11,
                                   EDemoDocument::createDemoDE_USI,
                                   DE4AMarshaller::deUsiRequestMarshaller),
+  DE_USI_REQ_T41_UC1_V2021_04_13 ("de-usi-req-t41-uc1-2021-04-13",
+                                  "Request to DE (USI) - SA UC1 2021-04-13",
+                                  "/de1/usi/forwardevidence",
+                                  EDemoDocumentType.REQUEST,
+                                  EDemoCE.T41_UC1_2021_04_13,
+                                  EDemoDocument::createDemoDE_USI,
+                                  DE4AMarshaller::deUsiRequestMarshaller),
   DE_USI_REQ_T42_V06 ("de-usi-req-dba-v06",
                       "Request to DE (USI) - DBA v0.6",
                       "/de1/usi/forwardevidence",
@@ -92,6 +99,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                                   null,
                                   EDemoDocumentType.RESPONSE,
                                   EDemoCE.T41_UC1_2021_02_11,
+                                  EDemoDocument::createResponseTransferEvidence,
+                                  DE4AMarshaller::drImResponseMarshaller),
+  DR_IM_RESP_T41_UC1_V2021_04_13 ("dr-im-resp-t41-uc1-2021-04-13",
+                                  "Response from DR (IM) - SA UC1 2021-04-13",
+                                  null,
+                                  EDemoDocumentType.RESPONSE,
+                                  EDemoCE.T41_UC1_2021_04_13,
                                   EDemoDocument::createResponseTransferEvidence,
                                   DE4AMarshaller::drImResponseMarshaller),
   DR_IM_RESP_T42_V06 ("dr-im-resp-dba-v06",
@@ -120,6 +134,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                                   EDemoCE.T41_UC1_2021_02_11,
                                   EDemoDocument::createDemoDT_USI,
                                   DE4AMarshaller::dtUsiRequestMarshaller),
+  DT_USI_REQ_T41_UC1_V2021_04_13 ("dt-usi-req-t41-uc1-2021-04-13",
+                                  "Request to DT (USI) - SA UC1 2021-04-13",
+                                  "/dt1/usi/transferevidence",
+                                  EDemoDocumentType.REQUEST,
+                                  EDemoCE.T41_UC1_2021_04_13,
+                                  EDemoDocument::createDemoDT_USI,
+                                  DE4AMarshaller::dtUsiRequestMarshaller),
   DT_USI_REQ_T42_V06 ("dt-usi-req-dba-v06",
                       "Request to DT (USI) - DBA v0.6",
                       "/dt1/usi/transferevidence",
@@ -144,6 +165,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                                   null,
                                   EDemoDocumentType.RESPONSE,
                                   EDemoCE.T41_UC1_2021_02_11,
+                                  EDemoDocument::createResponseExtractEvidence,
+                                  DE4AMarshaller::doImResponseMarshaller),
+  DO_IM_RESP_T41_UC1_V2021_04_13 ("do-im-resp-t41-uc1-2021-04-13",
+                                  "Response from DO (IM) - SA UC1 2021-04-13",
+                                  null,
+                                  EDemoDocumentType.RESPONSE,
+                                  EDemoCE.T41_UC1_2021_04_13,
                                   EDemoDocument::createResponseExtractEvidence,
                                   DE4AMarshaller::doImResponseMarshaller),
   DO_IM_RESP_T42_V06 ("do-im-resp-dba-v06",
@@ -395,7 +423,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
       final FontSpec r16 = new FontSpec (PreloadFont.REGULAR, 16);
       final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
 
-      aPS1.addElement (new PLText ("Dummy DE4A " + sWhat + " - Current time: " + PDTFactory.getCurrentLocalDateTime ().toString (),
+      aPS1.addElement (new PLText ("Dummy DE4A " +
+                                   sWhat +
+                                   " - Current time: " +
+                                   PDTFactory.getCurrentLocalDateTime ().toString (),
                                    r16).setBorder (Color.BLUE));
 
       final PageLayoutPDF aPageLayout = new PageLayoutPDF ().setCompressPDF (true);
@@ -485,9 +516,11 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ErrorListType ret = new ErrorListType ();
     // Max length 10
-    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something went wrong"));
+    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000),
+                                                          "Ooops - something went wrong"));
     if (aTLR.nextBoolean ())
-      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something else also went wrong"));
+      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000),
+                                                            "Ooops - something else also went wrong"));
     return ret;
   }
 
