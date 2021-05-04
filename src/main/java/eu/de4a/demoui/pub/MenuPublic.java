@@ -18,7 +18,9 @@ package eu.de4a.demoui.pub;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
+import com.helger.photon.core.menu.IMenuItemPage;
 import com.helger.photon.core.menu.IMenuTree;
+import com.helger.photon.uicore.page.system.BasePageShowChildren;
 
 /**
  * Menu for the Demo UI.
@@ -28,6 +30,7 @@ import com.helger.photon.core.menu.IMenuTree;
 @Immutable
 public final class MenuPublic
 {
+  public static final String MENU_DEMO_UI = "demoui";
   public static final String MENU_SEND_RANDOM_MESSAGE = "sendrandommessage";
   public static final String MENU_SEND_MESSAGE = "sendmessage";
   public static final String MENU_EXAMPLE_MESSAGE = "examplemsg";
@@ -38,13 +41,18 @@ public final class MenuPublic
 
   public static void init (@Nonnull final IMenuTree aMenuTree)
   {
-    // Common stuff
-    aMenuTree.createRootItem (new PagePublicSendRandomMessage (MENU_SEND_RANDOM_MESSAGE));
-    aMenuTree.createRootItem (new PagePublicSendMessage (MENU_SEND_MESSAGE));
-    aMenuTree.createRootItem (new PagePublicCreateRandomMessage (MENU_EXAMPLE_MESSAGE));
-    aMenuTree.createRootItem (new PagePublicValidateMessage (MENU_VALIDATE_MESSAGE));
+    // Demo UI stuff
+    {
+      final IMenuItemPage aDemoUI = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DEMO_UI,
+                                                                                           "Demo UI",
+                                                                                           aMenuTree));
+      aMenuTree.createItem (aDemoUI, new PagePublicSendRandomMessage (MENU_SEND_RANDOM_MESSAGE));
+      aMenuTree.createItem (aDemoUI, new PagePublicSendMessage (MENU_SEND_MESSAGE));
+      aMenuTree.createItem (aDemoUI, new PagePublicCreateRandomMessage (MENU_EXAMPLE_MESSAGE));
+      aMenuTree.createItem (aDemoUI, new PagePublicValidateMessage (MENU_VALIDATE_MESSAGE));
+    }
 
     // Set default
-    aMenuTree.setDefaultMenuItemID (MENU_SEND_RANDOM_MESSAGE);
+    aMenuTree.setDefaultMenuItemID (MENU_DEMO_UI);
   }
 }
