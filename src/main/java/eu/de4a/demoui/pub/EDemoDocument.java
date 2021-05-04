@@ -59,6 +59,11 @@ import eu.de4a.iem.xml.de4a.DE4AResponseDocumentHelper;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
 import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryObjectMimeCodeContentType;
 
+/**
+ * Available mock demo documents
+ *
+ * @author Philip Helger
+ */
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
   DE_USI_REQ_T41_UC1_V2021_02_11 ("de-usi-req-t41-uc1-2021-02-11",
@@ -268,9 +273,23 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     return m_sRelativeURL;
   }
 
+  @Nonnull
   public EDemoDocumentType getDocumentType ()
   {
     return m_eDocType;
+  }
+
+  @Nonnull
+  public Object createDemoRequest ()
+  {
+    return m_aDemoRequestCreator.get ();
+  }
+
+  @Nonnull
+  public String getAnyMessageAsString (@Nonnull final Object aObj)
+  {
+    // Throws exception if the type does not match so be careful
+    return m_aToString.apply (aObj);
   }
 
   @Nonnull
@@ -288,6 +307,12 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     m_aMarshaller.read (sMsg);
     m_aMarshaller.setValidationEventHandlerFactory (aOld);
     return ret;
+  }
+
+  @Nonnull
+  public Object parseMessage (@Nonnull final String sMsg)
+  {
+    return m_aMarshaller.read (sMsg);
   }
 
   @Nullable

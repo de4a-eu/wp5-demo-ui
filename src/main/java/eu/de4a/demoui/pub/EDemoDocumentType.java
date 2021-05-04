@@ -15,6 +15,11 @@
  */
 package eu.de4a.demoui.pub;
 
+/**
+ * Type of document
+ *
+ * @author Philip Helger
+ */
 public enum EDemoDocumentType
 {
   REQUEST,
