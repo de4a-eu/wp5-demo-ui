@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2021 DE4A
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package eu.de4a.demoui.pub;
 
 import java.io.IOException;
@@ -9,8 +24,6 @@ import javax.annotation.Nonnull;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.error.IError;
@@ -47,7 +60,6 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_USI extends AbstractAppWebPage
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI.class);
   private static final String FIELD_PAYLOAD = "payload";
 
   public PagePublicDE_USI (@Nonnull @Nonempty final String sID)
@@ -121,7 +133,7 @@ public class PagePublicDE_USI extends AbstractAppWebPage
               aPost.setEntity (new StringEntity (sPayload,
                                                  ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
               final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-              LOGGER.info ("Response content received (" + aResponse.length + " bytes)");
+              DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
               final ResponseErrorType aResponseObj = DE4AMarshaller.doUsiResponseMarshaller ().read (aResponse);
               if (aResponseObj == null)
                 throw new IOException ("Failed to parse response XML");
@@ -132,7 +144,7 @@ public class PagePublicDE_USI extends AbstractAppWebPage
                                                                                                                 .add ("requestId",
                                                                                                                       aParsedRequest.getRequestId ())
                                                                                                                 .getAsStringWithEncodedParameters ();
-                LOGGER.info ("Return URL is '" + sBackURL + "'");
+                DE4AKafkaClient.send (EErrorLevel.INFO, "Return URL is '" + sBackURL + "'");
                 aWPEC.postRedirectGetExternal (new SimpleURL ("https://de4a-dev-mock.egovlab.eu/do1/preview/index").add ("requestId",
                                                                                                                          aParsedRequest.getRequestId ())
                                                                                                                    .add ("backUrl",
