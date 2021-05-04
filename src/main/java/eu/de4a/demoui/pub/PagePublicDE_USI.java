@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.error.IError;
+import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.url.SimpleURL;
@@ -42,6 +43,7 @@ import eu.de4a.iem.jaxb.common.types.AckType;
 import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceUSIType;
 import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
+import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_USI extends AbstractAppWebPage
 {
@@ -69,6 +71,8 @@ public class PagePublicDE_USI extends AbstractAppWebPage
     if (aWPEC.params ().hasStringValue ("is-response", "true"))
     {
       // Show result of USI preview
+      DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received USI preview result");
+
       final String sRequestID = aWPEC.params ().getAsString ("requestId");
       final boolean bAccept = aWPEC.params ().getAsBoolean ("accept", false);
 
@@ -107,6 +111,9 @@ public class PagePublicDE_USI extends AbstractAppWebPage
             // Send only valid documents
             final RequestExtractEvidenceUSIType aParsedRequest = (RequestExtractEvidenceUSIType) eDemoDoc.parseMessage (sPayload);
 
+            DE4AKafkaClient.send (EErrorLevel.INFO,
+                                  "DemoUI sending USI request '" + aParsedRequest.getRequestId () + "'");
+
             final HttpClientSettings aHCS = new HttpClientSettings ();
             try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
             {
@@ -125,6 +132,7 @@ public class PagePublicDE_USI extends AbstractAppWebPage
                                                                                                                 .add ("requestId",
                                                                                                                       aParsedRequest.getRequestId ())
                                                                                                                 .getAsStringWithEncodedParameters ();
+                LOGGER.info ("Return URL is '" + sBackURL + "'");
                 aWPEC.postRedirectGetExternal (new SimpleURL ("https://de4a-dev-mock.egovlab.eu/do1/preview/index").add ("requestId",
                                                                                                                          aParsedRequest.getRequestId ())
                                                                                                                    .add ("backUrl",
