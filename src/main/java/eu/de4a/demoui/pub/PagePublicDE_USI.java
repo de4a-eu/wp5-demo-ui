@@ -95,6 +95,10 @@ public class PagePublicDE_USI extends AbstractAppWebPage
         else
           aNodeList.addChild (error ("The user rejected the USI preview on DP side and the message will arrive here"));
       }
+
+      aNodeList.addChild (info ("This is a mock and nothing will happen here - you can follow it up in the Tracker though"));
+
+      bShowForm = false;
     }
     else
       if (aWPEC.hasAction (CPageParam.ACTION_PERFORM))
@@ -173,7 +177,6 @@ public class PagePublicDE_USI extends AbstractAppWebPage
             }
           }
           aNodeList.addChild (aResNL);
-          bShowForm = false;
         }
       }
 
