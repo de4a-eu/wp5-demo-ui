@@ -46,7 +46,7 @@ public class APIExecutorPostUSIResponse implements IAPIExecutor
                          @Nonnull final IRequestWebScopeWithoutResponse aRequestScope,
                          @Nonnull final UnifiedResponse aUnifiedResponse) throws Exception
   {
-    DE4AKafkaClient.send (EErrorLevel.INFO, "Received USI response");
+    DE4AKafkaClient.send (EErrorLevel.INFO, "Received async USI response");
 
     // Read all source bytes from request
     final byte [] aPayloadBytes = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
@@ -63,7 +63,7 @@ public class APIExecutorPostUSIResponse implements IAPIExecutor
     {
       // TODO store message
 
-      DE4AKafkaClient.send (EErrorLevel.INFO, "Received USI response");
+      DE4AKafkaClient.send (EErrorLevel.INFO, "Received USI response for " + aRequest.getRequestId ());
       aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT).disableCaching ();
     }
   }
