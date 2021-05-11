@@ -15,9 +15,10 @@
  */
 package eu.de4a.demoui.pub;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.EnumSet;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Function;
@@ -25,6 +26,9 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,23 +39,29 @@ import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
+import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
-import com.helger.commons.id.IHasID;
-import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCDiv;
+import com.helger.html.hc.html.grouping.HCUL;
 import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.jquery.JQuery;
 import com.helger.html.jscode.JSPackage;
+import com.helger.html.jscode.html.JSHtml;
+import com.helger.httpclient.HttpClientManager;
+import com.helger.httpclient.HttpClientSettings;
+import com.helger.httpclient.response.ResponseHandlerByteArray;
 import com.helger.jaxb.GenericJAXBMarshaller;
 import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
+import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
+import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonGroup;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
@@ -65,7 +75,8 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.scope.singleton.AbstractSessionSingleton;
 
-import eu.de4a.demoui.ui.AbstractAppWebPage;
+import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.AgentType;
@@ -73,9 +84,12 @@ import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
 import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
+import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
+import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
+import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM_User extends AbstractAppWebPage
+public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_User.class);
   private static final String PARAM_DIRECTION = "dir";
@@ -140,209 +154,6 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     public static EStep min (@Nonnull final EStep e1, @Nonnull final EStep e2)
     {
       return e1.ordinal () < e2.ordinal () ? e1 : e2;
-    }
-  }
-
-  private static enum EDRSType
-  {
-    PERSON,
-    COMPANY;
-
-    public boolean allowsRepresentative ()
-    {
-      return this == COMPANY;
-    }
-  }
-
-  private static enum EProcessType implements IHasID <String>, IHasDisplayName
-  {
-    HIGHER_EDUCATION_DIPLOMA ("t41uc1",
-                              "Higher Education Diploma (SA)",
-                              EDRSType.PERSON,
-                              "urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma"),
-    COMPANY_REGISTRATION ("t42cr",
-                          "Company Registration (DBA)",
-                          EDRSType.COMPANY,
-                          "urn:de4a-eu:CanonicalEvidenceType::CompanyRegistration");
-
-    private final String m_sID;
-    private final String m_sDisplayName;
-    private final EDRSType m_eDRSType;
-    private final String m_sCETID;
-
-    EProcessType (@Nonnull @Nonempty final String sID,
-                  @Nonnull @Nonempty final String sDisplayName,
-                  @Nonnull final EDRSType eDRSType,
-                  @Nonnull @Nonempty final String sCETID)
-    {
-      m_sID = sID;
-      m_sDisplayName = sDisplayName;
-      m_eDRSType = eDRSType;
-      m_sCETID = sCETID;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getID ()
-    {
-      return m_sID;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getDisplayName ()
-    {
-      return m_sDisplayName;
-    }
-
-    @Nonnull
-    public EDRSType getDRSType ()
-    {
-      return m_eDRSType;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getCanonicalEvidenceTypeID ()
-    {
-      return m_sCETID;
-    }
-
-    @Nullable
-    public static EProcessType getFromIDOrNull (@Nullable final String sID)
-    {
-      return EnumHelper.getFromIDOrNull (EProcessType.class, sID);
-    }
-  }
-
-  private static enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
-  {
-    ES ("iso6523-actorid-upis::9999:esq6250003h",
-        "(UJI) Universitat Jaume I de Castellón",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA),
-    PT ("iso6523-actorid-upis::9999:pt990000101",
-        "Portuguese IST, University of Lisbon",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA),
-    SI1 ("iso6523-actorid-upis::9999:si000000016",
-         "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-         EProcessType.HIGHER_EDUCATION_DIPLOMA),
-    SI2 ("iso6523-actorid-upis::9999:si000000018",
-         "(JSI) Institut Jozef Stefan",
-         EProcessType.HIGHER_EDUCATION_DIPLOMA),
-    AT ("iso6523-actorid-upis::9999:at000000271",
-        "(BMDW) Bundesministerium Fuer Digitalisierung Und Wirtschaftsstandort",
-        EProcessType.COMPANY_REGISTRATION),
-    SE ("iso6523-actorid-upis::9999:se000000013",
-        "(BVE) BOLAGSVERKET (Companies Registration Office)",
-        EProcessType.COMPANY_REGISTRATION),
-    RO ("iso6523-actorid-upis::9999:ro000000006",
-        "(ORNC) Oficiul National B22 Al Registrului Comertului",
-        EProcessType.COMPANY_REGISTRATION),
-    NL ("iso6523-actorid-upis::9999:nl000000024",
-        "(RVO) Rijksdienst voor Ondernemend Nederland (Netherlands Enterprise Agency)",
-        EProcessType.COMPANY_REGISTRATION);
-
-    private final String m_sParticipantID;
-    private final String m_sDisplayName;
-    private final EnumSet <EProcessType> m_aProcesses = EnumSet.noneOf (EProcessType.class);
-
-    EMockDataEvaluator (@Nonnull @Nonempty final String sParticipantID,
-                        @Nonnull @Nonempty final String sDisplayName,
-                        @Nonnull @Nonempty final EProcessType... aProcesses)
-    {
-      m_sParticipantID = sParticipantID;
-      m_sDisplayName = sDisplayName;
-      for (final EProcessType e : aProcesses)
-        m_aProcesses.add (e);
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getID ()
-    {
-      return m_sParticipantID;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getDisplayName ()
-    {
-      return m_sDisplayName;
-    }
-
-    public boolean supportsProcess (@Nullable final EProcessType eProcType)
-    {
-      return eProcType != null && m_aProcesses.contains (eProcType);
-    }
-
-    @Nullable
-    public static EMockDataEvaluator getFromIDOrNull (@Nullable final String sID)
-    {
-      return EnumHelper.getFromIDOrNull (EMockDataEvaluator.class, sID);
-    }
-  }
-
-  private static enum EMockDataOwner implements IHasID <String>, IHasDisplayName
-  {
-    ES ("iso6523-actorid-upis::9999:ess2833002e",
-        "(MPTFP-SGAD) Secretaría General de Administración Digital",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA),
-    PT ("iso6523-actorid-upis::9999:pt990000101",
-        "Portuguese IST, University of Lisbon",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA),
-    SI ("iso6523-actorid-upis::9999:si000000016",
-        "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA),
-    AT ("iso6523-actorid-upis::9999:at000000271",
-        "(BMDW) Bundesministerium Fuer Digitalisierung Und Wirtschaftsstandort",
-        EProcessType.COMPANY_REGISTRATION),
-    SE ("iso6523-actorid-upis::9999:se000000013",
-        "(BVE) BOLAGSVERKET (Companies Registration Office)",
-        EProcessType.COMPANY_REGISTRATION),
-    RO ("iso6523-actorid-upis::9999:ro000000006",
-        "(ORNC) Oficiul National B22 Al Registrului Comertului",
-        EProcessType.COMPANY_REGISTRATION),
-    NL ("iso6523-actorid-upis::9999:nl990000106",
-        "(KVK) Chamber of Commerce of Netherlands",
-        EProcessType.COMPANY_REGISTRATION);
-
-    private final String m_sParticipantID;
-    private final String m_sDisplayName;
-    private final EnumSet <EProcessType> m_aProcesses = EnumSet.noneOf (EProcessType.class);
-
-    EMockDataOwner (@Nonnull @Nonempty final String sParticipantID,
-                    @Nonnull @Nonempty final String sDisplayName,
-                    @Nonnull @Nonempty final EProcessType... aProcesses)
-    {
-      m_sParticipantID = sParticipantID;
-      m_sDisplayName = sDisplayName;
-      for (final EProcessType e : aProcesses)
-        m_aProcesses.add (e);
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getID ()
-    {
-      return m_sParticipantID;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getDisplayName ()
-    {
-      return m_sDisplayName;
-    }
-
-    public boolean supportsProcess (@Nullable final EProcessType eProcType)
-    {
-      return eProcType != null && m_aProcesses.contains (eProcType);
-    }
-
-    @Nullable
-    public static EMockDataOwner getFromIDOrNull (@Nullable final String sID)
-    {
-      return EnumHelper.getFromIDOrNull (EMockDataOwner.class, sID);
     }
   }
 
@@ -527,7 +338,8 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
 
     final Function <ErrorList, GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType>> aMP = aEL -> DE4AMarshaller.drImRequestMarshaller ()
                                                                                                                       .setFormattedOutput (true)
-                                                                                                                      .setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (aEL));
+                                                                                                                      .setValidationEventHandlerFactory (aEL == null ? null
+                                                                                                                                                                     : x -> new WrappedCollectingValidationEventHandler (aEL));
 
     // Grab input parameters
     final FormErrorList aFormErrors = new FormErrorList ();
@@ -653,6 +465,11 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
           aState.m_bConfirmedToSend = bConfirm;
           break;
         }
+        case SEND_REQUEST:
+        {
+          // Nothing
+          break;
+        }
         default:
           aNodeList.addChild (error ("Unsupported step " + aState.m_eStep));
       }
@@ -739,7 +556,7 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
                                                                                                  bIsResubmitted ? null
                                                                                                                 : StringHelper.getNotEmpty (aState.m_sDRSPersonID,
-                                                                                                                                            "AB/CD/98765"))))
+                                                                                                                                            aState.m_eDO.getEntityID ()))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person First Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FIRSTNAME,
@@ -770,7 +587,11 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
                                                                                                  bIsResubmitted ? null
                                                                                                                 : StringHelper.getNotEmpty (aState.m_sDRSCompanyID,
-                                                                                                                                            "AB/CD/12345"))))
+                                                                                                                                            aState.m_eDO.getCountryCode () +
+                                                                                                                                                                    "/" +
+                                                                                                                                                                    aState.m_eDE.getCountryCode () +
+                                                                                                                                                                    "/" +
+                                                                                                                                                                    aState.m_eDO.getEntityID ()))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_NAME,
@@ -841,7 +662,7 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
                                                      .setCtrl (aState.m_aRequest == null ? error ("Failed to create Request Object")
                                                                                          : new HCTextArea (new RequestField (FIELD_REQUEST,
-                                                                                                                             aMP.apply (aErrorList)
+                                                                                                                             aMP.apply (null)
                                                                                                                                 .getAsString (aState.m_aRequest))).setRows (10)
                                                                                                                                                                   .setReadOnly (true)
                                                                                                                                                                   .addClass (CBootstrapCSS.FORM_CONTROL)
@@ -858,7 +679,54 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
       }
       case SEND_REQUEST:
       {
-        aForm.addChild (info ("This is where I would send the request"));
+        final String sTargetURL = CApp.DEFAULT_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+        aForm.addChild (info ("Sending the mock request to ").addChild (code (sTargetURL)));
+
+        DE4AKafkaClient.send (EErrorLevel.INFO,
+                              "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "'");
+
+        final HttpClientSettings aHCS = new HttpClientSettings ();
+        try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+        {
+          final HttpPost aPost = new HttpPost (sTargetURL);
+          aPost.setEntity (new ByteArrayEntity (aMP.apply (null).getAsBytes (aState.m_aRequest),
+                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+          final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+          DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
+          final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                          .read (aResponse);
+          if (aResponseObj == null)
+            throw new IOException ("Failed to parse response XML");
+
+          if (aResponseObj.getErrorList () == null)
+          {
+            aForm.addChild (h2 ("Preview of the response data"));
+            aForm.addChild (_createPreview (aWPEC, aResponseObj));
+
+            if (false)
+            {
+              final BootstrapButtonGroup aDiv = aForm.addAndReturnChild (new BootstrapButtonGroup ());
+              aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
+                                                                               .setIcon (EDefaultIcon.YES)
+                                                                               .setOnClick (JSHtml.windowAlert ("Okay, you accepted")));
+              aDiv.addChild (new BootstrapButton (EBootstrapButtonType.OUTLINE_DANGER).addChild ("Reject data")
+                                                                                      .setIcon (EDefaultIcon.NO)
+                                                                                      .setOnClick (JSHtml.windowAlert ("Okay, you rejected")));
+            }
+          }
+          else
+          {
+            final HCUL aUL = new HCUL ();
+            aResponseObj.getErrorList ()
+                        .getError ()
+                        .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+          }
+        }
+        catch (final IOException ex)
+        {
+          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (sTargetURL)))
+                                  .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
+        }
         // TODO
         break;
       }

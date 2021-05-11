@@ -20,26 +20,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 
 import com.helger.commons.annotation.Nonempty;
-import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
-import com.helger.html.hc.IHCNode;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCUL;
-import com.helger.html.hc.html.tabular.HCCol;
-import com.helger.html.hc.html.textlevel.HCA;
-import com.helger.html.hc.html.textlevel.HCCode;
-import com.helger.html.hc.html.textlevel.HCEM;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.jscode.html.JSHtml;
 import com.helger.httpclient.HttpClientManager;
@@ -52,9 +45,7 @@ import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
 import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonGroup;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
-import com.helger.photon.bootstrap4.form.BootstrapViewForm;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
-import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.css.CPageParam;
@@ -62,109 +53,20 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.CApp;
-import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.jaxb.common.types.AgentType;
-import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM_Expert extends AbstractAppWebPage
+public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
 {
   private static final String FIELD_PAYLOAD = "payload";
 
   public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
   {
     super (sID, "IM Exchange (Expert)");
-  }
-
-  @Nonnull
-  private static IHCNode _get (@Nullable final String s)
-  {
-    return StringHelper.hasNoText (s) ? new HCEM ().addChild ("none") : new HCCode ().addChild (s);
-  }
-
-  @Nonnull
-  private static IHCNode _createAgent (@Nullable final AgentType aAgent)
-  {
-    if (aAgent == null)
-      return _get (null);
-
-    final BootstrapTable aTable = new BootstrapTable (HCCol.fromString ("120"), HCCol.star ());
-    aTable.addHeaderRow ().addCell ("Field").addCell ("Value");
-    aTable.addBodyRow ().addCell ("URN:").addCell (_get (aAgent.getAgentUrn ()));
-    aTable.addBodyRow ().addCell ("Name:").addCell (_get (aAgent.getAgentNameValue ()));
-    if (StringHelper.hasText (aAgent.getRedirectURL ()))
-      aTable.addBodyRow ().addCell ("Redirect URL:").addCell (HCA.createLinkedWebsite (aAgent.getRedirectURL ()));
-    return aTable;
-  }
-
-  @Nonnull
-  private static IHCNode _createDRS (final DataRequestSubjectCVType aDRS)
-  {
-    if (aDRS == null)
-      return _get (null);
-
-    final BootstrapTable aTable = new BootstrapTable (HCCol.fromString ("120"), HCCol.star ());
-    aTable.addHeaderRow ().addCell ("Field").addCell ("Value");
-
-    if (aDRS.getDataSubjectPerson () != null)
-    {
-      aTable.addBodyRow ().addCell ("Natural Person").addCell (_get ("todo"));
-    }
-    if (aDRS.getDataSubjectCompany () != null)
-    {
-      aTable.addBodyRow ().addCell ("Company").addCell (_get ("todo"));
-    }
-    if (aDRS.getDataSubjectRepresentative () != null)
-    {
-      aTable.addBodyRow ().addCell ("Representative").addCell (_get ("todo"));
-    }
-    return aTable;
-  }
-
-  @Nonnull
-  private static IHCNode _createPreview (@Nonnull final WebPageExecutionContext aWPEC,
-                                         @Nonnull final ResponseTransferEvidenceType aResponseObj)
-  {
-    final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
-
-    final BootstrapViewForm aTable = new BootstrapViewForm ();
-    aTable.setSplitting (BootstrapGridSpec.create (-1, -1, -1, 2, 2), BootstrapGridSpec.create (-1, -1, -1, 10, 10));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID")
-                                                  .setCtrl (_get (aResponseObj.getRequestId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID")
-                                                  .setCtrl (_get (aResponseObj.getSpecificationId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Time stamp")
-                                                  .setCtrl (_get (PDTToString.getAsString (aResponseObj.getTimeStamp (),
-                                                                                           aDisplayLocale))));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID")
-                                                  .setCtrl (_get (aResponseObj.getProcedureId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
-                                                  .setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
-                                                  .setCtrl (_createAgent (aResponseObj.getDataOwner ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
-                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
-                                                  .setCtrl (_get (aResponseObj.getCanonicalEvidenceTypeId ())));
-    if (aResponseObj.getCanonicalEvidence () != null)
-    {
-      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
-                                                    .setCtrl (_get ("present, but not shown yet")));
-    }
-    if (aResponseObj.getDomesticEvidenceList () != null &&
-        aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
-    {
-      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
-                                                    .setCtrl (_get (aResponseObj.getDomesticEvidenceList ()
-                                                                                .getDomesticEvidenceCount () +
-                                                                    " present, but not shown yet")));
-    }
-    return aTable;
   }
 
   @Override
