@@ -31,8 +31,8 @@ import com.helger.photon.uicore.page.system.BasePageShowChildren;
 public final class MenuPublic
 {
   public static final String MENU_DE = "de";
-  public static final String MENU_DE_IM = "deim";
-  public static final String MENU_DE_USI = "deusi";
+  public static final String MENU_DE_IM_EXPERT = "deim-expert";
+  public static final String MENU_DE_USI_EXPERT = "deusi-expert";
 
   public static final String MENU_DEMO_UI = "demoui";
   public static final String MENU_SEND_RANDOM_MESSAGE = "sendrandommessage";
@@ -50,8 +50,8 @@ public final class MenuPublic
       final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE,
                                                                                        "Data Evaluator",
                                                                                        aMenuTree));
-      aMenuTree.createItem (aDE, new PagePublicDE_IM (MENU_DE_IM));
-      aMenuTree.createItem (aDE, new PagePublicDE_USI (MENU_DE_USI));
+      aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert (MENU_DE_IM_EXPERT));
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Expert (MENU_DE_USI_EXPERT));
     }
 
     // Demo UI stuff

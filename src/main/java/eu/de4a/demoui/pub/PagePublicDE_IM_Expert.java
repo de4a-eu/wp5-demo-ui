@@ -72,13 +72,13 @@ import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM extends AbstractAppWebPage
+public class PagePublicDE_IM_Expert extends AbstractAppWebPage
 {
   private static final String FIELD_PAYLOAD = "payload";
 
-  public PagePublicDE_IM (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "IM Exchange");
+    super (sID, "IM Exchange (Expert)");
   }
 
   @Nonnull

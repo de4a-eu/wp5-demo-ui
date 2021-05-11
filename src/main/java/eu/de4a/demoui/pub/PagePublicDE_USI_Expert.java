@@ -58,13 +58,13 @@ import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_USI extends AbstractAppWebPage
+public class PagePublicDE_USI_Expert extends AbstractAppWebPage
 {
   private static final String FIELD_PAYLOAD = "payload";
 
-  public PagePublicDE_USI (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_USI_Expert (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "USI Exchange");
+    super (sID, "USI Exchange (Expert)");
   }
 
   @Override
