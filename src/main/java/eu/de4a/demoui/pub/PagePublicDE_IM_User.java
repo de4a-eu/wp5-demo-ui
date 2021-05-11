@@ -15,6 +15,8 @@
  */
 package eu.de4a.demoui.pub;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -32,6 +34,7 @@ import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.string.StringHelper;
+import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.grouping.HCDiv;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.jquery.JQuery;
@@ -39,6 +42,8 @@ import com.helger.html.jscode.JSPackage;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
+import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
+import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePicker;
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.html.select.HCExtSelect;
@@ -57,7 +62,14 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_User.class);
   private static final String PARAM_DIRECTION = "dir";
+  // Select process
   private static final String FIELD_PROCESS = "process";
+  // Select DRS
+  private static final String FIELD_DRS_ID = "id";
+  private static final String FIELD_DRS_NAME = "name";
+  private static final String FIELD_DRS_FIRSTNAME = "firstname";
+  private static final String FIELD_DRS_FAMILYNAME = "familyname";
+  private static final String FIELD_DRS_BIRTHDAY = "birthday";
 
   private static enum EDRSType
   {
@@ -74,7 +86,7 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
   {
     // Order matters
     SELECT_PROCESS,
-    SELECT_DATA_OWNER,
+    SELECT_DATA_REQUEST_SUBJECT,
     SEND_REQUEST;
 
     public boolean isFirst ()
@@ -101,6 +113,12 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
       if (isLast ())
         return null;
       return values ()[ordinal () + 1];
+    }
+
+    @Nonnull
+    public static EStep min (@Nonnull final EStep e1, @Nonnull final EStep e2)
+    {
+      return e1.ordinal () < e2.ordinal () ? e1 : e2;
     }
   }
 
@@ -153,6 +171,12 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
   {
     private EStep m_eStep = EStep.SELECT_PROCESS;
     private EProcessType m_eProcType;
+    private String m_sDRSCompanyID;
+    private String m_sDRSCompanyName;
+    private String m_sDRSPersonID;
+    private String m_sDRSPersonFirstName;
+    private String m_sDRSPersonFamilyName;
+    private LocalDate m_aDRSPersonBirthday;
 
     @Deprecated
     @UsedViaReflection
@@ -171,11 +195,17 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
         throw new IllegalStateException ("No step");
 
       if (m_eProcType == null)
-        m_eStep = EStep.SELECT_PROCESS;
-      else
-      {
-        // TODO
-      }
+        m_eStep = EStep.min (m_eStep, EStep.SELECT_PROCESS);
+    }
+
+    public void moveBack ()
+    {
+      m_eStep = m_eStep.prev ();
+    }
+
+    public void moveForward ()
+    {
+      m_eStep = m_eStep.next ();
     }
 
     @Nullable
@@ -184,14 +214,20 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
       return m_eProcType == null ? null : m_eProcType.getID ();
     }
 
-    public void prevStep ()
+    public void resetDRS ()
     {
-      m_eStep = m_eStep.prev ();
+      m_sDRSCompanyID = null;
+      m_sDRSCompanyName = null;
+      m_sDRSPersonID = null;
+      m_sDRSPersonFirstName = null;
+      m_sDRSPersonFamilyName = null;
+      m_aDRSPersonBirthday = null;
     }
 
-    public void nextStep ()
+    @Nullable
+    public LocalDate getBirthDayOr (@Nullable final LocalDate aFallbackDate)
     {
-      m_eStep = m_eStep.next ();
+      return m_aDRSPersonBirthday != null ? m_aDRSPersonBirthday : aFallbackDate;
     }
   }
 
@@ -212,11 +248,12 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
 
     // Grab input parameters
     final FormErrorList aFormErrors = new FormErrorList ();
+    final boolean bIsSubmitted = bGoNext;
     if (bGoNext)
       switch (aState.m_eStep)
       {
         case SELECT_PROCESS:
-          final String sProcessID = aWPEC.params ().getAsString (FIELD_PROCESS, aState.getProcessID ());
+          final String sProcessID = aWPEC.params ().getAsStringTrimmed (FIELD_PROCESS, aState.getProcessID ());
           final EProcessType eProcess = EProcessType.getFromIDOrNull (sProcessID);
 
           if (StringHelper.hasNoText (sProcessID))
@@ -230,8 +267,62 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
             aState.m_eProcType = eProcess;
           }
           break;
-        case SELECT_DATA_OWNER:
+        case SELECT_DATA_REQUEST_SUBJECT:
         {
+          switch (aState.m_eProcType.getDRSType ())
+          {
+            case PERSON:
+            {
+              final String sDRSID = aWPEC.params ().getAsStringTrimmed (FIELD_DRS_ID, aState.m_sDRSPersonID);
+              final String sDRSFirstName = aWPEC.params ()
+                                                .getAsStringTrimmed (FIELD_DRS_FIRSTNAME, aState.m_sDRSPersonFirstName);
+              final String sDRSFamilyName = aWPEC.params ()
+                                                 .getAsStringTrimmed (FIELD_DRS_FAMILYNAME,
+                                                                      aState.m_sDRSPersonFamilyName);
+              LocalDate aDRSBirthday = aWPEC.params ().getAsLocalDate (FIELD_DRS_BIRTHDAY, aDisplayLocale);
+              if (aDRSBirthday == null)
+                aDRSBirthday = aState.m_aDRSPersonBirthday;
+
+              if (StringHelper.hasNoText (sDRSID))
+                aFormErrors.addFieldError (FIELD_DRS_ID, "A person ID must be provided");
+              if (StringHelper.hasNoText (sDRSFirstName))
+                aFormErrors.addFieldError (FIELD_DRS_FIRSTNAME, "A person first name must be provided");
+              if (StringHelper.hasNoText (sDRSFamilyName))
+                aFormErrors.addFieldError (FIELD_DRS_FAMILYNAME, "A person family name must be provided");
+              if (aDRSBirthday == null)
+                aFormErrors.addFieldError (FIELD_DRS_BIRTHDAY, "A person birthday name must be provided");
+
+              if (aFormErrors.isEmpty ())
+              {
+                aState.resetDRS ();
+                aState.m_sDRSPersonID = sDRSID;
+                aState.m_sDRSPersonFirstName = sDRSFirstName;
+                aState.m_sDRSPersonFamilyName = sDRSFamilyName;
+                aState.m_aDRSPersonBirthday = aDRSBirthday;
+              }
+              break;
+            }
+            case COMPANY:
+            {
+              final String sDRSID = aWPEC.params ().getAsStringTrimmed (FIELD_DRS_ID, aState.m_sDRSCompanyID);
+              final String sDRSName = aWPEC.params ().getAsStringTrimmed (FIELD_DRS_NAME, aState.m_sDRSCompanyName);
+
+              if (StringHelper.hasNoText (sDRSID))
+                aFormErrors.addFieldError (FIELD_DRS_ID, "A company ID must be provided");
+              if (StringHelper.hasNoText (sDRSName))
+                aFormErrors.addFieldError (FIELD_DRS_NAME, "A company name must be provided");
+
+              if (aFormErrors.isEmpty ())
+              {
+                aState.resetDRS ();
+                aState.m_sDRSCompanyID = sDRSID;
+                aState.m_sDRSCompanyName = sDRSName;
+              }
+              break;
+            }
+            default:
+              throw new IllegalStateException ();
+          }
           break;
         }
         case SEND_REQUEST:
@@ -264,26 +355,26 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
             {
               case PERSON:
               {
-                // TODO
                 final NaturalPersonIdentifierType aPerson = new NaturalPersonIdentifierType ();
-                aPerson.setPersonIdentifier ("PID");
-                aPerson.setFirstName ("FirstName");
-                aPerson.setFamilyName ("FamilyName");
-                aPerson.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (42));
+                aPerson.setPersonIdentifier (aState.m_sDRSPersonID);
+                aPerson.setFirstName (aState.m_sDRSPersonFirstName);
+                aPerson.setFamilyName (aState.m_sDRSPersonFamilyName);
+                aPerson.setDateOfBirth (aState.m_aDRSPersonBirthday);
                 // Ignore the optional stuff
                 aDRS.setDataSubjectPerson (aPerson);
                 break;
               }
               case COMPANY:
               {
-                // TODO
                 final LegalPersonIdentifierType aCompany = new LegalPersonIdentifierType ();
-                aCompany.setLegalPersonIdentifier ("NO/AT/12345");
-                aCompany.setLegalName ("Company name");
+                aCompany.setLegalPersonIdentifier (aState.m_sDRSCompanyID);
+                aCompany.setLegalName (aState.m_sDRSCompanyName);
                 // Ignore the optional stuff
                 aDRS.setDataSubjectCompany (aCompany);
                 break;
               }
+              default:
+                throw new IllegalStateException ();
             }
             aRequest.setDataRequestSubject (aDRS);
           }
@@ -297,20 +388,21 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     if (bGoBack && !aState.m_eStep.isFirst ())
     {
       LOGGER.info ("One step backwards from " + aState.m_eStep);
-      aState.prevStep ();
+      aState.moveBack ();
     }
     else
       if (bGoNext && !aState.m_eStep.isLast () && aFormErrors.isEmpty ())
       {
         // Forward moving only if no errors are found
         LOGGER.info ("One step forward from " + aState.m_eStep);
-        aState.nextStep ();
+        aState.moveForward ();
       }
 
     // Check the requirements for the current step are fulfilled
     aState.validate ();
 
     final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC).ensureID ());
+    aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 3, 2, 2), BootstrapGridSpec.create (-1, -1, 9, 10, 10));
 
     // Handle current step
     switch (aState.m_eStep)
@@ -322,20 +414,62 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
                                                                 IHasDisplayName.getComparatorCollating (aDisplayLocale)))
           aSelect.addOption (e.getID (), e.getDisplayName ());
         aSelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Process to use")
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Process to use")
                                                      .setCtrl (aSelect)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_PROCESS)));
         break;
       }
-      case SELECT_DATA_OWNER:
+      case SELECT_DATA_REQUEST_SUBJECT:
       {
         switch (aState.m_eProcType.getDRSType ())
         {
           case PERSON:
-            aForm.addChild (info ("input person data now"));
+            aForm.addChild (info ("The selected process " +
+                                  aState.m_eProcType.getDisplayName () +
+                                  " requires a person as Data Request Subject"));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
+                                                                                                 bIsSubmitted ? null
+                                                                                                              : StringHelper.getNotEmpty (aState.m_sDRSPersonID,
+                                                                                                                                          "AB/CD/98765"))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person First Name")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FIRSTNAME,
+                                                                                                 bIsSubmitted ? null
+                                                                                                              : StringHelper.getNotEmpty (aState.m_sDRSPersonFirstName,
+                                                                                                                                          "Lisa"))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FIRSTNAME)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Last Name")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FAMILYNAME,
+                                                                                                 bIsSubmitted ? null
+                                                                                                              : StringHelper.getNotEmpty (aState.m_sDRSPersonFirstName,
+                                                                                                                                          "Simpson"))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FAMILYNAME)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Birthday")
+                                                         .setCtrl (BootstrapDateTimePicker.create (FIELD_DRS_BIRTHDAY,
+                                                                                                   bIsSubmitted ? null
+                                                                                                                : aState.getBirthDayOr (PDTFactory.createLocalDate (2002,
+                                                                                                                                                                    Month.FEBRUARY,
+                                                                                                                                                                    20)),
+                                                                                                   aDisplayLocale))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_BIRTHDAY)));
             break;
           case COMPANY:
-            aForm.addChild (info ("input company data now"));
+            aForm.addChild (info ("The selected process " +
+                                  aState.m_eProcType.getDisplayName () +
+                                  " requires a company as Data Request Subject"));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
+                                                                                                 bIsSubmitted ? null
+                                                                                                              : StringHelper.getNotEmpty (aState.m_sDRSCompanyID,
+                                                                                                                                          "AB/CD/12345"))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company Name")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_NAME,
+                                                                                                 bIsSubmitted ? null
+                                                                                                              : StringHelper.getNotEmpty (aState.m_sDRSCompanyName,
+                                                                                                                                          "ACME Inc."))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_NAME)));
             break;
           default:
             aForm.addChild (error ("Unsupported DRS type " + aState.m_eProcType.getDRSType ()));
