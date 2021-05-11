@@ -32,6 +32,7 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
 import com.helger.commons.datetime.PDTFactory;
+import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
 import com.helger.commons.error.list.ErrorList;
@@ -43,6 +44,7 @@ import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCDiv;
+import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.jquery.JQuery;
 import com.helger.html.jscode.JSPackage;
@@ -53,6 +55,7 @@ import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
+import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePicker;
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
@@ -80,6 +83,8 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
   private static final String FIELD_PROCESS = "process";
   // Select DE
   private static final String FIELD_DE = "de";
+  // Select DO
+  private static final String FIELD_DO = "do";
   // Select DRS
   private static final String FIELD_DRS_ID = "id";
   private static final String FIELD_DRS_NAME = "name";
@@ -95,6 +100,7 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     // Order matters
     SELECT_PROCESS,
     SELECT_DATA_EVALUATOR,
+    SELECT_DATA_OWNER,
     SELECT_DATA_REQUEST_SUBJECT,
     EXPLICIT_CONSENT,
     SEND_REQUEST;
@@ -102,6 +108,11 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     public boolean isFirst ()
     {
       return ordinal () == 0;
+    }
+
+    public boolean isSecondLast ()
+    {
+      return ordinal () == values ().length - 2;
     }
 
     public boolean isLast ()
@@ -259,7 +270,7 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
       return m_sDisplayName;
     }
 
-    public boolean supports (@Nullable final EProcessType eProcType)
+    public boolean supportsProcess (@Nullable final EProcessType eProcType)
     {
       return eProcType != null && m_aProcesses.contains (eProcType);
     }
@@ -271,6 +282,70 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     }
   }
 
+  private static enum EMockDataOwner implements IHasID <String>, IHasDisplayName
+  {
+    ES ("iso6523-actorid-upis::9999:ess2833002e",
+        "(MPTFP-SGAD) Secretaría General de Administración Digital",
+        EProcessType.HIGHER_EDUCATION_DIPLOMA),
+    PT ("iso6523-actorid-upis::9999:pt990000101",
+        "Portuguese IST, University of Lisbon",
+        EProcessType.HIGHER_EDUCATION_DIPLOMA),
+    SI ("iso6523-actorid-upis::9999:si000000016",
+        "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
+        EProcessType.HIGHER_EDUCATION_DIPLOMA),
+    AT ("iso6523-actorid-upis::9999:at000000271",
+        "(BMDW) Bundesministerium Fuer Digitalisierung Und Wirtschaftsstandort",
+        EProcessType.COMPANY_REGISTRATION),
+    SE ("iso6523-actorid-upis::9999:se000000013",
+        "(BVE) BOLAGSVERKET (Companies Registration Office)",
+        EProcessType.COMPANY_REGISTRATION),
+    RO ("iso6523-actorid-upis::9999:ro000000006",
+        "(ORNC) Oficiul National B22 Al Registrului Comertului",
+        EProcessType.COMPANY_REGISTRATION),
+    NL ("iso6523-actorid-upis::9999:nl990000106",
+        "(KVK) Chamber of Commerce of Netherlands",
+        EProcessType.COMPANY_REGISTRATION);
+
+    private final String m_sParticipantID;
+    private final String m_sDisplayName;
+    private final EnumSet <EProcessType> m_aProcesses = EnumSet.noneOf (EProcessType.class);
+
+    EMockDataOwner (@Nonnull @Nonempty final String sParticipantID,
+                    @Nonnull @Nonempty final String sDisplayName,
+                    @Nonnull @Nonempty final EProcessType... aProcesses)
+    {
+      m_sParticipantID = sParticipantID;
+      m_sDisplayName = sDisplayName;
+      for (final EProcessType e : aProcesses)
+        m_aProcesses.add (e);
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getID ()
+    {
+      return m_sParticipantID;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getDisplayName ()
+    {
+      return m_sDisplayName;
+    }
+
+    public boolean supportsProcess (@Nullable final EProcessType eProcType)
+    {
+      return eProcType != null && m_aProcesses.contains (eProcType);
+    }
+
+    @Nullable
+    public static EMockDataOwner getFromIDOrNull (@Nullable final String sID)
+    {
+      return EnumHelper.getFromIDOrNull (EMockDataOwner.class, sID);
+    }
+  }
+
   public static final class SessionState extends AbstractSessionSingleton
   {
     private EStep m_eStep = EStep.SELECT_PROCESS;
@@ -278,6 +353,8 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     private EProcessType m_eProcType;
     // DE
     private EMockDataEvaluator m_eDE;
+    // DO
+    private EMockDataOwner m_eDO;
     // DRS
     private String m_sDRSCompanyID;
     private String m_sDRSCompanyName;
@@ -309,6 +386,8 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
         m_eStep = EStep.min (m_eStep, EStep.SELECT_PROCESS);
       if (m_eDE == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_EVALUATOR);
+      if (m_eDO == null)
+        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_OWNER);
       if (_allDRSNull ())
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_REQUEST_SUBJECT);
       if (m_aRequest == null || !m_bConfirmedToSend)
@@ -335,6 +414,12 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     public String getDataEvaluatorID ()
     {
       return m_eDE == null ? null : m_eDE.getID ();
+    }
+
+    @Nullable
+    public String getDataOwnerID ()
+    {
+      return m_eDO == null ? null : m_eDO.getID ();
     }
 
     private boolean _allDRSNull ()
@@ -381,10 +466,8 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
       }
       {
         final AgentType aDO = new AgentType ();
-        // TODO
-        aDO.setAgentUrn ("urn:DemoUI");
-        // TODO
-        aDO.setAgentName ("Demo UI Data Owner");
+        aDO.setAgentUrn (m_eDO.getID ());
+        aDO.setAgentName (m_eDO.getDisplayName ());
         aRequest.setDataOwner (aDO);
       }
       {
@@ -483,6 +566,23 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
           if (aFormErrors.isEmpty ())
           {
             aState.m_eDE = eDE;
+          }
+          break;
+        }
+        case SELECT_DATA_OWNER:
+        {
+          final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO, aState.getDataOwnerID ());
+          final EMockDataOwner eDO = EMockDataOwner.getFromIDOrNull (sDOID);
+
+          if (StringHelper.hasNoText (sDOID))
+            aFormErrors.addFieldError (FIELD_DO, "Select a Mock Data Owner");
+          else
+            if (eDO == null)
+              aFormErrors.addFieldError (FIELD_DO, "Select valid a Mock Data Owner");
+
+          if (aFormErrors.isEmpty ())
+          {
+            aState.m_eDO = eDO;
           }
           break;
         }
@@ -606,12 +706,25 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_DE, aState.getDataEvaluatorID ()));
         for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
                                                                       IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supports (aState.m_eProcType))
+          if (e.supportsProcess (aState.m_eProcType))
             aSelect.addOption (e.getID (), e.getDisplayName ());
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Mock Data Evaluator to be used")
                                                      .setCtrl (aSelect)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE)));
+        break;
+      }
+      case SELECT_DATA_OWNER:
+      {
+        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_DO, aState.getDataOwnerID ()));
+        for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
+                                                                  IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+          if (e.supportsProcess (aState.m_eProcType) && !e.getID ().equals (aState.m_eDE.getID ()))
+            aSelect.addOption (e.getID (), e.getDisplayName ());
+        aSelect.addOptionPleaseSelect (aDisplayLocale);
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Mock Data Owner to be used")
+                                                     .setCtrl (aSelect)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO)));
         break;
       }
       case SELECT_DATA_REQUEST_SUBJECT:
@@ -634,10 +747,10 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
                                                                                                                 : StringHelper.getNotEmpty (aState.m_sDRSPersonFirstName,
                                                                                                                                             "Lisa"))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FIRSTNAME)));
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Last Name")
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Family Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FAMILYNAME,
                                                                                                  bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_sDRSPersonFirstName,
+                                                                                                                : StringHelper.getNotEmpty (aState.m_sDRSPersonFamilyName,
                                                                                                                                             "Simpson"))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FAMILYNAME)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Birthday")
@@ -690,24 +803,63 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
           aState.m_aRequest = aRequest;
         }
 
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created request")
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
+                                                     .setCtrl (aState.m_eProcType.getDisplayName ()));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
+                                                     .setCtrl (span (aState.m_eDE.getDisplayName () +
+                                                                     " (").addChild (code (aState.m_eDE.getID ()))
+                                                                          .addChild (")")));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
+                                                     .setCtrl (span (aState.m_eDO.getDisplayName () +
+                                                                     " (").addChild (code (aState.m_eDO.getID ()))
+                                                                          .addChild (")")));
+        switch (aState.m_eProcType.getDRSType ())
+        {
+          case PERSON:
+          {
+            final BootstrapTable t = new BootstrapTable (HCCol.perc (25), HCCol.star ());
+            t.addBodyRow ().addCell (strong ("Person ID:")).addCell (aState.m_sDRSPersonID);
+            t.addBodyRow ().addCell (strong ("First Name:")).addCell (aState.m_sDRSPersonFirstName);
+            t.addBodyRow ().addCell (strong ("Family Name:")).addCell (aState.m_sDRSPersonFamilyName);
+            t.addBodyRow ()
+             .addCell (strong ("Birthday:"))
+             .addCell (PDTToString.getAsString (aState.m_aDRSPersonBirthday, aDisplayLocale));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
+            break;
+          }
+          case COMPANY:
+          {
+            final BootstrapTable t = new BootstrapTable (HCCol.perc (25), HCCol.star ());
+            t.addBodyRow ().addCell (strong ("Company ID:")).addCell (aState.m_sDRSCompanyID);
+            t.addBodyRow ().addCell (strong ("Company Name:")).addCell (aState.m_sDRSCompanyName);
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
+            break;
+          }
+          default:
+            throw new IllegalStateException ();
+        }
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
                                                      .setCtrl (aState.m_aRequest == null ? error ("Failed to create Request Object")
                                                                                          : new HCTextArea (new RequestField (FIELD_REQUEST,
                                                                                                                              aMP.apply (aErrorList)
-                                                                                                                                .getAsString (aState.m_aRequest))).setRows (20)
+                                                                                                                                .getAsString (aState.m_aRequest))).setRows (10)
                                                                                                                                                                   .setReadOnly (true)
                                                                                                                                                                   .addClass (CBootstrapCSS.FORM_CONTROL)
                                                                                                                                                                   .addClass (CBootstrapCSS.TEXT_MONOSPACE))
+                                                     .setHelpText ("This is the technical request. It is just shown for helping developers")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Confirmation to send request")
                                                      .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM,
                                                                                                         false)))
+                                                     .setHelpText ("You need to give your explicit consent here to proceed")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
 
         break;
       }
       case SEND_REQUEST:
       {
+        aForm.addChild (info ("This is where I would send the request"));
+        // TODO
         break;
       }
       default:
@@ -719,18 +871,20 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
       final HCDiv aRow = aForm.addAndReturnChild (div ());
 
       {
-        final JSPackage aFunc = new JSPackage ();
-        aFunc.add (JQuery.idRef (aForm)
-                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='back'></input>")
-                         .submit ());
-        aFunc._return (false);
         if (aState.m_eStep.isFirst ())
         {
           // Disable and no-action
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setDisabled (true));
         }
         else
+        {
+          final JSPackage aFunc = new JSPackage ();
+          aFunc.add (JQuery.idRef (aForm)
+                           .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='back'></input>")
+                           .submit ());
+          aFunc._return (false);
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setOnClick (aFunc));
+        }
       }
       {
         final JSPackage aFunc = new JSPackage ();
@@ -738,8 +892,9 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
                          .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='next'></input>")
                          .submit ());
         aFunc._return (false);
-        aRow.addChild (new BootstrapButton ().addChild (aState.m_eStep.isLast () ? "Save" : "Next")
-                                             .setIcon (aState.m_eStep.isLast () ? EDefaultIcon.SAVE : EDefaultIcon.NEXT)
+        aRow.addChild (new BootstrapButton ().addChild (aState.m_eStep.isSecondLast () ? "Send Request" : "Next")
+                                             .setIcon (aState.m_eStep.isSecondLast () ? EDefaultIcon.YES
+                                                                                      : EDefaultIcon.NEXT)
                                              .setOnClick (aFunc));
       }
     }
