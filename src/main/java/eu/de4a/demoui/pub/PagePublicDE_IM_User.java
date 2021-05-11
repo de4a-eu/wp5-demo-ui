@@ -56,6 +56,8 @@ import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.AgentType;
 import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
+import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
+import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 
 public class PagePublicDE_IM_User extends AbstractAppWebPage
@@ -124,20 +126,23 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
 
   private static enum EProcessType implements IHasID <String>, IHasDisplayName
   {
-    HIGHER_EDUCATION_DIPLOMA ("t41uc1", "Higher Education Diploma (SA)", EDRSType.PERSON),
-    DBA ("t42", "Company Registration (DBA)", EDRSType.COMPANY);
+    HIGHER_EDUCATION_DIPLOMA ("t41uc1", "Higher Education Diploma (SA)", EDRSType.PERSON, ""),
+    DBA ("t42", "Company Registration (DBA)", EDRSType.COMPANY, "");
 
     private final String m_sID;
     private final String m_sDisplayName;
     private final EDRSType m_eDRSType;
+    private final String m_sCETID;
 
     EProcessType (@Nonnull @Nonempty final String sID,
                   @Nonnull @Nonempty final String sDisplayName,
-                  @Nonnull final EDRSType eDRSType)
+                  @Nonnull final EDRSType eDRSType,
+                  @Nonnull @Nonempty final String sCETID)
     {
       m_sID = sID;
       m_sDisplayName = sDisplayName;
       m_eDRSType = eDRSType;
+      m_sCETID = sCETID;
     }
 
     @Nonnull
@@ -158,6 +163,13 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     public EDRSType getDRSType ()
     {
       return m_eDRSType;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getCanonicalEvidenceTypeID ()
+    {
+      return m_sCETID;
     }
 
     @Nullable
@@ -196,6 +208,8 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
 
       if (m_eProcType == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_PROCESS);
+      if (_allDRSNull ())
+        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_REQUEST_SUBJECT);
     }
 
     public void moveBack ()
@@ -212,6 +226,16 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     public String getProcessID ()
     {
       return m_eProcType == null ? null : m_eProcType.getID ();
+    }
+
+    private boolean _allDRSNull ()
+    {
+      return m_sDRSCompanyID == null &&
+             m_sDRSCompanyName == null &&
+             m_sDRSPersonID == null &&
+             m_sDRSPersonFirstName == null &&
+             m_sDRSPersonFamilyName == null &&
+             m_aDRSPersonBirthday == null;
     }
 
     public void resetDRS ()
@@ -378,6 +402,13 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
             }
             aRequest.setDataRequestSubject (aDRS);
           }
+          {
+            final RequestGroundsType aRG = new RequestGroundsType ();
+            // TODO okay for now?
+            aRG.setExplicitRequest (ExplicitRequestType.SDGR_14);
+            aRequest.setRequestGrounds (aRG);
+          }
+          aRequest.setCanonicalEvidenceTypeId (aState.m_eProcType.getCanonicalEvidenceTypeID ());
           break;
         }
         default:
@@ -472,7 +503,7 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_NAME)));
             break;
           default:
-            aForm.addChild (error ("Unsupported DRS type " + aState.m_eProcType.getDRSType ()));
+            throw new IllegalStateException ();
         }
         break;
       }
