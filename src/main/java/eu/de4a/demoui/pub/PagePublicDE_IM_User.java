@@ -124,14 +124,19 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       return ordinal () == 0;
     }
 
-    public boolean isSecondLast ()
+    public boolean isNextSendRequest ()
     {
-      return ordinal () == values ().length - 2;
+      return ordinal () == SEND_REQUEST.ordinal () - 1;
     }
 
     public boolean isLast ()
     {
       return ordinal () == values ().length - 1;
+    }
+
+    public boolean wasRequestSent ()
+    {
+      return ordinal () >= SEND_REQUEST.ordinal ();
     }
 
     @Nullable
@@ -176,6 +181,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     // Consent to send this
     public RequestTransferEvidenceUSIIMDRType m_aRequest;
     public boolean m_bConfirmedToSend;
+    // Response received
+    public ResponseTransferEvidenceType m_aResponse;
 
     @Deprecated
     @UsedViaReflection
@@ -691,12 +698,16 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           final HttpPost aPost = new HttpPost (sTargetURL);
           aPost.setEntity (new ByteArrayEntity (aMP.apply (null).getAsBytes (aState.m_aRequest),
                                                 ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+          // Main POST
           final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+
           DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
           final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
                                                                           .read (aResponse);
           if (aResponseObj == null)
             throw new IOException ("Failed to parse response XML");
+
+          aState.m_aResponse = aResponseObj;
 
           if (aResponseObj.getErrorList () == null)
           {
@@ -716,10 +727,12 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           }
           else
           {
+            aForm.addChild (h2 ("The data could not be fetched from the Data Owner"));
             final HCUL aUL = new HCUL ();
             aResponseObj.getErrorList ()
                         .getError ()
                         .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+            aForm.addChild (aUL);
           }
         }
         catch (final IOException ex)
@@ -739,7 +752,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       final HCDiv aRow = aForm.addAndReturnChild (div ());
 
       {
-        if (aState.m_eStep.isFirst ())
+        if (aState.m_eStep.isFirst () || aState.m_eStep.wasRequestSent ())
         {
           // Disable and no-action
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setDisabled (true));
@@ -760,9 +773,9 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                          .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='next'></input>")
                          .submit ());
         aFunc._return (false);
-        aRow.addChild (new BootstrapButton ().addChild (aState.m_eStep.isSecondLast () ? "Send Request" : "Next")
-                                             .setIcon (aState.m_eStep.isSecondLast () ? EDefaultIcon.YES
-                                                                                      : EDefaultIcon.NEXT)
+        aRow.addChild (new BootstrapButton ().addChild (aState.m_eStep.isNextSendRequest () ? "Send Request" : "Next")
+                                             .setIcon (aState.m_eStep.isNextSendRequest () ? EDefaultIcon.YES
+                                                                                           : EDefaultIcon.NEXT)
                                              .setOnClick (aFunc));
       }
     }

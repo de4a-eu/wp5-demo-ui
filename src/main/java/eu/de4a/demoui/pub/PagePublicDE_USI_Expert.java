@@ -50,7 +50,6 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.CApp;
-import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.AckType;
 import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceUSIType;
@@ -58,7 +57,7 @@ import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_USI_Expert extends AbstractAppWebPage
+public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
 {
   private static final String FIELD_PAYLOAD = "payload";
 

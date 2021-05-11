@@ -136,11 +136,12 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
             }
             else
             {
+              aResNL.addChild (h2 ("The data could not be fetched from the Data Owner"));
               final HCUL aUL = new HCUL ();
               aResponseObj.getErrorList ()
                           .getError ()
                           .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-              aResNL.addChild (error (aUL));
+              aResNL.addChild (aUL);
             }
           }
           catch (final IOException ex)

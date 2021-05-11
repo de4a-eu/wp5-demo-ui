@@ -23,9 +23,7 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
-import eu.de4a.demoui.ui.AbstractAppWebPage;
-
-public class PagePublicDE_USI_User extends AbstractAppWebPage
+public class PagePublicDE_USI_User extends AbstractPageDE4ARequest
 {
   private static final String FIELD_PAYLOAD = "payload";
 
@@ -41,5 +39,6 @@ public class PagePublicDE_USI_User extends AbstractAppWebPage
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
 
     // TODO
+    aNodeList.addChild (info ("TODO"));
   }
 }
