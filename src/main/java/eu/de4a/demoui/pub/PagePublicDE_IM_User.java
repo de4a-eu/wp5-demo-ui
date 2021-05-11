@@ -16,6 +16,7 @@
 package eu.de4a.demoui.pub;
 
 import java.util.Locale;
+import java.util.UUID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
+import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
@@ -45,6 +47,11 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.scope.singleton.AbstractSessionSingleton;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
+import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
+import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
+import eu.de4a.iem.jaxb.common.types.AgentType;
+import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
+import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 
 public class PagePublicDE_IM_User extends AbstractAppWebPage
 {
@@ -52,11 +59,23 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
   private static final String PARAM_DIRECTION = "dir";
   private static final String FIELD_PROCESS = "process";
 
+  private static enum EDRSType
+  {
+    PERSON,
+    COMPANY;
+
+    public boolean allowsRepresentative ()
+    {
+      return this == COMPANY;
+    }
+  }
+
   private static enum EStep
   {
     // Order matters
     SELECT_PROCESS,
-    INPUT_DATA;
+    SELECT_DATA_OWNER,
+    SEND_REQUEST;
 
     public boolean isFirst ()
     {
@@ -87,16 +106,20 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
 
   private static enum EProcessType implements IHasID <String>, IHasDisplayName
   {
-    HIGHER_EDUCATION_DIPLOMA ("t41uc1", "Higher Education Diploma (SA)"),
-    DBA ("t42", "Company Registration (DBA)");
+    HIGHER_EDUCATION_DIPLOMA ("t41uc1", "Higher Education Diploma (SA)", EDRSType.PERSON),
+    DBA ("t42", "Company Registration (DBA)", EDRSType.COMPANY);
 
     private final String m_sID;
     private final String m_sDisplayName;
+    private final EDRSType m_eDRSType;
 
-    EProcessType (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
+    EProcessType (@Nonnull @Nonempty final String sID,
+                  @Nonnull @Nonempty final String sDisplayName,
+                  @Nonnull final EDRSType eDRSType)
     {
       m_sID = sID;
       m_sDisplayName = sDisplayName;
+      m_eDRSType = eDRSType;
     }
 
     @Nonnull
@@ -111,6 +134,12 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     public String getDisplayName ()
     {
       return m_sDisplayName;
+    }
+
+    @Nonnull
+    public EDRSType getDRSType ()
+    {
+      return m_eDRSType;
     }
 
     @Nullable
@@ -201,8 +230,63 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
             aState.m_eProcType = eProcess;
           }
           break;
-        case INPUT_DATA:
+        case SELECT_DATA_OWNER:
         {
+          break;
+        }
+        case SEND_REQUEST:
+        {
+          final RequestTransferEvidenceUSIIMDRType aRequest = new RequestTransferEvidenceUSIIMDRType ();
+          aRequest.setRequestId (UUID.randomUUID ().toString ());
+          // TODO
+          aRequest.setSpecificationId ("SpecificationId");
+          aRequest.setTimeStamp (PDTFactory.getCurrentXMLOffsetDateTimeMillisOnly ());
+          // TODO
+          aRequest.setProcedureId ("ProcedureId");
+          {
+            final AgentType aDE = new AgentType ();
+            // TODO
+            aDE.setAgentUrn ("urn:DemoUI");
+            aDE.setAgentName ("Demo UI Data Evaluator");
+            aRequest.setDataEvaluator (aDE);
+          }
+          {
+            final AgentType aDO = new AgentType ();
+            // TODO
+            aDO.setAgentUrn ("urn:DemoUI");
+            // TODO
+            aDO.setAgentName ("Demo UI Data Owner");
+            aRequest.setDataOwner (aDO);
+          }
+          {
+            final DataRequestSubjectCVType aDRS = new DataRequestSubjectCVType ();
+            switch (aState.m_eProcType.getDRSType ())
+            {
+              case PERSON:
+              {
+                // TODO
+                final NaturalPersonIdentifierType aPerson = new NaturalPersonIdentifierType ();
+                aPerson.setPersonIdentifier ("PID");
+                aPerson.setFirstName ("FirstName");
+                aPerson.setFamilyName ("FamilyName");
+                aPerson.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (42));
+                // Ignore the optional stuff
+                aDRS.setDataSubjectPerson (aPerson);
+                break;
+              }
+              case COMPANY:
+              {
+                // TODO
+                final LegalPersonIdentifierType aCompany = new LegalPersonIdentifierType ();
+                aCompany.setLegalPersonIdentifier ("NO/AT/12345");
+                aCompany.setLegalName ("Company name");
+                // Ignore the optional stuff
+                aDRS.setDataSubjectCompany (aCompany);
+                break;
+              }
+            }
+            aRequest.setDataRequestSubject (aDRS);
+          }
           break;
         }
         default:
@@ -212,7 +296,7 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
     // Change step now
     if (bGoBack && !aState.m_eStep.isFirst ())
     {
-      LOGGER.info ("One step back from " + aState.m_eStep);
+      LOGGER.info ("One step backwards from " + aState.m_eStep);
       aState.prevStep ();
     }
     else
@@ -243,18 +327,18 @@ public class PagePublicDE_IM_User extends AbstractAppWebPage
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_PROCESS)));
         break;
       }
-      case INPUT_DATA:
+      case SELECT_DATA_OWNER:
       {
-        switch (aState.m_eProcType)
+        switch (aState.m_eProcType.getDRSType ())
         {
-          case HIGHER_EDUCATION_DIPLOMA:
-            aForm.addChild (info ("input SA data now"));
+          case PERSON:
+            aForm.addChild (info ("input person data now"));
             break;
-          case DBA:
-            aForm.addChild (info ("input DBA data now"));
+          case COMPANY:
+            aForm.addChild (info ("input company data now"));
             break;
           default:
-            aForm.addChild (error ("Unsupported process " + aState.m_eProcType));
+            aForm.addChild (error ("Unsupported DRS type " + aState.m_eProcType.getDRSType ()));
         }
         break;
       }
