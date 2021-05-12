@@ -25,7 +25,7 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 public class PagePublicDE_USI_User extends AbstractPageDE4ARequest
 {
-  private static final String FIELD_PAYLOAD = "payload";
+  private static final EPatternType OUR_PATTERN = EPatternType.USI;
 
   public PagePublicDE_USI_User (@Nonnull @Nonempty final String sID)
   {
