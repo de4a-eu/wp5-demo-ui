@@ -91,7 +91,9 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
 {
+  private static final EPatternType OUR_PATTERN = EPatternType.IM;
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_User.class);
+
   private static final String PARAM_DIRECTION = "dir";
   // Select process
   private static final String FIELD_PROCESS = "process";
@@ -518,7 +520,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_PROCESS, aState.getProcessID ()));
         for (final EProcessType e : CollectionHelper.getSorted (EProcessType.values (),
                                                                 IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          aSelect.addOption (e.getID (), e.getDisplayName ());
+          if (e.getPatternType () == OUR_PATTERN)
+            aSelect.addOption (e.getID (), e.getDisplayName ());
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Process to use")
                                                      .setCtrl (aSelect)

@@ -46,6 +46,12 @@ import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 {
 
+  protected static enum EPatternType
+  {
+    IM,
+    USI;
+  }
+
   protected static enum EDRSType
   {
     PERSON,
@@ -56,25 +62,30 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   {
     HIGHER_EDUCATION_DIPLOMA ("t41uc1",
                               "Higher Education Diploma (SA)",
+                              EPatternType.USI,
                               EDRSType.PERSON,
                               "urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma"),
     COMPANY_REGISTRATION ("t42cr",
                           "Company Registration (DBA)",
+                          EPatternType.IM,
                           EDRSType.COMPANY,
                           "urn:de4a-eu:CanonicalEvidenceType::CompanyRegistration");
 
     private final String m_sID;
     private final String m_sDisplayName;
+    private final EPatternType m_ePatternType;
     private final EDRSType m_eDRSType;
     private final String m_sCETID;
 
     EProcessType (@Nonnull @Nonempty final String sID,
                   @Nonnull @Nonempty final String sDisplayName,
+                  @Nonnull final EPatternType ePatternType,
                   @Nonnull final EDRSType eDRSType,
                   @Nonnull @Nonempty final String sCETID)
     {
       m_sID = sID;
       m_sDisplayName = sDisplayName;
+      m_ePatternType = ePatternType;
       m_eDRSType = eDRSType;
       m_sCETID = sCETID;
     }
@@ -91,6 +102,12 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     public String getDisplayName ()
     {
       return m_sDisplayName;
+    }
+
+    @Nonnull
+    public EPatternType getPatternType ()
+    {
+      return m_ePatternType;
     }
 
     @Nonnull
