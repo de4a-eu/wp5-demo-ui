@@ -16,10 +16,10 @@
 package eu.de4a.demoui.ui;
 
 import java.util.Locale;
+import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
-import com.helger.commons.functional.IFunction;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.IHCNode;
 import com.helger.html.hc.html.metadata.HCHead;
@@ -42,9 +42,9 @@ import eu.de4a.demoui.AppHelper;
  */
 public class AppLayoutHTMLProvider extends AbstractSWECHTMLProvider
 {
-  private final IFunction <LayoutExecutionContext, IHCNode> m_aFactory;
+  private final Function <LayoutExecutionContext, IHCNode> m_aFactory;
 
-  public AppLayoutHTMLProvider (@Nonnull final IFunction <LayoutExecutionContext, IHCNode> aFactory)
+  public AppLayoutHTMLProvider (@Nonnull final Function <LayoutExecutionContext, IHCNode> aFactory)
   {
     m_aFactory = aFactory;
   }

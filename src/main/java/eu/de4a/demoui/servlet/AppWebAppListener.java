@@ -20,9 +20,11 @@ import javax.servlet.ServletContext;
 
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.vendor.VendorInfo;
 import com.helger.httpclient.HttpDebugger;
 import com.helger.photon.ajax.IAjaxRegistry;
+import com.helger.photon.api.IAPIRegistry;
 import com.helger.photon.bootstrap4.servlet.WebAppListenerBootstrap;
 import com.helger.photon.core.appid.CApplicationID;
 import com.helger.photon.core.appid.PhotonGlobalState;
@@ -33,8 +35,11 @@ import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppSecurity;
 import eu.de4a.demoui.CAjax;
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.api.DemoUIAPI;
 import eu.de4a.demoui.pub.MenuPublic;
 import eu.de4a.demoui.ui.AppCommonUI;
+import eu.de4a.kafkaclient.DE4AKafkaClient;
+import eu.de4a.kafkaclient.DE4AKafkaSettings;
 
 /**
  * This listener is invoked during the servlet initialization. This is basically
@@ -83,6 +88,10 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
     VendorInfo.setVendorEmail ("philip@helger.com");
     VendorInfo.setVendorLocation ("Vienna, Austria");
     VendorInfo.setInceptionYear (2021);
+
+    DE4AKafkaSettings.setKafkaEnabled (true);
+    DE4AKafkaSettings.setKafkaTopic ("wp5-demoui");
+    DE4AKafkaSettings.defaultProperties ().put ("bootstrap.servers", "de4a-dev-kafka.egovlab.eu:9092");
   }
 
   @Override
@@ -125,6 +134,21 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
   }
 
   @Override
-  protected void initManagers ()
-  {}
+  protected void initAPI (@Nonnull final IAPIRegistry aAPIRegistry)
+  {
+    DemoUIAPI.initAPI (aAPIRegistry);
+  }
+
+  @Override
+  protected void afterContextInitialized (final ServletContext aSC)
+  {
+    DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI started");
+  }
+
+  @Override
+  protected void beforeContextDestroyed (final ServletContext aSC)
+  {
+    DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI is shutting down");
+    DE4AKafkaClient.close ();
+  }
 }

@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.api;
 
 /**
- * Type of document
+ * Special exception if a parameter is invalid.
  *
  * @author Philip Helger
  */
-public enum EDemoDocumentType
+public class APIParamException extends RuntimeException
 {
-  REQUEST,
-  RESPONSE,
-  IDK_REQUEST,
-  IDK_RESPONSE
+  public APIParamException (final String sMsg)
+  {
+    super (sMsg);
+  }
 }

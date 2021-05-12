@@ -16,8 +16,8 @@
 package eu.de4a.demoui.pub;
 
 import java.awt.Color;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -40,6 +40,8 @@ import com.helger.commons.lang.GenericReflection;
 import com.helger.commons.locale.country.ECountry;
 import com.helger.commons.math.MathHelper;
 import com.helger.commons.name.IHasDisplayName;
+import com.helger.jaxb.validation.IValidationEventHandlerFactory;
+import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.pdflayout4.PDFCreationException;
 import com.helger.pdflayout4.PageLayoutPDF;
 import com.helger.pdflayout4.base.PLPageSet;
@@ -48,7 +50,7 @@ import com.helger.pdflayout4.spec.FontSpec;
 import com.helger.pdflayout4.spec.PreloadFont;
 import com.helger.xml.XMLFactory;
 
-import eu.de4a.iem.jaxb.common.idtypes.LegalEntityIdentifierType;
+import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.*;
 import eu.de4a.iem.jaxb.eidas.np.GenderType;
@@ -57,20 +59,32 @@ import eu.de4a.iem.xml.de4a.DE4AResponseDocumentHelper;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
 import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryObjectMimeCodeContentType;
 
+/**
+ * Available mock demo documents
+ *
+ * @author Philip Helger
+ */
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
-  DE_USI_REQ_DBA_V04 ("de-usi-req-dba-v04",
-                      "Request to DE (USI) - DBA v0.4",
+  DE_USI_REQ_T41_UC1_V2021_02_11 ("de-usi-req-t41-uc1-2021-02-11",
+                                  "Request to DE (USI) - SA UC1 2021-02-11",
+                                  "/de1/usi/forwardevidence",
+                                  EDemoDocumentType.REQUEST,
+                                  EDemoCE.T41_UC1_2021_02_11,
+                                  EDemoDocument::createDemoDE_USI,
+                                  DE4AMarshaller::deUsiRequestMarshaller),
+  DE_USI_REQ_T41_UC1_V2021_04_13 ("de-usi-req-t41-uc1-2021-04-13",
+                                  "Request to DE (USI) - SA UC1 2021-04-13",
+                                  "/de1/usi/forwardevidence",
+                                  EDemoDocumentType.REQUEST,
+                                  EDemoCE.T41_UC1_2021_04_13,
+                                  EDemoDocument::createDemoDE_USI,
+                                  DE4AMarshaller::deUsiRequestMarshaller),
+  DE_USI_REQ_T42_V06 ("de-usi-req-dba-v06",
+                      "Request to DE (USI) - DBA v0.6",
                       "/de1/usi/forwardevidence",
                       EDemoDocumentType.REQUEST,
-                      EDemoCE.T42_COMPANY_INFO_V04,
-                      EDemoDocument::createDemoDE_USI,
-                      DE4AMarshaller::deUsiRequestMarshaller),
-  DE_USI_REQ_DBA_V05 ("de-usi-req-dba-v05",
-                      "Request to DE (USI) - DBA v0.5",
-                      "/de1/usi/forwardevidence",
-                      EDemoDocumentType.REQUEST,
-                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoCE.T42_COMPANY_INFO_V06,
                       EDemoDocument::createDemoDE_USI,
                       DE4AMarshaller::deUsiRequestMarshaller),
   DE_USI_RESP ("de-usi-resp",
@@ -81,22 +95,29 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                DE4AMarshaller.deUsiResponseMarshaller ()),
   DR_IM_REQ ("dr-im-req",
              "Request to DR (IM)",
-             "/dr1/im/transferevidence",
+             "/requestTransferEvidenceIM",
              EDemoDocumentType.REQUEST,
              EDemoDocument::createDemoDR,
              DE4AMarshaller.drImRequestMarshaller ()),
-  DR_IM_RESP_DBA_V04 ("dr-im-resp-dba-v04",
-                      "Response from DR (IM) - DBA v0.4",
+  DR_IM_RESP_T41_UC1_V2021_02_11 ("dr-im-resp-t41-uc1-2021-02-11",
+                                  "Response from DR (IM) - SA UC1 2021-02-11",
+                                  null,
+                                  EDemoDocumentType.RESPONSE,
+                                  EDemoCE.T41_UC1_2021_02_11,
+                                  EDemoDocument::createResponseTransferEvidence,
+                                  DE4AMarshaller::drImResponseMarshaller),
+  DR_IM_RESP_T41_UC1_V2021_04_13 ("dr-im-resp-t41-uc1-2021-04-13",
+                                  "Response from DR (IM) - SA UC1 2021-04-13",
+                                  null,
+                                  EDemoDocumentType.RESPONSE,
+                                  EDemoCE.T41_UC1_2021_04_13,
+                                  EDemoDocument::createResponseTransferEvidence,
+                                  DE4AMarshaller::drImResponseMarshaller),
+  DR_IM_RESP_T42_V06 ("dr-im-resp-dba-v06",
+                      "Response from DR (IM) - DBA v0.6",
                       null,
                       EDemoDocumentType.RESPONSE,
-                      EDemoCE.T42_COMPANY_INFO_V04,
-                      EDemoDocument::createResponseTransferEvidence,
-                      DE4AMarshaller::drImResponseMarshaller),
-  DR_IM_RESP_DBA_V05 ("dr-im-resp-dba-v05",
-                      "Response from DR (IM) - DBA v0.5",
-                      null,
-                      EDemoDocumentType.RESPONSE,
-                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoCE.T42_COMPANY_INFO_V06,
                       EDemoDocument::createResponseTransferEvidence,
                       DE4AMarshaller::drImResponseMarshaller),
   DR_USI_REQ ("dr-usi-req",
@@ -111,18 +132,25 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.drUsiResponseMarshaller ()),
-  DT_USI_REQ_DBA_V04 ("dt-usi-req-dba-v04",
-                      "Request to DT (USI) - DBA v0.4",
+  DT_USI_REQ_T41_UC1_V2021_02_11 ("dt-usi-req-t41-uc1-2021-02-11",
+                                  "Request to DT (USI) - SA UC1 2021-02-11",
+                                  "/dt1/usi/transferevidence",
+                                  EDemoDocumentType.REQUEST,
+                                  EDemoCE.T41_UC1_2021_02_11,
+                                  EDemoDocument::createDemoDT_USI,
+                                  DE4AMarshaller::dtUsiRequestMarshaller),
+  DT_USI_REQ_T41_UC1_V2021_04_13 ("dt-usi-req-t41-uc1-2021-04-13",
+                                  "Request to DT (USI) - SA UC1 2021-04-13",
+                                  "/dt1/usi/transferevidence",
+                                  EDemoDocumentType.REQUEST,
+                                  EDemoCE.T41_UC1_2021_04_13,
+                                  EDemoDocument::createDemoDT_USI,
+                                  DE4AMarshaller::dtUsiRequestMarshaller),
+  DT_USI_REQ_T42_V06 ("dt-usi-req-dba-v06",
+                      "Request to DT (USI) - DBA v0.6",
                       "/dt1/usi/transferevidence",
                       EDemoDocumentType.REQUEST,
-                      EDemoCE.T42_COMPANY_INFO_V04,
-                      EDemoDocument::createDemoDT_USI,
-                      DE4AMarshaller::dtUsiRequestMarshaller),
-  DT_USI_REQ_DBA_V05 ("dt-usi-req-dba-v05",
-                      "Request to DT (USI) - DBA v0.5",
-                      "/dt1/usi/transferevidence",
-                      EDemoDocumentType.REQUEST,
-                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoCE.T42_COMPANY_INFO_V06,
                       EDemoDocument::createDemoDT_USI,
                       DE4AMarshaller::dtUsiRequestMarshaller),
   DT_USI_RESP ("dt-usi-resp",
@@ -133,22 +161,29 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                DE4AMarshaller.dtUsiResponseMarshaller ()),
   DO_IM_REQ ("do-im-req",
              "Request to DO (IM)",
-             "/do1/im/extractevidence",
+             "/requestExtractEvidenceIM",
              EDemoDocumentType.REQUEST,
              EDemoDocument::createDemoDO_IM,
              DE4AMarshaller.doImRequestMarshaller ()),
-  DO_IM_RESP_DBA_V04 ("do-im-resp-dba-v04",
-                      "Response from DO (IM) - DBA v0.4",
+  DO_IM_RESP_T41_UC1_V2021_02_11 ("do-im-resp-t41-uc1-2021-02-11",
+                                  "Response from DO (IM) - SA UC1 2021-02-11",
+                                  null,
+                                  EDemoDocumentType.RESPONSE,
+                                  EDemoCE.T41_UC1_2021_02_11,
+                                  EDemoDocument::createResponseExtractEvidence,
+                                  DE4AMarshaller::doImResponseMarshaller),
+  DO_IM_RESP_T41_UC1_V2021_04_13 ("do-im-resp-t41-uc1-2021-04-13",
+                                  "Response from DO (IM) - SA UC1 2021-04-13",
+                                  null,
+                                  EDemoDocumentType.RESPONSE,
+                                  EDemoCE.T41_UC1_2021_04_13,
+                                  EDemoDocument::createResponseExtractEvidence,
+                                  DE4AMarshaller::doImResponseMarshaller),
+  DO_IM_RESP_T42_V06 ("do-im-resp-dba-v06",
+                      "Response from DO (IM) - DBA v0.6",
                       null,
                       EDemoDocumentType.RESPONSE,
-                      EDemoCE.T42_COMPANY_INFO_V04,
-                      EDemoDocument::createResponseExtractEvidence,
-                      DE4AMarshaller::doImResponseMarshaller),
-  DO_IM_RESP_DBA_V05 ("do-im-resp-dba-v05",
-                      "Response from DO (IM) - DBA v0.5",
-                      null,
-                      EDemoDocumentType.RESPONSE,
-                      EDemoCE.T42_COMPANY_INFO_V05,
+                      EDemoCE.T42_COMPANY_INFO_V06,
                       EDemoDocument::createResponseExtractEvidence,
                       DE4AMarshaller::doImResponseMarshaller),
   DO_USI_REQ ("do-usi-req",
@@ -174,19 +209,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                                     null,
                                     EDemoDocumentType.IDK_RESPONSE,
                                     EDemoDocument::createIDKResponseLookupRoutingInformation,
-                                    DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ()),
-  IDK_LOOKUP_EVIDENCE_SERVICE_DATA_REQUEST ("idk-lesd-req",
-                                            "IDK evidence service data lookup request",
-                                            null,
-                                            EDemoDocumentType.IDK_REQUEST,
-                                            EDemoDocument::createIDKRequestLookupEvidenceServiceData,
-                                            DE4AMarshaller.idkRequestLookupEvidenceServiceDataMarshaller ()),
-  IDK_LOOKUP_EVIDENCE_SERVICE_DATA_RESPONSE ("idk-lesd-resp",
-                                             "IDK evidence service data lookup response",
-                                             null,
-                                             EDemoDocumentType.IDK_RESPONSE,
-                                             EDemoDocument::createIDKResponseLookupEvidenceServiceData,
-                                             DE4AMarshaller.idkResponseLookupEvidenceServiceDataMarshaller ());
+                                    DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ());
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -194,7 +217,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   private final EDemoDocumentType m_eDocType;
   private final Supplier <Object> m_aDemoRequestCreator;
   private final Function <Object, String> m_aToString;
-  private final BiConsumer <String, ErrorList> m_aReader;
+  private final DE4AMarshaller <Object> m_aMarshaller;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
                      @Nonnull @Nonempty final String sDisplayName,
@@ -226,7 +249,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
     final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_aToString = GenericReflection.uncheckedCast (aToString);
-    m_aReader = aMarshaller::readAndValidate;
+    m_aMarshaller = GenericReflection.uncheckedCast (aMarshaller);
   }
 
   @Nonnull
@@ -250,9 +273,23 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     return m_sRelativeURL;
   }
 
+  @Nonnull
   public EDemoDocumentType getDocumentType ()
   {
     return m_eDocType;
+  }
+
+  @Nonnull
+  public Object createDemoRequest ()
+  {
+    return m_aDemoRequestCreator.get ();
+  }
+
+  @Nonnull
+  public String getAnyMessageAsString (@Nonnull final Object aObj)
+  {
+    // Throws exception if the type does not match so be careful
+    return m_aToString.apply (aObj);
   }
 
   @Nonnull
@@ -265,8 +302,17 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   public IErrorList validateMessage (@Nonnull final String sMsg)
   {
     final ErrorList ret = new ErrorList ();
-    m_aReader.accept (sMsg, ret);
+    final IValidationEventHandlerFactory aOld = m_aMarshaller.getValidationEventHandlerFactory ();
+    m_aMarshaller.setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (ret));
+    m_aMarshaller.read (sMsg);
+    m_aMarshaller.setValidationEventHandlerFactory (aOld);
     return ret;
+  }
+
+  @Nonnull
+  public Object parseMessage (@Nonnull final String sMsg)
+  {
+    return m_aMarshaller.read (sMsg);
   }
 
   @Nullable
@@ -276,17 +322,17 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  private static AgentCVType _createAgent ()
+  private static AgentType _createAgent ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final AgentCVType ret = new AgentCVType ();
-    ret.setId ("ID-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setName ("Maxi Musterfrau " + MathHelper.abs (aTLR.nextInt ()));
+    final AgentType ret = new AgentType ();
+    ret.setAgentUrn ("Urn-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setAgentName ("Maxi Musterfrau " + MathHelper.abs (aTLR.nextInt ()));
     return ret;
   }
 
   @Nonnull
-  private static <T> T _random (@Nonnull final T [] a)
+  static <T> T random (@Nonnull final T [] a)
   {
     return a[ThreadLocalRandom.current ().nextInt (a.length)];
   }
@@ -296,22 +342,22 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final NaturalPersonIdentifierType ret = new NaturalPersonIdentifierType ();
-    ret.setIdentifier ("ID-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setGivenName ("GivenName-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setPersonIdentifier ("ID-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setFirstName ("FirstName-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setFamilyName ("FamilyName-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (50)));
-    ret.setGender (_random (GenderType.values ()));
+    ret.setGender (random (GenderType.values ()));
     // Ignore the optional stuff
     return ret;
   }
 
   @Nonnull
-  private static LegalEntityIdentifierType _createLP ()
+  private static LegalPersonIdentifierType _createLP ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final LegalEntityIdentifierType ret = new LegalEntityIdentifierType ();
-    ret.setLegalEntityIdentifier ("LEI-ID-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setLegalEntityName ("LEI_NAME-" + MathHelper.abs (aTLR.nextInt ()));
+    final LegalPersonIdentifierType ret = new LegalPersonIdentifierType ();
+    ret.setLegalPersonIdentifier ("LPI-ID-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setLegalName ("LegalName-" + MathHelper.abs (aTLR.nextInt ()));
     // Ignore the optional stuff
     return ret;
   }
@@ -340,17 +386,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     if (aTLR.nextBoolean ())
       ret.setLawELIPermanentLink ("https://example.org/article/" + MathHelper.abs (aTLR.nextInt ()));
     else
-      ret.setExplicitRequest (_random (ExplicitRequestType.values ()));
-    return ret;
-  }
-
-  @Nonnull
-  private static EvidenceServiceDataType _createEvidenceServiceData ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final EvidenceServiceDataType ret = new EvidenceServiceDataType ();
-    ret.setEvidenceServiceURI ("https://myevidenceprovider.example.org/service/" + MathHelper.abs (aTLR.nextInt ()));
-    // Ignore the optional stuff
+      ret.setExplicitRequest (random (ExplicitRequestType.values ()));
     return ret;
   }
 
@@ -359,7 +395,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestExtractEvidenceIMType ret = new RequestExtractEvidenceIMType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -367,8 +403,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     ret.setDataOwner (_createAgent ());
     ret.setDataRequestSubject (_createDRS ());
     ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setEvidenceServiceData (_createEvidenceServiceData ());
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     return ret;
   }
 
@@ -377,7 +412,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestExtractEvidenceUSIType ret = new RequestExtractEvidenceUSIType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -385,9 +420,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     ret.setDataOwner (_createAgent ());
     ret.setDataRequestSubject (_createDRS ());
     ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setEvidenceServiceData (_createEvidenceServiceData ());
-    ret.setReturnServiceId ("ReturnService-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     return ret;
   }
 
@@ -396,7 +429,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestTransferEvidenceUSIIMDRType ret = new RequestTransferEvidenceUSIIMDRType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
@@ -404,9 +437,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     ret.setDataOwner (_createAgent ());
     ret.setDataRequestSubject (_createDRS ());
     ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setEvidenceServiceData (_createEvidenceServiceData ());
-    ret.setReturnServiceId ("ReturnService-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     return ret;
   }
 
@@ -417,7 +448,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
       final FontSpec r16 = new FontSpec (PreloadFont.REGULAR, 16);
       final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
 
-      aPS1.addElement (new PLText ("Dummy DE4A " + sWhat + " - Current time: " + PDTFactory.getCurrentLocalDateTime ().toString (),
+      aPS1.addElement (new PLText ("Dummy DE4A " +
+                                   sWhat +
+                                   " - Current time: " +
+                                   PDTFactory.getCurrentLocalDateTime ().toString (),
                                    r16).setBorder (Color.BLUE));
 
       final PageLayoutPDF aPageLayout = new PageLayoutPDF ().setCompressPDF (true);
@@ -443,16 +477,6 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  private static PreviewResponseType _createPreviewResponse ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final PreviewResponseType ret = new PreviewResponseType ();
-    // Lax
-    ret.setAny (_createAny (_createPDF ("Preview-" + MathHelper.abs (aTLR.nextInt ()))));
-    return ret;
-  }
-
-  @Nonnull
   private static CanonicalEvidenceType _createCanonicalEvidence (@Nonnull final Element aCanonicalEvidence)
   {
     final CanonicalEvidenceType ret = new CanonicalEvidenceType ();
@@ -465,8 +489,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   private static DomesticEvidenceType _createDomesticEvidence ()
   {
     final DomesticEvidenceType ret = new DomesticEvidenceType ();
-    ret.setIssuingType (_random (IssuingTypeType.values ()));
-    ret.setMimeType (_random (BinaryObjectMimeCodeContentType.values ()));
+    ret.setIssuingType (random (IssuingTypeType.values ()));
+    ret.setMimeType (random (BinaryObjectMimeCodeContentType.values ()));
     ret.setDataLanguage ("en");
     ret.setEvidenceData (_createPDF ("DomesticEvidence"));
     return ret;
@@ -486,11 +510,9 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   @Nonnull
   public static RequestForwardEvidenceType createDemoDE_USI (@Nonnull final Element aCanonicalEvidence)
   {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestForwardEvidenceType ret = new RequestForwardEvidenceType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
-    ret.setPreviewResponse (_createPreviewResponse ());
     ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
     ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
     return ret;
@@ -501,14 +523,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestTransferEvidenceUSIDTType ret = new RequestTransferEvidenceUSIDTType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.setDataRequestSubject (_createDRS ());
-    ret.setPreviewResponse (_createPreviewResponse ());
     ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
     ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
     return ret;
@@ -520,9 +541,11 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ErrorListType ret = new ErrorListType ();
     // Max length 10
-    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something went wrong"));
+    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000),
+                                                          "Ooops - something went wrong"));
     if (aTLR.nextBoolean ())
-      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something else also went wrong"));
+      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000),
+                                                            "Ooops - something else also went wrong"));
     return ret;
   }
 
@@ -548,14 +571,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseTransferEvidenceType ret = new ResponseTransferEvidenceType ();
-    ret.setRequestId ("Request-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.setDataRequestSubject (_createDRS ());
-    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     if (aTLR.nextBoolean ())
     {
       ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
@@ -588,53 +611,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestLookupRoutingInformationType ret = new RequestLookupRoutingInformationType ();
-    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
-    return ret;
-  }
-
-  @Nonnull
-  private static IaOrganisationalStructureType _createOrganisationalStructure ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ElementType e = new ElementType ();
-    e.setAtuLevel (_random (AtuLevelType.values ()));
-    e.setAtuPath ("Path-" + MathHelper.abs (aTLR.nextInt ()));
-    e.setAtuCode ("Code-" + MathHelper.abs (aTLR.nextInt ()));
-    e.setAtuName ("Name-" + MathHelper.abs (aTLR.nextInt ()));
-    e.setAtuLatinName ("LatinName-" + MathHelper.abs (aTLR.nextInt ()));
-
-    final IaOrganisationalStructureType ret = new IaOrganisationalStructureType ();
-    ret.setElement (e);
-    return ret;
-  }
-
-  @Nonnull
-  private static IssuingAuthorityType _createIssuingAuthority ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final IssuingAuthorityType ret = new IssuingAuthorityType ();
-    ret.setEvidenceTypeId (_random (EvidenceTypeIdType.values ()));
-    ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
-    ret.setIaLevelPath ("IaLevel-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setIaTotalNum (aTLR.nextInt (101));
-    ret.setIaOrganisationalStructure (_createOrganisationalStructure ());
-    return ret;
-  }
-
-  @Nonnull
-  public static DataOwnerType _createDataOwner ()
-  {
-    final DataOwnerType ret = new DataOwnerType ();
-    ret.setAgent (_createAgent ());
-    return ret;
-  }
-
-  @Nonnull
-  public static DataTransferorType _createDataTransferor ()
-  {
-    final DataTransferorType ret = new DataTransferorType ();
-    ret.setAgent (_createAgent ());
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCountryCode (random (ECountry.values ()).getISOCountryCode ());
     return ret;
   }
 
@@ -669,7 +647,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     if (aTLR.nextBoolean ())
       ret.setItemType ("ItemType-" + MathHelper.abs (aTLR.nextInt ()));
     if (aTLR.nextBoolean ())
-      ret.setDataType (_random (DataTypeType.values ()));
+      ret.setDataType (random (DataTypeType.values ()));
     if (aTLR.nextBoolean ())
       ret.setConstraints ("Constraints-" + MathHelper.abs (aTLR.nextInt ()));
     if (aTLR.nextBoolean ())
@@ -697,21 +675,30 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     final InputParameterSetsType ret = new InputParameterSetsType ();
     ret.setSerialNumber (aTLR.nextInt (1, 101));
     ret.setTitle ("Title-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setRecordMatchingAssurance (_random (RecordMatchingAssuranceType.values ()));
+    ret.setRecordMatchingAssurance (random (RecordMatchingAssuranceType.values ()));
     ret.setParameters (_createParameters ());
     return ret;
   }
 
   @Nonnull
-  public static EvidenceServiceType _createEvidenceService ()
+  public static SourceType _createSource ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final EvidenceServiceType ret = new EvidenceServiceType ();
-    ret.setService ("Service-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setCanonicalEvidenceType ("CanonEvidenceType-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataOwner (_createDataOwner ());
-    ret.setDataTransferor (_createDataTransferor ());
-    ret.setInputParameterSets (_createInputParameterSets ());
+    final SourceType ret = new SourceType ();
+    ret.setCountryCode (random (ECountry.values ()).getISOCountryCode ());
+    ret.setAtuLevel (random (AtuLevelType.values ()));
+    ret.setNumProvisions (Integer.valueOf (aTLR.nextInt (10_000)));
+    return ret;
+  }
+
+  @Nonnull
+  public static AvailableSourcesType _createAvaliableSources ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final AvailableSourcesType ret = new AvailableSourcesType ();
+    ret.addSource (_createSource ());
+    if (aTLR.nextBoolean ())
+      ret.addSource (_createSource ());
     return ret;
   }
 
@@ -720,41 +707,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseLookupRoutingInformationType ret = new ResponseLookupRoutingInformationType ();
-    switch (aTLR.nextInt (3))
-    {
-      case 0:
-        ret.setIssuingAuthority (_createIssuingAuthority ());
-        break;
-      case 1:
-        ret.setEvidenceService (_createEvidenceService ());
-        break;
-      case 2:
-        ret.setErrorList (_createErrorList ());
-        break;
-    }
-    return ret;
-  }
-
-  @Nonnull
-  public static RequestLookupEvidenceServiceDataType createIDKRequestLookupEvidenceServiceData ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestLookupEvidenceServiceDataType ret = new RequestLookupEvidenceServiceDataType ();
-    ret.setCanonicalEvidenceId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setCountryCode (_random (ECountry.values ()).getISOCountryCode ());
-    ret.setAdminTerritorialUnit ("ATU-" + MathHelper.abs (aTLR.nextInt ()));
-    return ret;
-  }
-
-  @Nonnull
-  public static ResponseLookupEvidenceServiceDataType createIDKResponseLookupEvidenceServiceData ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ResponseLookupEvidenceServiceDataType ret = new ResponseLookupEvidenceServiceDataType ();
     switch (aTLR.nextInt (2))
     {
       case 0:
-        ret.setEvidenceService (_createEvidenceService ());
+        ret.setAvailableSources (_createAvaliableSources ());
         break;
       case 1:
         ret.setErrorList (_createErrorList ());

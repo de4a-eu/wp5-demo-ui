@@ -69,35 +69,35 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.helger</groupId>
+        <groupId>com.helger.commons</groupId>
         <artifactId>ph-commons-parent-pom</artifactId>
-        <version>9.5.4</version>
+        <version>10.1.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.helger.web</groupId>
         <artifactId>ph-web-parent-pom</artifactId>
-        <version>9.5.2</version>
+        <version>9.6.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.helger.photon</groupId>
         <artifactId>ph-oton-parent-pom</artifactId>
-        <version>8.2.9</version>
+        <version>8.3.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.helger</groupId>
         <artifactId>ph-pdf-layout4</artifactId>
-        <version>5.1.2</version>
+        <version>5.2.1</version>
       </dependency>
       <dependency>
         <groupId>eu.de4a</groupId>
         <artifactId>de4a-commons-parent-pom</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.1.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -106,11 +106,11 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.helger</groupId>
+      <groupId>com.helger.commons</groupId>
       <artifactId>ph-commons</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.helger</groupId>
+      <groupId>com.helger.commons</groupId>
       <artifactId>ph-config</artifactId>
     </dependency>
     <dependency>
@@ -125,6 +125,14 @@
     <dependency>
       <groupId>eu.de4a</groupId>
       <artifactId>de4a-iem</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.de4a</groupId>
+      <artifactId>de4a-kafka-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.xml.bind</groupId>
+      <artifactId>jaxb-impl</artifactId>
     </dependency>
 
     <dependency>
@@ -194,7 +202,7 @@
       <plugin>
         <groupId>com.helger.maven</groupId>
         <artifactId>ph-csscompress-maven-plugin</artifactId>
-        <version>6.2.3</version><!--$NO-MVN-MAN-VER$-->
+        <version>6.3.1</version><!--$NO-MVN-MAN-VER$-->
         <executions>
           <execution>
             <goals>
