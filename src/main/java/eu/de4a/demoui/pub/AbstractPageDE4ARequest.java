@@ -15,13 +15,18 @@
  */
 package eu.de4a.demoui.pub;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.EnumSet;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.builder.IBuilder;
+import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
@@ -32,6 +37,7 @@ import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.html.textlevel.HCA;
 import com.helger.html.hc.html.textlevel.HCCode;
 import com.helger.html.hc.html.textlevel.HCEM;
+import com.helger.html.hc.impl.HCTextNode;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.form.BootstrapViewForm;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
@@ -130,6 +136,176 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
+  protected static class MDSCompany
+  {
+    private final String m_sID;
+    private final String m_sName;
+
+    public MDSCompany (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sName)
+    {
+      ValueEnforcer.notEmpty (sID, "ID");
+      ValueEnforcer.notEmpty (sName, "Name");
+      m_sID = sID;
+      m_sName = sName;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getID ()
+    {
+      return m_sID;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getName ()
+    {
+      return m_sName;
+    }
+
+    @Nonnull
+    public static MDSCompany.Builder builder ()
+    {
+      return new MDSCompany.Builder ();
+    }
+
+    public static class Builder implements IBuilder <MDSCompany>
+    {
+      private String m_sID;
+      private String m_sName;
+
+      public Builder ()
+      {}
+
+      @Nonnull
+      public Builder id (@Nullable final String s)
+      {
+        m_sID = s;
+        return this;
+      }
+
+      @Nonnull
+      public Builder name (@Nullable final String s)
+      {
+        m_sName = s;
+        return this;
+      }
+
+      @Nonnull
+      public MDSCompany build ()
+      {
+        return new MDSCompany (m_sID, m_sName);
+      }
+    }
+  }
+
+  protected static class MDSPerson
+  {
+    private final String m_sID;
+    private final String m_sFirstName;
+    private final String m_sFamilyName;
+    private final LocalDate m_aBirthday;
+
+    public MDSPerson (@Nonnull @Nonempty final String sID,
+                      @Nonnull @Nonempty final String sFirstName,
+                      @Nonnull @Nonempty final String sFamilyName,
+                      @Nonnull final LocalDate aBirthday)
+    {
+      ValueEnforcer.notEmpty (sID, "ID");
+      ValueEnforcer.notEmpty (sFirstName, "FirstName");
+      ValueEnforcer.notEmpty (sFamilyName, "FamilyName");
+      ValueEnforcer.notNull (aBirthday, "Birthday");
+      m_sID = sID;
+      m_sFirstName = sFirstName;
+      m_sFamilyName = sFamilyName;
+      m_aBirthday = aBirthday;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getID ()
+    {
+      return m_sID;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getFirstName ()
+    {
+      return m_sFirstName;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getFamilyName ()
+    {
+      return m_sFamilyName;
+    }
+
+    @Nonnull
+    public LocalDate getBirthday ()
+    {
+      return m_aBirthday;
+    }
+
+    @Nonnull
+    public static MDSPerson.Builder builder ()
+    {
+      return new MDSPerson.Builder ();
+    }
+
+    public static class Builder implements IBuilder <MDSPerson>
+    {
+      private String m_sID;
+      private String m_sFirstName;
+      private String m_sFamilyName;
+      private LocalDate m_aBirthday;
+
+      public Builder ()
+      {}
+
+      @Nonnull
+      public Builder id (@Nullable final String s)
+      {
+        m_sID = s;
+        return this;
+      }
+
+      @Nonnull
+      public Builder firstName (@Nullable final String s)
+      {
+        m_sFirstName = s;
+        return this;
+      }
+
+      @Nonnull
+      public Builder familyName (@Nullable final String s)
+      {
+        m_sFamilyName = s;
+        return this;
+      }
+
+      @Nonnull
+      public Builder birthday (final int y, final int m, final int d)
+      {
+        return birthday (PDTFactory.createLocalDate (y, Month.of (m), d));
+      }
+
+      @Nonnull
+      public Builder birthday (@Nullable final LocalDate a)
+      {
+        m_aBirthday = a;
+        return this;
+      }
+
+      @Nonnull
+      public MDSPerson build ()
+      {
+        return new MDSPerson (m_sID, m_sFirstName, m_sFamilyName, m_aBirthday);
+      }
+    }
+  }
+
   protected static enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   {
     ES ("iso6523-actorid-upis::9999:esq6250003h",
@@ -149,7 +325,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
          EProcessType.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
     AT ("iso6523-actorid-upis::9999:at000000271",
-        "(BMDW) Bundesministerium Fuer Digitalisierung Und Wirtschaftsstandort",
+        "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
         EProcessType.COMPANY_REGISTRATION,
         "AT"),
     SE ("iso6523-actorid-upis::9999:se000000013",
@@ -220,55 +396,71 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
         "(MPTFP-SGAD) Secretaría General de Administración Digital",
         EProcessType.HIGHER_EDUCATION_DIPLOMA,
         "ES",
-        "53377873W"),
+        MDSPerson.builder ()
+                 .id ("53377873W")
+                 .firstName ("Francisco José")
+                 .familyName ("Aragó Monzonís")
+                 .birthday (1984, 7, 24)
+                 .build (),
+        null),
     PT ("iso6523-actorid-upis::9999:pt990000101",
         "Portuguese IST, University of Lisbon",
         EProcessType.HIGHER_EDUCATION_DIPLOMA,
         "PT",
-        "123456"),
+        MDSPerson.builder ().id ("123456789").firstName ("Alicea").familyName ("Alves").birthday (1997, 1, 1).build (),
+        null),
     SI ("iso6523-actorid-upis::9999:si000000016",
         "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
         EProcessType.HIGHER_EDUCATION_DIPLOMA,
         "SI",
-        "123456789"),
+        MDSPerson.builder ().id ("123456").firstName ("Marjeta").familyName ("Maček").birthday (1999, 9, 16).build (),
+        null),
     AT ("iso6523-actorid-upis::9999:at000000271",
-        "(BMDW) Bundesministerium Fuer Digitalisierung Und Wirtschaftsstandort",
+        "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
         EProcessType.COMPANY_REGISTRATION,
         "AT",
-        "???"),
+        null,
+        MDSCompany.builder ().id ("???").name ("Carl-Markus Piswanger e.U.").build ()),
     SE ("iso6523-actorid-upis::9999:se000000013",
         "(BVE) BOLAGSVERKET (Companies Registration Office)",
         EProcessType.COMPANY_REGISTRATION,
         "SE",
-        "5591674170"),
+        null,
+        MDSCompany.builder ().id ("5591674170").name ("Företag Ett AB").build ()),
     RO ("iso6523-actorid-upis::9999:ro000000006",
         "(ORNC) Oficiul National B22 Al Registrului Comertului",
         EProcessType.COMPANY_REGISTRATION,
         "RO",
-        "J40/12487/1998"),
+        null,
+        MDSCompany.builder ().id ("J40/12487/1998").name ("Regional Tris-ice Coöperatie").build ()),
     NL ("iso6523-actorid-upis::9999:nl990000106",
         "(KVK) Chamber of Commerce of Netherlands",
         EProcessType.COMPANY_REGISTRATION,
         "NL",
-        "90000471");
+        null,
+        MDSCompany.builder ().id ("90000471").name ("ELVILA SA").build ());
 
     private final String m_sParticipantID;
     private final String m_sDisplayName;
     private final EnumSet <EProcessType> m_aProcesses = EnumSet.noneOf (EProcessType.class);
     private final String m_sCountryCode;
-    private final String m_sEntityID;
+    private final MDSPerson m_aPerson;
+    private final MDSCompany m_aCompany;
 
     EMockDataOwner (@Nonnull @Nonempty final String sParticipantID,
                     @Nonnull @Nonempty final String sDisplayName,
                     @Nonnull final EProcessType eProcess,
                     @Nonnull @Nonempty final String sCountryCode,
-                    @Nonnull @Nonempty final String sEntityID)
+                    @Nullable final MDSPerson aPerson,
+                    @Nullable final MDSCompany aCompany)
     {
       m_sParticipantID = sParticipantID;
       m_sDisplayName = sDisplayName;
       m_aProcesses.add (eProcess);
       m_sCountryCode = sCountryCode;
-      m_sEntityID = sEntityID;
+      // Either or must be set
+      m_aPerson = aPerson;
+      m_aCompany = aCompany;
     }
 
     @Nonnull
@@ -297,11 +489,16 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
       return m_sCountryCode;
     }
 
-    @Nonnull
-    @Nonempty
-    public String getEntityID ()
+    @Nullable
+    public MDSPerson getMDSPerson ()
     {
-      return m_sEntityID;
+      return m_aPerson;
+    }
+
+    @Nullable
+    public MDSCompany getMDSCompany ()
+    {
+      return m_aCompany;
     }
 
     @Nullable
@@ -317,21 +514,27 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _get (@Nullable final String s)
+  protected static IHCNode _code (@Nullable final String s)
   {
     return StringHelper.hasNoText (s) ? new HCEM ().addChild ("none") : new HCCode ().addChild (s);
+  }
+
+  @Nonnull
+  protected static IHCNode _text (@Nullable final String s)
+  {
+    return StringHelper.hasNoText (s) ? new HCEM ().addChild ("none") : new HCTextNode (s);
   }
 
   @Nonnull
   protected static IHCNode _createAgent (@Nullable final AgentType aAgent)
   {
     if (aAgent == null)
-      return _get (null);
+      return _text (null);
 
     final BootstrapTable aTable = new BootstrapTable (HCCol.fromString ("120"), HCCol.star ());
     aTable.addHeaderRow ().addCell ("Field").addCell ("Value");
-    aTable.addBodyRow ().addCell ("URN:").addCell (_get (aAgent.getAgentUrn ()));
-    aTable.addBodyRow ().addCell ("Name:").addCell (_get (aAgent.getAgentNameValue ()));
+    aTable.addBodyRow ().addCell ("Participant ID:").addCell (_code (aAgent.getAgentUrn ()));
+    aTable.addBodyRow ().addCell ("Name:").addCell (_text (aAgent.getAgentNameValue ()));
     if (StringHelper.hasText (aAgent.getRedirectURL ()))
       aTable.addBodyRow ().addCell ("Redirect URL:").addCell (HCA.createLinkedWebsite (aAgent.getRedirectURL ()));
     return aTable;
@@ -341,22 +544,22 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   protected static IHCNode _createDRS (final DataRequestSubjectCVType aDRS)
   {
     if (aDRS == null)
-      return _get (null);
+      return _text (null);
 
     final BootstrapTable aTable = new BootstrapTable (HCCol.fromString ("120"), HCCol.star ());
     aTable.addHeaderRow ().addCell ("Field").addCell ("Value");
 
     if (aDRS.getDataSubjectPerson () != null)
     {
-      aTable.addBodyRow ().addCell ("Natural Person").addCell (_get ("todo"));
+      aTable.addBodyRow ().addCell ("Natural Person").addCell (_text ("todo"));
     }
     if (aDRS.getDataSubjectCompany () != null)
     {
-      aTable.addBodyRow ().addCell ("Company").addCell (_get ("todo"));
+      aTable.addBodyRow ().addCell ("Company").addCell (_text ("todo"));
     }
     if (aDRS.getDataSubjectRepresentative () != null)
     {
-      aTable.addBodyRow ().addCell ("Representative").addCell (_get ("todo"));
+      aTable.addBodyRow ().addCell ("Representative").addCell (_text ("todo"));
     }
     return aTable;
   }
@@ -370,14 +573,14 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     final BootstrapViewForm aTable = new BootstrapViewForm ();
     aTable.setSplitting (BootstrapGridSpec.create (-1, -1, -1, 2, 2), BootstrapGridSpec.create (-1, -1, -1, 10, 10));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID")
-                                                  .setCtrl (_get (aResponseObj.getRequestId ())));
+                                                  .setCtrl (_code (aResponseObj.getRequestId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID")
-                                                  .setCtrl (_get (aResponseObj.getSpecificationId ())));
+                                                  .setCtrl (_code (aResponseObj.getSpecificationId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Time stamp")
-                                                  .setCtrl (_get (PDTToString.getAsString (aResponseObj.getTimeStamp (),
-                                                                                           aDisplayLocale))));
+                                                  .setCtrl (_text (PDTToString.getAsString (aResponseObj.getTimeStamp (),
+                                                                                            aDisplayLocale))));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID")
-                                                  .setCtrl (_get (aResponseObj.getProcedureId ())));
+                                                  .setCtrl (_code (aResponseObj.getProcedureId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
                                                   .setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
@@ -385,19 +588,20 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
                                                   .setCtrl (_createDRS (aResponseObj.getDataRequestSubject ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
-                                                  .setCtrl (_get (aResponseObj.getCanonicalEvidenceTypeId ())));
+                                                  .setCtrl (_code (aResponseObj.getCanonicalEvidenceTypeId ())));
     if (aResponseObj.getCanonicalEvidence () != null)
     {
+      // TODO
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
-                                                    .setCtrl (_get ("present, but not shown yet")));
+                                                    .setCtrl (_text ("present, but not shown yet")));
     }
     if (aResponseObj.getDomesticEvidenceList () != null &&
         aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
     {
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
-                                                    .setCtrl (_get (aResponseObj.getDomesticEvidenceList ()
-                                                                                .getDomesticEvidenceCount () +
-                                                                    " present, but not shown yet")));
+                                                    .setCtrl (_text (aResponseObj.getDomesticEvidenceList ()
+                                                                                 .getDomesticEvidenceCount () +
+                                                                     " present, but not shown yet")));
     }
     return aTable;
   }

@@ -18,7 +18,6 @@ package eu.de4a.demoui.pub;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Function;
@@ -70,6 +69,7 @@ import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePick
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.core.form.RequestFieldBoolean;
+import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
@@ -141,6 +141,16 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       return ordinal () >= SEND_REQUEST.ordinal ();
     }
 
+    public boolean isLT (@Nonnull final EStep eOther)
+    {
+      return ordinal () < eOther.ordinal ();
+    }
+
+    public boolean isGT (@Nonnull final EStep eOther)
+    {
+      return ordinal () > eOther.ordinal ();
+    }
+
     @Nullable
     public EStep prev ()
     {
@@ -158,6 +168,12 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     }
 
     @Nonnull
+    public static EStep first ()
+    {
+      return values ()[0];
+    }
+
+    @Nonnull
     public static EStep min (@Nonnull final EStep e1, @Nonnull final EStep e2)
     {
       return e1.ordinal () < e2.ordinal () ? e1 : e2;
@@ -166,7 +182,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
 
   public static final class SessionState extends AbstractSessionSingleton
   {
-    private EStep m_eStep = EStep.SELECT_PROCESS;
+    private EStep m_eStep = EStep.first ();
     // Process
     private EProcessType m_eProcType;
     // DE
@@ -174,12 +190,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     // DO
     private EMockDataOwner m_eDO;
     // DRS
-    private String m_sDRSCompanyID;
-    private String m_sDRSCompanyName;
-    private String m_sDRSPersonID;
-    private String m_sDRSPersonFirstName;
-    private String m_sDRSPersonFamilyName;
-    private LocalDate m_aDRSPersonBirthday;
+    private MDSCompany m_aDRSCompany;
+    private MDSPerson m_aDRSPerson;
     // Consent to send this
     public RequestTransferEvidenceUSIIMDRType m_aRequest;
     public boolean m_bConfirmedToSend;
@@ -214,14 +226,41 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         m_eStep = EStep.min (m_eStep, EStep.EXPLICIT_CONSENT);
     }
 
+    private void _onBack ()
+    {
+      if (m_eStep.isLT (EStep.SELECT_PROCESS))
+        m_eProcType = null;
+      if (m_eStep.isLT (EStep.SELECT_DATA_EVALUATOR))
+        m_eDE = null;
+      if (m_eStep.isLT (EStep.SELECT_DATA_OWNER))
+        m_eDO = null;
+      if (m_eStep.isLT (EStep.SELECT_DATA_REQUEST_SUBJECT))
+        resetDRS ();
+      if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
+      {
+        m_aRequest = null;
+        m_bConfirmedToSend = false;
+      }
+    }
+
     public void moveBack ()
     {
       m_eStep = m_eStep.prev ();
+      _onBack ();
     }
 
     public void moveForward ()
     {
       m_eStep = m_eStep.next ();
+    }
+
+    /**
+     * Restart the whole wizard to the start state
+     */
+    public void reset ()
+    {
+      m_eStep = EStep.first ();
+      _onBack ();
     }
 
     @Nullable
@@ -244,28 +283,19 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
 
     private boolean _allDRSNull ()
     {
-      return m_sDRSCompanyID == null &&
-             m_sDRSCompanyName == null &&
-             m_sDRSPersonID == null &&
-             m_sDRSPersonFirstName == null &&
-             m_sDRSPersonFamilyName == null &&
-             m_aDRSPersonBirthday == null;
+      return m_aDRSCompany == null && m_aDRSPerson == null;
     }
 
     public void resetDRS ()
     {
-      m_sDRSCompanyID = null;
-      m_sDRSCompanyName = null;
-      m_sDRSPersonID = null;
-      m_sDRSPersonFirstName = null;
-      m_sDRSPersonFamilyName = null;
-      m_aDRSPersonBirthday = null;
+      m_aDRSCompany = null;
+      m_aDRSPerson = null;
     }
 
     @Nullable
     public LocalDate getBirthDayOr (@Nullable final LocalDate aFallbackDate)
     {
-      return m_aDRSPersonBirthday != null ? m_aDRSPersonBirthday : aFallbackDate;
+      return m_aDRSPerson != null ? m_aDRSPerson.getBirthday () : aFallbackDate;
     }
 
     @Nonnull
@@ -297,10 +327,10 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           case PERSON:
           {
             final NaturalPersonIdentifierType aPerson = new NaturalPersonIdentifierType ();
-            aPerson.setPersonIdentifier (m_sDRSPersonID);
-            aPerson.setFirstName (m_sDRSPersonFirstName);
-            aPerson.setFamilyName (m_sDRSPersonFamilyName);
-            aPerson.setDateOfBirth (m_aDRSPersonBirthday);
+            aPerson.setPersonIdentifier (m_aDRSPerson.getID ());
+            aPerson.setFirstName (m_aDRSPerson.getFirstName ());
+            aPerson.setFamilyName (m_aDRSPerson.getFamilyName ());
+            aPerson.setDateOfBirth (m_aDRSPerson.getBirthday ());
             // Ignore the optional stuff
             aDRS.setDataSubjectPerson (aPerson);
             break;
@@ -308,8 +338,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           case COMPANY:
           {
             final LegalPersonIdentifierType aCompany = new LegalPersonIdentifierType ();
-            aCompany.setLegalPersonIdentifier (m_sDRSCompanyID);
-            aCompany.setLegalName (m_sDRSCompanyName);
+            aCompany.setLegalPersonIdentifier (m_aDRSCompany.getID ());
+            aCompany.setLegalName (m_aDRSCompany.getName ());
             // Ignore the optional stuff
             aDRS.setDataSubjectCompany (aCompany);
             break;
@@ -342,8 +372,12 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
     final SessionState aState = SessionState.getInstance ();
 
-    final boolean bGoBack = aWPEC.params ().hasStringValue (PARAM_DIRECTION, "back");
-    final boolean bGoNext = !bGoBack && aWPEC.params ().hasStringValue (PARAM_DIRECTION, "next");
+    final String sDir = aWPEC.params ().getAsStringTrimmed (PARAM_DIRECTION);
+    final boolean bGoBack = "back".equals (sDir);
+    final boolean bGoNext = !bGoBack && "next".equals (sDir);
+
+    if ("reset".equals (sDir))
+      aState.reset ();
 
     final Function <ErrorList, GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType>> aMP = aEL -> DE4AMarshaller.drImRequestMarshaller ()
                                                                                                                       .setFormattedOutput (true)
@@ -413,15 +447,21 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           {
             case PERSON:
             {
-              final String sDRSID = aWPEC.params ().getAsStringTrimmed (FIELD_DRS_ID, aState.m_sDRSPersonID);
+              final String sDRSID = aWPEC.params ()
+                                         .getAsStringTrimmed (FIELD_DRS_ID,
+                                                              aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
+                                                                                          : null);
               final String sDRSFirstName = aWPEC.params ()
-                                                .getAsStringTrimmed (FIELD_DRS_FIRSTNAME, aState.m_sDRSPersonFirstName);
+                                                .getAsStringTrimmed (FIELD_DRS_FIRSTNAME,
+                                                                     aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
+                                                                                                 : null);
               final String sDRSFamilyName = aWPEC.params ()
                                                  .getAsStringTrimmed (FIELD_DRS_FAMILYNAME,
-                                                                      aState.m_sDRSPersonFamilyName);
+                                                                      aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFamilyName ()
+                                                                                                  : null);
               LocalDate aDRSBirthday = aWPEC.params ().getAsLocalDate (FIELD_DRS_BIRTHDAY, aDisplayLocale);
               if (aDRSBirthday == null)
-                aDRSBirthday = aState.m_aDRSPersonBirthday;
+                aDRSBirthday = aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getBirthday () : null;
 
               if (StringHelper.hasNoText (sDRSID))
                 aFormErrors.addFieldError (FIELD_DRS_ID, "A person ID must be provided");
@@ -435,17 +475,25 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
               aState.resetDRS ();
               if (aFormErrors.isEmpty ())
               {
-                aState.m_sDRSPersonID = sDRSID;
-                aState.m_sDRSPersonFirstName = sDRSFirstName;
-                aState.m_sDRSPersonFamilyName = sDRSFamilyName;
-                aState.m_aDRSPersonBirthday = aDRSBirthday;
+                aState.m_aDRSPerson = MDSPerson.builder ()
+                                               .id (sDRSID)
+                                               .firstName (sDRSFirstName)
+                                               .familyName (sDRSFamilyName)
+                                               .birthday (aDRSBirthday)
+                                               .build ();
               }
               break;
             }
             case COMPANY:
             {
-              final String sDRSID = aWPEC.params ().getAsStringTrimmed (FIELD_DRS_ID, aState.m_sDRSCompanyID);
-              final String sDRSName = aWPEC.params ().getAsStringTrimmed (FIELD_DRS_NAME, aState.m_sDRSCompanyName);
+              final String sDRSID = aWPEC.params ()
+                                         .getAsStringTrimmed (FIELD_DRS_ID,
+                                                              aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
+                                                                                           : null);
+              final String sDRSName = aWPEC.params ()
+                                           .getAsStringTrimmed (FIELD_DRS_NAME,
+                                                                aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
+                                                                                             : null);
 
               if (StringHelper.hasNoText (sDRSID))
                 aFormErrors.addFieldError (FIELD_DRS_ID, "A company ID must be provided");
@@ -455,8 +503,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
               aState.resetDRS ();
               if (aFormErrors.isEmpty ())
               {
-                aState.m_sDRSCompanyID = sDRSID;
-                aState.m_sDRSCompanyName = sDRSName;
+                aState.m_aDRSCompany = MDSCompany.builder ().id (sDRSID).name (sDRSName).build ();
               }
               break;
             }
@@ -512,6 +559,12 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC).ensureID ());
     aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 3, 2, 2), BootstrapGridSpec.create (-1, -1, 9, 10, 10));
 
+    if (aFormErrors.isNotEmpty ())
+      aForm.addChild (getUIHandler ().createIncorrectInputBox (aWPEC));
+
+    if (aState.m_eStep.isGT (EStep.SELECT_PROCESS))
+      aForm.addChild (h2 ("Running process " + aState.m_eProcType.getDisplayName ()));
+
     // Handle current step
     switch (aState.m_eStep)
     {
@@ -565,27 +618,32 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
                                                                                                  bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_sDRSPersonID,
-                                                                                                                                            aState.m_eDO.getEntityID ()))))
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
+                                                                                                                                                                        : null,
+                                                                                                                                            aState.m_eDO.getMDSPerson ()
+                                                                                                                                                        .getID ()))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person First Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FIRSTNAME,
                                                                                                  bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_sDRSPersonFirstName,
-                                                                                                                                            "Lisa"))))
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
+                                                                                                                                                                        : null,
+                                                                                                                                            aState.m_eDO.getMDSPerson ()
+                                                                                                                                                        .getFirstName ()))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FIRSTNAME)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Family Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FAMILYNAME,
                                                                                                  bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_sDRSPersonFamilyName,
-                                                                                                                                            "Simpson"))))
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFamilyName ()
+                                                                                                                                                                        : null,
+                                                                                                                                            aState.m_eDO.getMDSPerson ()
+                                                                                                                                                        .getFamilyName ()))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FAMILYNAME)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Birthday")
                                                          .setCtrl (BootstrapDateTimePicker.create (FIELD_DRS_BIRTHDAY,
                                                                                                    bIsResubmitted ? null
-                                                                                                                  : aState.getBirthDayOr (PDTFactory.createLocalDate (2002,
-                                                                                                                                                                      Month.FEBRUARY,
-                                                                                                                                                                      20)),
+                                                                                                                  : aState.getBirthDayOr (aState.m_eDO.getMDSPerson ()
+                                                                                                                                                      .getBirthday ()),
                                                                                                    aDisplayLocale))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_BIRTHDAY)));
             break;
@@ -596,18 +654,22 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
                                                                                                  bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_sDRSCompanyID,
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
+                                                                                                                                                                         : null,
                                                                                                                                             aState.m_eDO.getCountryCode () +
-                                                                                                                                                                    "/" +
-                                                                                                                                                                    aState.m_eDE.getCountryCode () +
-                                                                                                                                                                    "/" +
-                                                                                                                                                                    aState.m_eDO.getEntityID ()))))
+                                                                                                                                                                                 "/" +
+                                                                                                                                                                                 aState.m_eDE.getCountryCode () +
+                                                                                                                                                                                 "/" +
+                                                                                                                                                                                 aState.m_eDO.getMDSCompany ()
+                                                                                                                                                                                             .getID ()))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_NAME,
                                                                                                  bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_sDRSCompanyName,
-                                                                                                                                            "ACME Inc."))))
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
+                                                                                                                                                                         : null,
+                                                                                                                                            aState.m_eDO.getMDSCompany ()
+                                                                                                                                                        .getName ()))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_NAME)));
             break;
           default:
@@ -649,20 +711,20 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           case PERSON:
           {
             final BootstrapTable t = new BootstrapTable (HCCol.perc (25), HCCol.star ());
-            t.addBodyRow ().addCell (strong ("Person ID:")).addCell (aState.m_sDRSPersonID);
-            t.addBodyRow ().addCell (strong ("First Name:")).addCell (aState.m_sDRSPersonFirstName);
-            t.addBodyRow ().addCell (strong ("Family Name:")).addCell (aState.m_sDRSPersonFamilyName);
+            t.addBodyRow ().addCell (strong ("Person ID:")).addCell (aState.m_aDRSPerson.getID ());
+            t.addBodyRow ().addCell (strong ("First Name:")).addCell (aState.m_aDRSPerson.getFirstName ());
+            t.addBodyRow ().addCell (strong ("Family Name:")).addCell (aState.m_aDRSPerson.getFamilyName ());
             t.addBodyRow ()
              .addCell (strong ("Birthday:"))
-             .addCell (PDTToString.getAsString (aState.m_aDRSPersonBirthday, aDisplayLocale));
+             .addCell (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (), aDisplayLocale));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
             break;
           }
           case COMPANY:
           {
             final BootstrapTable t = new BootstrapTable (HCCol.perc (25), HCCol.star ());
-            t.addBodyRow ().addCell (strong ("Company ID:")).addCell (aState.m_sDRSCompanyID);
-            t.addBodyRow ().addCell (strong ("Company Name:")).addCell (aState.m_sDRSCompanyName);
+            t.addBodyRow ().addCell (strong ("Company ID:")).addCell (aState.m_aDRSCompany.getID ());
+            t.addBodyRow ().addCell (strong ("Company Name:")).addCell (aState.m_aDRSCompany.getName ());
             aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
             break;
           }
@@ -770,6 +832,11 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setOnClick (aFunc));
         }
       }
+      if (aState.m_eStep.isLast ())
+      {
+        aRow.addChild (new BootstrapButton ().addChild ("Next").setIcon (EDefaultIcon.NEXT).setDisabled (true));
+      }
+      else
       {
         final JSPackage aFunc = new JSPackage ();
         aFunc.add (JQuery.idRef (aForm)
@@ -780,6 +847,15 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                                              .setIcon (aState.m_eStep.isNextSendRequest () ? EDefaultIcon.YES
                                                                                            : EDefaultIcon.NEXT)
                                              .setOnClick (aFunc));
+      }
+      if (aState.m_eStep.wasRequestSent ())
+      {
+        final JSPackage aFunc = new JSPackage ();
+        aFunc.add (JQuery.idRef (aForm)
+                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='reset'></input>")
+                         .submit ());
+        aFunc._return (false);
+        aRow.addChild (new BootstrapButton ().addChild ("Restart").setIcon (EFontAwesome5Icon.UNDO).setOnClick (aFunc));
       }
     }
   }
