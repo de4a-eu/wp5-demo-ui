@@ -22,6 +22,7 @@ import java.util.Locale;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
 import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
@@ -51,43 +52,42 @@ import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 
 public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 {
-
   protected static enum EPatternType
   {
     IM,
     USI;
   }
 
-  protected static enum EDRSType
+  protected static enum EDataRequestSubjectType
   {
     PERSON,
     COMPANY;
   }
 
-  protected static enum EProcessType implements IHasID <String>, IHasDisplayName
+  protected static enum EUseCase implements IHasID <String>, IHasDisplayName
   {
     HIGHER_EDUCATION_DIPLOMA ("t41uc1",
-                              "Higher Education Diploma (SA)",
+                              "Studying Abroad – Application to public higher education",
                               EPatternType.USI,
-                              EDRSType.PERSON,
+                              EDataRequestSubjectType.PERSON,
                               "urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma"),
     COMPANY_REGISTRATION ("t42cr",
-                          "Company Registration (DBA)",
+                          "Doing Business Abroad – Starting a business in another Member State",
                           EPatternType.IM,
-                          EDRSType.COMPANY,
+                          EDataRequestSubjectType.COMPANY,
                           "urn:de4a-eu:CanonicalEvidenceType::CompanyRegistration");
 
     private final String m_sID;
     private final String m_sDisplayName;
     private final EPatternType m_ePatternType;
-    private final EDRSType m_eDRSType;
+    private final EDataRequestSubjectType m_eDRSType;
     private final String m_sCETID;
 
-    EProcessType (@Nonnull @Nonempty final String sID,
-                  @Nonnull @Nonempty final String sDisplayName,
-                  @Nonnull final EPatternType ePatternType,
-                  @Nonnull final EDRSType eDRSType,
-                  @Nonnull @Nonempty final String sCETID)
+    EUseCase (@Nonnull @Nonempty final String sID,
+              @Nonnull @Nonempty final String sDisplayName,
+              @Nonnull final EPatternType ePatternType,
+              @Nonnull final EDataRequestSubjectType eDRSType,
+              @Nonnull @Nonempty final String sCETID)
     {
       m_sID = sID;
       m_sDisplayName = sDisplayName;
@@ -117,7 +117,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
 
     @Nonnull
-    public EDRSType getDRSType ()
+    public EDataRequestSubjectType getDRSType ()
     {
       return m_eDRSType;
     }
@@ -130,12 +130,18 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
 
     @Nullable
-    public static EProcessType getFromIDOrNull (@Nullable final String sID)
+    public static EUseCase getFromIDOrNull (@Nullable final String sID)
     {
-      return EnumHelper.getFromIDOrNull (EProcessType.class, sID);
+      return EnumHelper.getFromIDOrNull (EUseCase.class, sID);
     }
   }
 
+  /**
+   * Minimum Data Set for a Company
+   *
+   * @author Philip Helger
+   */
+  @Immutable
   protected static class MDSCompany
   {
     private final String m_sID;
@@ -199,6 +205,12 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
+  /**
+   * Minimum Data Set for a Person
+   *
+   * @author Philip Helger
+   */
+  @Immutable
   protected static class MDSPerson
   {
     private final String m_sID;
@@ -306,49 +318,138 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
+  /**
+   * DE/DO data
+   *
+   * @author Philip Helger
+   */
+  @Immutable
+  protected static class Agent
+  {
+    private final String m_sID;
+    private final String m_sName;
+    private final String m_sCountryCode;
+
+    public Agent (@Nonnull @Nonempty final String sID,
+                  @Nonnull @Nonempty final String sName,
+                  @Nonnull @Nonempty final String sCountryCode)
+    {
+      ValueEnforcer.notEmpty (sID, "ID");
+      ValueEnforcer.notEmpty (sName, "Name");
+      ValueEnforcer.notEmpty (sCountryCode, "CountryCode");
+      m_sID = sID;
+      m_sName = sName;
+      m_sCountryCode = sCountryCode;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getID ()
+    {
+      return m_sID;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getName ()
+    {
+      return m_sName;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getCountryCode ()
+    {
+      return m_sCountryCode;
+    }
+
+    @Nonnull
+    public static Agent.Builder builder ()
+    {
+      return new Agent.Builder ();
+    }
+
+    public static class Builder implements IBuilder <Agent>
+    {
+      private String m_sID;
+      private String m_sName;
+      private String m_sCountryCode;
+
+      public Builder ()
+      {}
+
+      @Nonnull
+      public Builder id (@Nullable final String s)
+      {
+        m_sID = s;
+        return this;
+      }
+
+      @Nonnull
+      public Builder name (@Nullable final String s)
+      {
+        m_sName = s;
+        return this;
+      }
+
+      @Nonnull
+      public Builder countryCode (@Nullable final String s)
+      {
+        m_sCountryCode = s;
+        return this;
+      }
+
+      @Nonnull
+      public Agent build ()
+      {
+        return new Agent (m_sID, m_sName, m_sCountryCode);
+      }
+    }
+  }
+
   protected static enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   {
     ES ("iso6523-actorid-upis::9999:esq6250003h",
         "(UJI) Universitat Jaume I de Castellón",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA,
+        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "ES"),
     PT ("iso6523-actorid-upis::9999:pt990000101",
         "Portuguese IST, University of Lisbon",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA,
+        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "PT"),
     SI1 ("iso6523-actorid-upis::9999:si000000016",
          "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-         EProcessType.HIGHER_EDUCATION_DIPLOMA,
+         EUseCase.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
     SI2 ("iso6523-actorid-upis::9999:si000000018",
          "(JSI) Institut Jozef Stefan",
-         EProcessType.HIGHER_EDUCATION_DIPLOMA,
+         EUseCase.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "AT"),
     SE ("iso6523-actorid-upis::9999:se000000013",
         "(BVE) BOLAGSVERKET (Companies Registration Office)",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "SE"),
     RO ("iso6523-actorid-upis::9999:ro000000006",
         "(ORNC) Oficiul National B22 Al Registrului Comertului",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "RO"),
     NL ("iso6523-actorid-upis::9999:nl000000024",
         "(RVO) Rijksdienst voor Ondernemend Nederland (Netherlands Enterprise Agency)",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "NL");
 
     private final String m_sParticipantID;
     private final String m_sDisplayName;
-    private final EnumSet <EProcessType> m_aProcesses = EnumSet.noneOf (EProcessType.class);
+    private final EnumSet <EUseCase> m_aProcesses = EnumSet.noneOf (EUseCase.class);
     private final String m_sCountryCode;
 
     EMockDataEvaluator (@Nonnull @Nonempty final String sParticipantID,
                         @Nonnull @Nonempty final String sDisplayName,
-                        @Nonnull final EProcessType eProcess,
+                        @Nonnull final EUseCase eProcess,
                         @Nonnull @Nonempty final String sCountryCode)
     {
       m_sParticipantID = sParticipantID;
@@ -371,7 +472,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
       return m_sDisplayName;
     }
 
-    public boolean supportsProcess (@Nullable final EProcessType eProcType)
+    public boolean supportsProcess (@Nullable final EUseCase eProcType)
     {
       return eProcType != null && m_aProcesses.contains (eProcType);
     }
@@ -394,7 +495,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   {
     ES ("iso6523-actorid-upis::9999:ess2833002e",
         "(MPTFP-SGAD) Secretaría General de Administración Digital",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA,
+        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "ES",
         MDSPerson.builder ()
                  .id ("53377873W")
@@ -405,51 +506,51 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
         null),
     PT ("iso6523-actorid-upis::9999:pt990000101",
         "Portuguese IST, University of Lisbon",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA,
+        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "PT",
         MDSPerson.builder ().id ("123456789").firstName ("Alicea").familyName ("Alves").birthday (1997, 1, 1).build (),
         null),
     SI ("iso6523-actorid-upis::9999:si000000016",
         "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-        EProcessType.HIGHER_EDUCATION_DIPLOMA,
+        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "SI",
         MDSPerson.builder ().id ("123456").firstName ("Marjeta").familyName ("Maček").birthday (1999, 9, 16).build (),
         null),
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "AT",
         null,
         MDSCompany.builder ().id ("???").name ("Carl-Markus Piswanger e.U.").build ()),
     SE ("iso6523-actorid-upis::9999:se000000013",
         "(BVE) BOLAGSVERKET (Companies Registration Office)",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "SE",
         null,
         MDSCompany.builder ().id ("5591674170").name ("Företag Ett AB").build ()),
     RO ("iso6523-actorid-upis::9999:ro000000006",
         "(ORNC) Oficiul National B22 Al Registrului Comertului",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "RO",
         null,
         MDSCompany.builder ().id ("J40/12487/1998").name ("Regional Tris-ice Coöperatie").build ()),
     NL ("iso6523-actorid-upis::9999:nl990000106",
         "(KVK) Chamber of Commerce of Netherlands",
-        EProcessType.COMPANY_REGISTRATION,
+        EUseCase.COMPANY_REGISTRATION,
         "NL",
         null,
         MDSCompany.builder ().id ("90000471").name ("ELVILA SA").build ());
 
     private final String m_sParticipantID;
     private final String m_sDisplayName;
-    private final EnumSet <EProcessType> m_aProcesses = EnumSet.noneOf (EProcessType.class);
+    private final EnumSet <EUseCase> m_aProcesses = EnumSet.noneOf (EUseCase.class);
     private final String m_sCountryCode;
     private final MDSPerson m_aPerson;
     private final MDSCompany m_aCompany;
 
     EMockDataOwner (@Nonnull @Nonempty final String sParticipantID,
                     @Nonnull @Nonempty final String sDisplayName,
-                    @Nonnull final EProcessType eProcess,
+                    @Nonnull final EUseCase eProcess,
                     @Nonnull @Nonempty final String sCountryCode,
                     @Nullable final MDSPerson aPerson,
                     @Nullable final MDSCompany aCompany)
@@ -477,7 +578,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
       return m_sDisplayName;
     }
 
-    public boolean supportsProcess (@Nullable final EProcessType eProcType)
+    public boolean supportsProcess (@Nullable final EUseCase eProcType)
     {
       return eProcType != null && m_aProcesses.contains (eProcType);
     }

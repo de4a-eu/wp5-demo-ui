@@ -41,16 +41,26 @@ import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
 import com.helger.commons.name.IHasDisplayName;
+import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCDiv;
 import com.helger.html.hc.html.grouping.HCUL;
+import com.helger.html.hc.html.script.HCScriptInline;
 import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.jquery.JQuery;
+import com.helger.html.js.EJSEvent;
+import com.helger.html.jscode.JSAnonymousFunction;
+import com.helger.html.jscode.JSArray;
+import com.helger.html.jscode.JSAssocArray;
+import com.helger.html.jscode.JSBlock;
+import com.helger.html.jscode.JSFunction;
 import com.helger.html.jscode.JSPackage;
+import com.helger.html.jscode.JSReturn;
+import com.helger.html.jscode.JSVar;
 import com.helger.html.jscode.html.JSHtml;
 import com.helger.httpclient.HttpClientManager;
 import com.helger.httpclient.HttpClientSettings;
@@ -70,6 +80,7 @@ import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.core.form.RequestFieldBoolean;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
+import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
@@ -98,9 +109,13 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
   // Select process
   private static final String FIELD_PROCESS = "process";
   // Select DE
-  private static final String FIELD_DE = "de";
+  private static final String FIELD_DE_ID = "de_id";
+  private static final String FIELD_DE_NAME = "de_name";
+  private static final String FIELD_DE_COUNTRY_CODE = "de_cc";
   // Select DO
-  private static final String FIELD_DO = "do";
+  private static final String FIELD_DO_ID = "do_id";
+  private static final String FIELD_DO_NAME = "do_name";
+  private static final String FIELD_DO_COUNTRY_CODE = "do_cc";
   // Select DRS
   private static final String FIELD_DRS_ID = "id";
   private static final String FIELD_DRS_NAME = "name";
@@ -184,11 +199,11 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
   {
     private EStep m_eStep = EStep.first ();
     // Process
-    private EProcessType m_eProcType;
+    private EUseCase m_eUseCase;
     // DE
-    private EMockDataEvaluator m_eDE;
+    private Agent m_aDE;
     // DO
-    private EMockDataOwner m_eDO;
+    private Agent m_aDO;
     // DRS
     private MDSCompany m_aDRSCompany;
     private MDSPerson m_aDRSPerson;
@@ -214,11 +229,11 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       if (m_eStep == null)
         throw new IllegalStateException ("No step");
 
-      if (m_eProcType == null)
+      if (m_eUseCase == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_PROCESS);
-      if (m_eDE == null)
+      if (m_aDE == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_EVALUATOR);
-      if (m_eDO == null)
+      if (m_aDO == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_OWNER);
       if (_allDRSNull ())
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_REQUEST_SUBJECT);
@@ -229,11 +244,11 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     private void _onBack ()
     {
       if (m_eStep.isLT (EStep.SELECT_PROCESS))
-        m_eProcType = null;
+        m_eUseCase = null;
       if (m_eStep.isLT (EStep.SELECT_DATA_EVALUATOR))
-        m_eDE = null;
+        m_aDE = null;
       if (m_eStep.isLT (EStep.SELECT_DATA_OWNER))
-        m_eDO = null;
+        m_aDO = null;
       if (m_eStep.isLT (EStep.SELECT_DATA_REQUEST_SUBJECT))
         resetDRS ();
       if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
@@ -266,19 +281,43 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     @Nullable
     public String getProcessID ()
     {
-      return m_eProcType == null ? null : m_eProcType.getID ();
+      return m_eUseCase == null ? null : m_eUseCase.getID ();
     }
 
     @Nullable
     public String getDataEvaluatorID ()
     {
-      return m_eDE == null ? null : m_eDE.getID ();
+      return m_aDE == null ? null : m_aDE.getID ();
+    }
+
+    @Nullable
+    public String getDataEvaluatorName ()
+    {
+      return m_aDE == null ? null : m_aDE.getName ();
+    }
+
+    @Nullable
+    public String getDataEvaluatorCountryCode ()
+    {
+      return m_aDE == null ? null : m_aDE.getCountryCode ();
     }
 
     @Nullable
     public String getDataOwnerID ()
     {
-      return m_eDO == null ? null : m_eDO.getID ();
+      return m_aDO == null ? null : m_aDO.getID ();
+    }
+
+    @Nullable
+    public String getDataOwnerName ()
+    {
+      return m_aDO == null ? null : m_aDO.getName ();
+    }
+
+    @Nullable
+    public String getDataOwnerCountryCode ()
+    {
+      return m_aDO == null ? null : m_aDO.getCountryCode ();
     }
 
     private boolean _allDRSNull ()
@@ -310,19 +349,19 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       aRequest.setProcedureId ("ProcedureId");
       {
         final AgentType aDE = new AgentType ();
-        aDE.setAgentUrn (m_eDE.getID ());
-        aDE.setAgentName (m_eDE.getDisplayName ());
+        aDE.setAgentUrn (m_aDE.getID ());
+        aDE.setAgentName (m_aDE.getName ());
         aRequest.setDataEvaluator (aDE);
       }
       {
         final AgentType aDO = new AgentType ();
-        aDO.setAgentUrn (m_eDO.getID ());
-        aDO.setAgentName (m_eDO.getDisplayName ());
+        aDO.setAgentUrn (m_aDO.getID ());
+        aDO.setAgentName (m_aDO.getName ());
         aRequest.setDataOwner (aDO);
       }
       {
         final DataRequestSubjectCVType aDRS = new DataRequestSubjectCVType ();
-        switch (m_eProcType.getDRSType ())
+        switch (m_eUseCase.getDRSType ())
         {
           case PERSON:
           {
@@ -355,7 +394,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         aRG.setExplicitRequest (ExplicitRequestType.SDGR_14);
         aRequest.setRequestGrounds (aRG);
       }
-      aRequest.setCanonicalEvidenceTypeId (m_eProcType.getCanonicalEvidenceTypeID ());
+      aRequest.setCanonicalEvidenceTypeId (m_eUseCase.getCanonicalEvidenceTypeID ());
       return aRequest;
     }
   }
@@ -393,7 +432,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         case SELECT_PROCESS:
         {
           final String sProcessID = aWPEC.params ().getAsStringTrimmed (FIELD_PROCESS, aState.getProcessID ());
-          final EProcessType eProcess = EProcessType.getFromIDOrNull (sProcessID);
+          final EUseCase eProcess = EUseCase.getFromIDOrNull (sProcessID);
 
           if (StringHelper.hasNoText (sProcessID))
             aFormErrors.addFieldError (FIELD_PROCESS, "Select a process");
@@ -403,47 +442,63 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
 
           if (aFormErrors.isEmpty ())
           {
-            aState.m_eProcType = eProcess;
+            aState.m_eUseCase = eProcess;
           }
           break;
         }
         case SELECT_DATA_EVALUATOR:
         {
-          final String sDEID = aWPEC.params ().getAsStringTrimmed (FIELD_DE, aState.getDataEvaluatorID ());
-          final EMockDataEvaluator eDE = EMockDataEvaluator.getFromIDOrNull (sDEID);
+          final String sDEID = aWPEC.params ().getAsStringTrimmed (FIELD_DE_ID, aState.getDataEvaluatorID ());
+          final String sDEName = aWPEC.params ().getAsStringTrimmed (FIELD_DE_NAME, aState.getDataEvaluatorName ());
+          final String sDECC = aWPEC.params ()
+                                    .getAsStringTrimmed (FIELD_DE_COUNTRY_CODE, aState.getDataEvaluatorCountryCode ());
 
           if (StringHelper.hasNoText (sDEID))
-            aFormErrors.addFieldError (FIELD_DE, "Select a Mock Data Evaluator");
+            aFormErrors.addFieldError (FIELD_DE_ID, "A Data Evaluator ID is needed");
+
+          if (StringHelper.hasNoText (sDEName))
+            aFormErrors.addFieldError (FIELD_DE_NAME, "A Data Evaluator name is needed");
+
+          if (StringHelper.hasNoText (sDECC))
+            aFormErrors.addFieldError (FIELD_DE_COUNTRY_CODE, "A Data Evaluator country code is needed");
           else
-            if (eDE == null)
-              aFormErrors.addFieldError (FIELD_DE, "Select valid a Mock Data Evaluator");
+            if (!RegExHelper.stringMatchesPattern ("[A-Z]{2}", sDECC))
+              aFormErrors.addFieldError (FIELD_DE_COUNTRY_CODE, "The Data Evaluator country code is invalid");
 
           if (aFormErrors.isEmpty ())
           {
-            aState.m_eDE = eDE;
+            aState.m_aDE = Agent.builder ().id (sDEID).name (sDEName).countryCode (sDECC).build ();
           }
           break;
         }
         case SELECT_DATA_OWNER:
         {
-          final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO, aState.getDataOwnerID ());
-          final EMockDataOwner eDO = EMockDataOwner.getFromIDOrNull (sDOID);
+          final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_ID, aState.getDataOwnerID ());
+          final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
+          final String sDOCC = aWPEC.params ()
+                                    .getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
 
           if (StringHelper.hasNoText (sDOID))
-            aFormErrors.addFieldError (FIELD_DO, "Select a Mock Data Owner");
+            aFormErrors.addFieldError (FIELD_DO_ID, "A Data Owner ID is needed");
+
+          if (StringHelper.hasNoText (sDOName))
+            aFormErrors.addFieldError (FIELD_DO_NAME, "A Data Owner name is needed");
+
+          if (StringHelper.hasNoText (sDOCC))
+            aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "A Data Owner country code is needed");
           else
-            if (eDO == null)
-              aFormErrors.addFieldError (FIELD_DO, "Select valid a Mock Data Owner");
+            if (!RegExHelper.stringMatchesPattern ("[A-Z]{2}", sDOCC))
+              aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "The Data Owner country code is invalid");
 
           if (aFormErrors.isEmpty ())
           {
-            aState.m_eDO = eDO;
+            aState.m_aDO = Agent.builder ().id (sDOID).name (sDOName).countryCode (sDOCC).build ();
           }
           break;
         }
         case SELECT_DATA_REQUEST_SUBJECT:
         {
-          switch (aState.m_eProcType.getDRSType ())
+          switch (aState.m_eUseCase.getDRSType ())
           {
             case PERSON:
             {
@@ -563,7 +618,63 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       aForm.addChild (getUIHandler ().createIncorrectInputBox (aWPEC));
 
     if (aState.m_eStep.isGT (EStep.SELECT_PROCESS))
-      aForm.addChild (h2 ("Running process " + aState.m_eProcType.getDisplayName ()));
+      aForm.addChild (h2 ("Running use case " + aState.m_eUseCase.getDisplayName ()));
+
+    final JSFunction aJSSetDE;
+    final JSFunction aJSSetDO;
+    {
+      final HCScriptInline aScript = new HCScriptInline ();
+      final JSPackage aJS = new JSPackage ();
+      aJSSetDE = aJS.function ("_setMDE");
+      {
+        final JSVar aJSID = aJSSetDE.param ("id");
+        final JSVar aElementID = aJSSetDE.param ("eid");
+        final JSVar aElementName = aJSSetDE.param ("en");
+        final JSVar aElementCC = aJSSetDE.param ("ecc");
+        final JSArray aMDE = new JSArray ();
+        for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
+          aMDE.add (new JSAssocArray ().add ("id", e.getID ())
+                                       .add ("n", e.getDisplayName ())
+                                       .add ("cc", e.getCountryCode ()));
+        final JSVar aArray = aJSSetDE.body ().var ("array", aMDE);
+        final JSVar aCallbackParam = new JSVar ("x");
+        final JSVar aFound = aJSSetDE.body ()
+                                     .var ("f",
+                                           aArray.invoke ("find")
+                                                 .arg (new JSAnonymousFunction (aCallbackParam,
+                                                                                new JSReturn (aJSID.eq (aCallbackParam.ref ("id"))))));
+        final JSBlock aIfFound = aJSSetDE.body ()._if (aFound)._then ();
+        aIfFound.add (JQuery.idRef (aElementID).val (aFound.component ("id")));
+        aIfFound.add (JQuery.idRef (aElementName).val (aFound.component ("n")));
+        aIfFound.add (JQuery.idRef (aElementCC).val (aFound.component ("cc")));
+      }
+      aJSSetDO = aJS.function ("_setMDO");
+      {
+        final JSVar aJSID = aJSSetDO.param ("id");
+        final JSVar aElementID = aJSSetDO.param ("eid");
+        final JSVar aElementName = aJSSetDO.param ("en");
+        final JSVar aElementCC = aJSSetDO.param ("ecc");
+        final JSArray aMDO = new JSArray ();
+        for (final EMockDataOwner e : EMockDataOwner.values ())
+          aMDO.add (new JSAssocArray ().add ("id", e.getID ())
+                                       .add ("n", e.getDisplayName ())
+                                       .add ("cc", e.getCountryCode ()));
+        final JSVar aArray = aJSSetDO.body ().var ("array", aMDO);
+        final JSVar aCallbackParam = new JSVar ("x");
+        final JSVar aFound = aJSSetDO.body ()
+                                     .var ("f",
+                                           aArray.invoke ("find")
+                                                 .arg (new JSAnonymousFunction (aCallbackParam,
+                                                                                new JSReturn (aJSID.eq (aCallbackParam.ref ("id"))))));
+        final JSBlock aIfFound = aJSSetDO.body ()._if (aFound)._then ();
+        aIfFound.add (JQuery.idRef (aElementID).val (aFound.component ("id")));
+        aIfFound.add (JQuery.idRef (aElementName).val (aFound.component ("n")));
+        aIfFound.add (JQuery.idRef (aElementCC).val (aFound.component ("cc")));
+      }
+      aScript.setJSCodeProvider (aJS);
+
+      aForm.addChild (aScript);
+    }
 
     // Handle current step
     switch (aState.m_eStep)
@@ -571,107 +682,180 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       case SELECT_PROCESS:
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_PROCESS, aState.getProcessID ()));
-        for (final EProcessType e : CollectionHelper.getSorted (EProcessType.values (),
-                                                                IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+        for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (),
+                                                            IHasDisplayName.getComparatorCollating (aDisplayLocale)))
           if (e.getPatternType () == OUR_PATTERN)
             aSelect.addOption (e.getID (), e.getDisplayName ());
         aSelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Process to use")
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Use Case")
                                                      .setCtrl (aSelect)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_PROCESS)));
         break;
       }
       case SELECT_DATA_EVALUATOR:
       {
-        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_DE, aState.getDataEvaluatorID ()));
+        final HCExtSelect aSelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorID ()));
         for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
                                                                       IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsProcess (aState.m_eProcType))
+          if (e.supportsProcess (aState.m_eUseCase))
             aSelect.addOption (e.getID (), e.getDisplayName ());
         aSelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Mock Data Evaluator to be used")
-                                                     .setCtrl (aSelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE)));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aSelect));
+
+        // ID
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DE_ID, aState.getDataEvaluatorID ())).ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator ID")
+                                                     .setCtrl (aEditID)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_ID)));
+
+        // Name
+        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME,
+                                                               aState.getDataEvaluatorName ())).ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator name")
+                                                     .setCtrl (aEditName)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_NAME)));
+
+        // Country
+        final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
+                                                                                aState.getDataEvaluatorCountryCode ()),
+                                                              aDisplayLocale);
+        aCSelect.ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
+                                                     .setCtrl (aCSelect)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_COUNTRY_CODE)));
+
+        // JS
+        final JSPackage aJSOnChange = new JSPackage ();
+        aJSOnChange.add (aJSSetDE.invoke ()
+                                 .arg (JSHtml.getSelectSelectedValue ())
+                                 .arg (aEditID.getID ())
+                                 .arg (aEditName.getID ())
+                                 .arg (aCSelect.getID ()));
+        aSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
         break;
       }
       case SELECT_DATA_OWNER:
       {
-        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_DO, aState.getDataOwnerID ()));
+        final HCExtSelect aSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
         for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
                                                                   IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsProcess (aState.m_eProcType) && !e.getID ().equals (aState.m_eDE.getID ()))
+          if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
             aSelect.addOption (e.getID (), e.getDisplayName ());
         aSelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Mock Data Owner to be used")
-                                                     .setCtrl (aSelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO)));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used").setCtrl (aSelect));
+
+        // ID
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
+                                                     .setCtrl (aEditID)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID)));
+
+        // Name
+        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
+                                                     .setCtrl (aEditName)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
+
+        // Country
+        final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
+                                                                                aState.getDataOwnerCountryCode ()),
+                                                              aDisplayLocale);
+        aCSelect.ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
+                                                     .setCtrl (aCSelect)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE)));
+
+        // JS
+        final JSPackage aJSOnChange = new JSPackage ();
+        aJSOnChange.add (aJSSetDE.invoke ()
+                                 .arg (JSHtml.getSelectSelectedValue ())
+                                 .arg (aEditID.getID ())
+                                 .arg (aEditName.getID ())
+                                 .arg (aCSelect.getID ()));
+        aSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
         break;
       }
       case SELECT_DATA_REQUEST_SUBJECT:
       {
-        switch (aState.m_eProcType.getDRSType ())
+        switch (aState.m_eUseCase.getDRSType ())
         {
           case PERSON:
-            aForm.addChild (info ("The selected process " +
-                                  aState.m_eProcType.getDisplayName () +
+          {
+            aForm.addChild (info ("The selected use case " +
+                                  aState.m_eUseCase.getDisplayName () +
                                   " requires a person as Data Request Subject"));
+
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
+
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
                                                                                                  bIsResubmitted ? null
                                                                                                                 : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
                                                                                                                                                                         : null,
-                                                                                                                                            aState.m_eDO.getMDSPerson ()
-                                                                                                                                                        .getID ()))))
+                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                     .getID ()
+                                                                                                                                                            : null))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person First Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FIRSTNAME,
                                                                                                  bIsResubmitted ? null
                                                                                                                 : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
                                                                                                                                                                         : null,
-                                                                                                                                            aState.m_eDO.getMDSPerson ()
-                                                                                                                                                        .getFirstName ()))))
+                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                     .getFirstName ()
+                                                                                                                                                            : null))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FIRSTNAME)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Family Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FAMILYNAME,
                                                                                                  bIsResubmitted ? null
                                                                                                                 : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFamilyName ()
                                                                                                                                                                         : null,
-                                                                                                                                            aState.m_eDO.getMDSPerson ()
-                                                                                                                                                        .getFamilyName ()))))
+                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                     .getFamilyName ()
+                                                                                                                                                            : null))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FAMILYNAME)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Birthday")
                                                          .setCtrl (BootstrapDateTimePicker.create (FIELD_DRS_BIRTHDAY,
                                                                                                    bIsResubmitted ? null
-                                                                                                                  : aState.getBirthDayOr (aState.m_eDO.getMDSPerson ()
-                                                                                                                                                      .getBirthday ()),
+                                                                                                                  : aState.getBirthDayOr (eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                   .getBirthday ()
+                                                                                                                                                          : null),
                                                                                                    aDisplayLocale))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_BIRTHDAY)));
             break;
+          }
           case COMPANY:
-            aForm.addChild (info ("The selected process " +
-                                  aState.m_eProcType.getDisplayName () +
+          {
+            aForm.addChild (info ("The selected use case " +
+                                  aState.m_eUseCase.getDisplayName () +
                                   " requires a company as Data Request Subject"));
+
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
+
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
                                                                                                  bIsResubmitted ? null
                                                                                                                 : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
                                                                                                                                                                          : null,
-                                                                                                                                            aState.m_eDO.getCountryCode () +
+                                                                                                                                            aState.getDataOwnerCountryCode () +
                                                                                                                                                                                  "/" +
-                                                                                                                                                                                 aState.m_eDE.getCountryCode () +
+                                                                                                                                                                                 aState.getDataEvaluatorCountryCode () +
                                                                                                                                                                                  "/" +
-                                                                                                                                                                                 aState.m_eDO.getMDSCompany ()
-                                                                                                                                                                                             .getID ()))))
+                                                                                                                                                                                 (eMockDO != null ? eMockDO.getMDSCompany ()
+                                                                                                                                                                                                           .getID ()
+                                                                                                                                                                                                  : "")))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company Name")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_NAME,
                                                                                                  bIsResubmitted ? null
                                                                                                                 : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
                                                                                                                                                                          : null,
-                                                                                                                                            aState.m_eDO.getMDSCompany ()
-                                                                                                                                                        .getName ()))))
+                                                                                                                                            eMockDO != null ? eMockDO.getMDSCompany ()
+                                                                                                                                                                     .getName ()
+                                                                                                                                                            : null))))
                                                          .setErrorList (aFormErrors.getListOfField (FIELD_DRS_NAME)));
             break;
+          }
           default:
             throw new IllegalStateException ();
         }
@@ -697,16 +881,16 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         }
 
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
-                                                     .setCtrl (aState.m_eProcType.getDisplayName ()));
+                                                     .setCtrl (aState.m_eUseCase.getDisplayName ()));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
-                                                     .setCtrl (span (aState.m_eDE.getDisplayName () +
-                                                                     " (").addChild (code (aState.m_eDE.getID ()))
+                                                     .setCtrl (span (aState.getDataEvaluatorName () +
+                                                                     " (").addChild (code (aState.getDataEvaluatorID ()))
                                                                           .addChild (")")));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
-                                                     .setCtrl (span (aState.m_eDO.getDisplayName () +
-                                                                     " (").addChild (code (aState.m_eDO.getID ()))
+                                                     .setCtrl (span (aState.getDataOwnerName () +
+                                                                     " (").addChild (code (aState.getDataOwnerID ()))
                                                                           .addChild (")")));
-        switch (aState.m_eProcType.getDRSType ())
+        switch (aState.m_eUseCase.getDRSType ())
         {
           case PERSON:
           {
