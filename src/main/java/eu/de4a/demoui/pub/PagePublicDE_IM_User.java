@@ -40,6 +40,7 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
+import com.helger.commons.locale.country.CountryCache;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
@@ -260,6 +261,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
       {
         m_aRequest = null;
+        m_sTargetURL = null;
         m_bConfirmedToSend = false;
       }
     }
@@ -901,21 +903,41 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           aState.m_aRequest = aRequest;
         }
 
+        // First column for all nested tables
+        final HCCol aCol1 = new HCCol (150);
+
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
                                                      .setCtrl (aState.m_eUseCase.getDisplayName ()));
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
-                                                     .setCtrl (span (aState.getDataEvaluatorName () +
-                                                                     " (").addChild (code (aState.getDataEvaluatorID ()))
-                                                                          .addChild (")")));
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
-                                                     .setCtrl (span (aState.getDataOwnerName () +
-                                                                     " (").addChild (code (aState.getDataOwnerID ()))
-                                                                          .addChild (")")));
+
+        {
+          final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
+          final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+          t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataEvaluatorName ());
+          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorID ()));
+          t.addBodyRow ()
+           .addCell (strong ("Country:"))
+           .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
+                                        : aState.getDataEvaluatorCountryCode ());
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
+        }
+
+        {
+          final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
+          final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+          t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataOwnerName ());
+          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerID ()));
+          t.addBodyRow ()
+           .addCell (strong ("Country:"))
+           .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
+                                        : aState.getDataOwnerCountryCode ());
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
+        }
+
         switch (aState.m_eUseCase.getDRSType ())
         {
           case PERSON:
           {
-            final BootstrapTable t = new BootstrapTable (HCCol.perc (25), HCCol.star ());
+            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
             t.addBodyRow ().addCell (strong ("Person ID:")).addCell (aState.m_aDRSPerson.getID ());
             t.addBodyRow ().addCell (strong ("First Name:")).addCell (aState.m_aDRSPerson.getFirstName ());
             t.addBodyRow ().addCell (strong ("Family Name:")).addCell (aState.m_aDRSPerson.getFamilyName ());
@@ -927,7 +949,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           }
           case COMPANY:
           {
-            final BootstrapTable t = new BootstrapTable (HCCol.perc (25), HCCol.star ());
+            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
             t.addBodyRow ().addCell (strong ("Company ID:")).addCell (aState.m_aDRSCompany.getID ());
             t.addBodyRow ().addCell (strong ("Company Name:")).addCell (aState.m_aDRSCompany.getName ());
             aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
