@@ -767,7 +767,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
 
         // JS
         final JSPackage aJSOnChange = new JSPackage ();
-        aJSOnChange.add (aJSSetDE.invoke ()
+        aJSOnChange.add (aJSSetDO.invoke ()
                                  .arg (JSHtml.getSelectSelectedValue ())
                                  .arg (aEditID.getID ())
                                  .arg (aEditName.getID ())
