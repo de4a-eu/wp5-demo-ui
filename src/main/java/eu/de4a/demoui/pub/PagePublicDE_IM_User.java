@@ -43,6 +43,7 @@ import com.helger.commons.error.list.ErrorList;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
+import com.helger.commons.url.URLHelper;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCTextArea;
@@ -123,8 +124,12 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
   private static final String FIELD_DRS_FAMILYNAME = "familyname";
   private static final String FIELD_DRS_BIRTHDAY = "birthday";
   // Request
-  private static final String FIELD_REQUEST = "request";
+  private static final String FIELD_REQUEST_XML = "requestxml";
+  private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_CONFIRM = "confirm";
+
+  private static final String TARGET_URL_MOCK_DO = CApp.DEFAULT_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+  private static final String TARGET_URL_TEST_DR = "https://de4a-dev-connector.egovlab.eu/requestTransferEvidenceIM";
 
   private static enum EStep
   {
@@ -208,10 +213,11 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     private MDSCompany m_aDRSCompany;
     private MDSPerson m_aDRSPerson;
     // Consent to send this
-    public RequestTransferEvidenceUSIIMDRType m_aRequest;
-    public boolean m_bConfirmedToSend;
+    private RequestTransferEvidenceUSIIMDRType m_aRequest;
+    private String m_sTargetURL;
+    private boolean m_bConfirmedToSend;
     // Response received
-    public ResponseTransferEvidenceType m_aResponse;
+    private ResponseTransferEvidenceType m_aResponse;
 
     @Deprecated
     @UsedViaReflection
@@ -569,11 +575,25 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         }
         case EXPLICIT_CONSENT:
         {
+          final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
           final boolean bConfirm = aWPEC.params ().isCheckBoxChecked (FIELD_CONFIRM, false);
+
+          if (StringHelper.hasNoText (sTargetURL))
+            aFormErrors.addFieldError (FIELD_TARGET_URL, "A target URL is required");
+          else
+            if (URLHelper.getAsURL (sTargetURL, false) == null)
+              aFormErrors.addFieldError (FIELD_TARGET_URL, "The target URL must be valid URL");
+
           if (!bConfirm)
             aFormErrors.addFieldError (FIELD_CONFIRM, "Confirmation is required");
 
+          aState.m_sTargetURL = null;
           aState.m_bConfirmedToSend = bConfirm;
+          if (aFormErrors.isEmpty ())
+          {
+            aState.m_sTargetURL = sTargetURL;
+          }
+
           break;
         }
         case SEND_REQUEST:
@@ -686,7 +706,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                                                             IHasDisplayName.getComparatorCollating (aDisplayLocale)))
           if (e.getPatternType () == OUR_PATTERN)
             aSelect.addOption (e.getID (), e.getDisplayName ());
-        aSelect.addOptionPleaseSelect (aDisplayLocale);
+        if (aSelect.getOptionCount () > 1)
+          aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Use Case")
                                                      .setCtrl (aSelect)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_PROCESS)));
@@ -873,7 +894,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         {
           aState.m_aRequest = null;
           for (final IError a : aErrorList)
-            aFormErrors.add (SingleError.builder (a).errorFieldName (FIELD_REQUEST).build ());
+            aFormErrors.add (SingleError.builder (a).errorFieldName (FIELD_REQUEST_XML).build ());
         }
         else
         {
@@ -917,14 +938,22 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         }
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
                                                      .setCtrl (aState.m_aRequest == null ? error ("Failed to create Request Object")
-                                                                                         : new HCTextArea (new RequestField (FIELD_REQUEST,
+                                                                                         : new HCTextArea (new RequestField (FIELD_REQUEST_XML,
                                                                                                                              aMP.apply (null)
                                                                                                                                 .getAsString (aState.m_aRequest))).setRows (10)
                                                                                                                                                                   .setReadOnly (true)
                                                                                                                                                                   .addClass (CBootstrapCSS.FORM_CONTROL)
                                                                                                                                                                   .addClass (CBootstrapCSS.TEXT_MONOSPACE))
                                                      .setHelpText ("This is the technical request. It is just shown for helping developers")
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST)));
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
+                                                     .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
+                                                                                             TARGET_URL_MOCK_DO)))
+                                                     .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO))
+                                                                                                                .addChild (" for the mock DO, or ")
+                                                                                                                .addChild (code (TARGET_URL_TEST_DR))
+                                                                                                                .addChild (" for the test DE4A Connector"))
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Confirmation to send request")
                                                      .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM,
                                                                                                         false)))
@@ -935,8 +964,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       }
       case SEND_REQUEST:
       {
-        final String sTargetURL = CApp.DEFAULT_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
-        aForm.addChild (info ("Sending the mock request to ").addChild (code (sTargetURL)));
+        aForm.addChild (info ("Sending the mock request to ").addChild (code (aState.m_sTargetURL)));
 
         DE4AKafkaClient.send (EErrorLevel.INFO,
                               "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "'");
@@ -944,17 +972,19 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         final HttpClientSettings aHCS = new HttpClientSettings ();
         try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
         {
-          final HttpPost aPost = new HttpPost (sTargetURL);
+          final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
           aPost.setEntity (new ByteArrayEntity (aMP.apply (null).getAsBytes (aState.m_aRequest),
                                                 ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
           // Main POST
           final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
           DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
+          LOGGER.info ("Received (in UTF-8): " + new String (aResponse, StandardCharsets.UTF_8));
+
           final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
                                                                           .read (aResponse);
           if (aResponseObj == null)
-            throw new IOException ("Failed to parse response XML");
+            throw new IOException ("Failed to parse response XML - see log for details");
 
           aState.m_aResponse = aResponseObj;
 
@@ -986,7 +1016,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         }
         catch (final IOException ex)
         {
-          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (sTargetURL)))
+          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sTargetURL)))
                                   .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
         }
         // TODO

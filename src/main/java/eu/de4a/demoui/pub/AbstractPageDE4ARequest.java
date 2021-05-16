@@ -46,6 +46,8 @@ import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.ui.AbstractAppWebPage;
+import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
+import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.AgentType;
 import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
@@ -642,7 +644,55 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createDRS (final DataRequestSubjectCVType aDRS)
+  protected static IHCNode _createLegalPerson (@Nonnull final LegalPersonIdentifierType aLP)
+  {
+    final BootstrapTable aTable2 = new BootstrapTable (HCCol.fromString ("170"), HCCol.star ());
+    aTable2.addBodyRow ().addCell ("Legal Person Identifier:").addCell (_code (aLP.getLegalPersonIdentifier ()));
+    aTable2.addBodyRow ().addCell ("Legal Name:").addCell (_text (aLP.getLegalNameValue ()));
+    if (StringHelper.hasText (aLP.getLegalAddress ()))
+      aTable2.addBodyRow ().addCell ("Legal Address:").addCell (_text (aLP.getLegalAddress ()));
+    if (StringHelper.hasText (aLP.getVATRegistration ()))
+      aTable2.addBodyRow ().addCell ("VAT Registration:").addCell (_code (aLP.getVATRegistration ()));
+    if (StringHelper.hasText (aLP.getTaxReference ()))
+      aTable2.addBodyRow ().addCell ("Tax Reference:").addCell (_code (aLP.getTaxReference ()));
+    if (StringHelper.hasText (aLP.getD201217EUIdentifier ()))
+      aTable2.addBodyRow ().addCell ("D-2012-17-EU Identifier:").addCell (_code (aLP.getD201217EUIdentifier ()));
+    if (StringHelper.hasText (aLP.getLEI ()))
+      aTable2.addBodyRow ().addCell ("LEI:").addCell (_code (aLP.getLEI ()));
+    if (StringHelper.hasText (aLP.getEORI ()))
+      aTable2.addBodyRow ().addCell ("EORI:").addCell (_code (aLP.getEORI ()));
+    if (StringHelper.hasText (aLP.getSEED ()))
+      aTable2.addBodyRow ().addCell ("SEED:").addCell (_code (aLP.getSEED ()));
+    if (StringHelper.hasText (aLP.getSIC ()))
+      aTable2.addBodyRow ().addCell ("SIC:").addCell (_code (aLP.getSIC ()));
+    return aTable2;
+  }
+
+  @Nonnull
+  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP,
+                                                 @Nonnull final Locale aDisplayLocale)
+  {
+    final BootstrapTable aTable2 = new BootstrapTable (HCCol.fromString ("170"), HCCol.star ());
+    aTable2.addBodyRow ().addCell ("Person Identifier:").addCell (_code (aNP.getPersonIdentifier ()));
+    aTable2.addBodyRow ().addCell ("First Name:").addCell (_text (aNP.getFirstNameValue ()));
+    aTable2.addBodyRow ().addCell ("Family Identifier:").addCell (_text (aNP.getFamilyNameValue ()));
+    aTable2.addBodyRow ()
+           .addCell ("Date of Birth:")
+           .addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
+    if (aNP.getGender () != null)
+      aTable2.addBodyRow ().addCell ("Gender:").addCell (_text (aNP.getGender ().value ()));
+    if (StringHelper.hasText (aNP.getBirthNameValue ()))
+      aTable2.addBodyRow ().addCell ("Birth Name:").addCell (_text (aNP.getBirthNameValue ()));
+    if (StringHelper.hasText (aNP.getPlaceOfBirthValue ()))
+      aTable2.addBodyRow ().addCell ("Place of Birth:").addCell (_text (aNP.getPlaceOfBirthValue ()));
+    if (StringHelper.hasText (aNP.getCurrentAddress ()))
+      aTable2.addBodyRow ().addCell ("Current Address:").addCell (_text (aNP.getCurrentAddress ()));
+    return aTable2;
+  }
+
+  @Nonnull
+  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS,
+                                       @Nonnull final Locale aDisplayLocale)
   {
     if (aDRS == null)
       return _text (null);
@@ -652,15 +702,19 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 
     if (aDRS.getDataSubjectPerson () != null)
     {
-      aTable.addBodyRow ().addCell ("Natural Person").addCell (_text ("todo"));
+      aTable.addBodyRow ()
+            .addCell ("Natural Person")
+            .addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
     }
     if (aDRS.getDataSubjectCompany () != null)
     {
-      aTable.addBodyRow ().addCell ("Company").addCell (_text ("todo"));
+      aTable.addBodyRow ().addCell ("Company").addCell (_createLegalPerson (aDRS.getDataSubjectCompany ()));
     }
     if (aDRS.getDataSubjectRepresentative () != null)
     {
-      aTable.addBodyRow ().addCell ("Representative").addCell (_text ("todo"));
+      aTable.addBodyRow ()
+            .addCell ("Representative")
+            .addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
     }
     return aTable;
   }
@@ -687,7 +741,8 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
                                                   .setCtrl (_createAgent (aResponseObj.getDataOwner ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
-                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject ())));
+                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject (),
+                                                                        aDisplayLocale)));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
                                                   .setCtrl (_code (aResponseObj.getCanonicalEvidenceTypeId ())));
     if (aResponseObj.getCanonicalEvidence () != null)
@@ -699,6 +754,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     if (aResponseObj.getDomesticEvidenceList () != null &&
         aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
     {
+      // TODO
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
                                                     .setCtrl (_text (aResponseObj.getDomesticEvidenceList ()
                                                                                  .getDomesticEvidenceCount () +
