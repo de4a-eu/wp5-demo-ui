@@ -44,6 +44,7 @@ import com.helger.commons.locale.country.CountryCache;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
+import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
@@ -82,6 +83,8 @@ import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.core.form.RequestFieldBoolean;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
+import com.helger.photon.uicore.html.formlabel.ELabelType;
+import com.helger.photon.uicore.html.formlabel.HCFormLabel;
 import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
@@ -976,7 +979,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                                                                                                                 .addChild (code (TARGET_URL_TEST_DR))
                                                                                                                 .addChild (" for the test DE4A Connector"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Confirmation to send request")
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel (new HCFormLabel (span ("Confirmation to send request"),
+                                                                                 ELabelType.MANDATORY))
                                                      .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM,
                                                                                                         false)))
                                                      .setHelpText ("You need to give your explicit consent here to proceed")
@@ -991,7 +995,9 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         DE4AKafkaClient.send (EErrorLevel.INFO,
                               "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "'");
 
+        final StopWatch aSW = StopWatch.createdStarted ();
         final HttpClientSettings aHCS = new HttpClientSettings ();
+        aHCS.setConnectionRequestTimeoutMS (120_000);
         try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
         {
           final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
@@ -1040,6 +1046,11 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         {
           aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sTargetURL)))
                                   .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
+        }
+        finally
+        {
+          aSW.stop ();
+          aForm.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
         }
         // TODO
         break;
