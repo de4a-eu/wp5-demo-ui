@@ -45,6 +45,7 @@ import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
+import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
@@ -332,9 +333,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     private final String m_sName;
     private final String m_sCountryCode;
 
-    public Agent (@Nonnull @Nonempty final String sID,
-                  @Nonnull @Nonempty final String sName,
-                  @Nonnull @Nonempty final String sCountryCode)
+    public Agent (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sName, @Nonnull @Nonempty final String sCountryCode)
     {
       ValueEnforcer.notEmpty (sID, "ID");
       ValueEnforcer.notEmpty (sName, "Name");
@@ -411,22 +410,13 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 
   protected static enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   {
-    ES ("iso6523-actorid-upis::9999:esq6250003h",
-        "(UJI) Universitat Jaume I de Castellón",
-        EUseCase.HIGHER_EDUCATION_DIPLOMA,
-        "ES"),
-    PT ("iso6523-actorid-upis::9999:pt990000101",
-        "Portuguese IST, University of Lisbon",
-        EUseCase.HIGHER_EDUCATION_DIPLOMA,
-        "PT"),
+    ES ("iso6523-actorid-upis::9999:esq6250003h", "(UJI) Universitat Jaume I de Castellón", EUseCase.HIGHER_EDUCATION_DIPLOMA, "ES"),
+    PT ("iso6523-actorid-upis::9999:pt990000101", "Portuguese IST, University of Lisbon", EUseCase.HIGHER_EDUCATION_DIPLOMA, "PT"),
     SI1 ("iso6523-actorid-upis::9999:si000000016",
          "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
          EUseCase.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
-    SI2 ("iso6523-actorid-upis::9999:si000000018",
-         "(JSI) Institut Jozef Stefan",
-         EUseCase.HIGHER_EDUCATION_DIPLOMA,
-         "SI"),
+    SI2 ("iso6523-actorid-upis::9999:si000000018", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
         EUseCase.COMPANY_REGISTRATION,
@@ -499,12 +489,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
         "(MPTFP-SGAD) Secretaría General de Administración Digital",
         EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "ES",
-        MDSPerson.builder ()
-                 .id ("53377873W")
-                 .firstName ("Francisco José")
-                 .familyName ("Aragó Monzonís")
-                 .birthday (1984, 7, 24)
-                 .build (),
+        MDSPerson.builder ().id ("53377873W").firstName ("Francisco José").familyName ("Aragó Monzonís").birthday (1984, 7, 24).build (),
         null),
     PT ("iso6523-actorid-upis::9999:pt990000101",
         "Portuguese IST, University of Lisbon",
@@ -611,6 +596,9 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
+  protected static final String TARGET_URL_MOCK_DO = CApp.DEFAULT_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+  protected static final String TARGET_URL_TEST_DR = "https://de4a-dev-connector.egovlab.eu/requestTransferEvidenceIM";
+
   public AbstractPageDE4ARequest (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
   {
     super (sID, sDisplayName);
@@ -669,16 +657,13 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP,
-                                                 @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP, @Nonnull final Locale aDisplayLocale)
   {
     final BootstrapTable aTable2 = new BootstrapTable (HCCol.fromString ("170"), HCCol.star ());
     aTable2.addBodyRow ().addCell ("Person Identifier:").addCell (_code (aNP.getPersonIdentifier ()));
     aTable2.addBodyRow ().addCell ("First Name:").addCell (_text (aNP.getFirstNameValue ()));
     aTable2.addBodyRow ().addCell ("Family Identifier:").addCell (_text (aNP.getFamilyNameValue ()));
-    aTable2.addBodyRow ()
-           .addCell ("Date of Birth:")
-           .addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
+    aTable2.addBodyRow ().addCell ("Date of Birth:").addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
     if (aNP.getGender () != null)
       aTable2.addBodyRow ().addCell ("Gender:").addCell (_text (aNP.getGender ().value ()));
     if (StringHelper.hasText (aNP.getBirthNameValue ()))
@@ -691,8 +676,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS,
-                                       @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS, @Nonnull final Locale aDisplayLocale)
   {
     if (aDRS == null)
       return _text (null);
@@ -702,9 +686,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 
     if (aDRS.getDataSubjectPerson () != null)
     {
-      aTable.addBodyRow ()
-            .addCell ("Natural Person")
-            .addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
+      aTable.addBodyRow ().addCell ("Natural Person").addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
     }
     if (aDRS.getDataSubjectCompany () != null)
     {
@@ -712,9 +694,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
     if (aDRS.getDataSubjectRepresentative () != null)
     {
-      aTable.addBodyRow ()
-            .addCell ("Representative")
-            .addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
+      aTable.addBodyRow ().addCell ("Representative").addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
     }
     return aTable;
   }
@@ -727,37 +707,28 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 
     final BootstrapViewForm aTable = new BootstrapViewForm ();
     aTable.setSplitting (BootstrapGridSpec.create (-1, -1, -1, 2, 2), BootstrapGridSpec.create (-1, -1, -1, 10, 10));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID")
-                                                  .setCtrl (_code (aResponseObj.getRequestId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID")
-                                                  .setCtrl (_code (aResponseObj.getSpecificationId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID").setCtrl (_code (aResponseObj.getRequestId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID").setCtrl (_code (aResponseObj.getSpecificationId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Time stamp")
                                                   .setCtrl (_text (PDTToString.getAsString (aResponseObj.getTimeStamp (),
                                                                                             aDisplayLocale))));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID")
-                                                  .setCtrl (_code (aResponseObj.getProcedureId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
-                                                  .setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
-                                                  .setCtrl (_createAgent (aResponseObj.getDataOwner ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID").setCtrl (_code (aResponseObj.getProcedureId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (_createAgent (aResponseObj.getDataOwner ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
-                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject (),
-                                                                        aDisplayLocale)));
+                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject (), aDisplayLocale)));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
                                                   .setCtrl (_code (aResponseObj.getCanonicalEvidenceTypeId ())));
     if (aResponseObj.getCanonicalEvidence () != null)
     {
       // TODO
-      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
-                                                    .setCtrl (_text ("present, but not shown yet")));
+      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence").setCtrl (_text ("present, but not shown yet")));
     }
-    if (aResponseObj.getDomesticEvidenceList () != null &&
-        aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
+    if (aResponseObj.getDomesticEvidenceList () != null && aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
     {
       // TODO
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
-                                                    .setCtrl (_text (aResponseObj.getDomesticEvidenceList ()
-                                                                                 .getDomesticEvidenceCount () +
+                                                    .setCtrl (_text (aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () +
                                                                      " present, but not shown yet")));
     }
     return aTable;

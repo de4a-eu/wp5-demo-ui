@@ -126,15 +126,13 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
             // Send only valid documents
             final RequestExtractEvidenceUSIType aParsedRequest = (RequestExtractEvidenceUSIType) eDemoDoc.parseMessage (sPayload);
 
-            DE4AKafkaClient.send (EErrorLevel.INFO,
-                                  "DemoUI sending USI request '" + aParsedRequest.getRequestId () + "'");
+            DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI sending USI request '" + aParsedRequest.getRequestId () + "'");
 
             final HttpClientSettings aHCS = new HttpClientSettings ();
             try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
             {
               final HttpPost aPost = new HttpPost (sTargetURL);
-              aPost.setEntity (new StringEntity (sPayload,
-                                                 ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+              aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
               final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
               DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
               final ResponseErrorType aResponseObj = DE4AMarshaller.doUsiResponseMarshaller ().read (aResponse);
@@ -142,8 +140,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
                 throw new IOException ("Failed to parse response XML");
               if (aResponseObj.getAck () == AckType.OK && aResponseObj.getErrorList () == null)
               {
-                final String sBackURL = new SimpleURL ("https://de4a-dev-mock.egovlab.eu/public/menuitem-deusi").add ("is-response",
-                                                                                                                      "true")
+                final String sBackURL = new SimpleURL ("https://de4a-dev-mock.egovlab.eu/public/menuitem-deusi").add ("is-response", "true")
                                                                                                                 .add ("requestId",
                                                                                                                       aParsedRequest.getRequestId ())
                                                                                                                 .getAsStringWithEncodedParameters ();
@@ -158,9 +155,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
                 if (aResponseObj.getErrorList () != null)
                 {
                   final HCUL aUL = new HCUL ();
-                  aResponseObj.getErrorList ()
-                              .getError ()
-                              .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                  aResponseObj.getErrorList ().getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
                   aResNL.addChild (error (aUL));
                 }
                 else

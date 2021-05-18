@@ -23,7 +23,7 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
-public class PagePublicDE_USI_User extends AbstractPageDE4ARequest
+public class PagePublicDE_USI_User extends AbstractPageDE_User
 {
   private static final EPatternType OUR_PATTERN = EPatternType.USI;
 

@@ -19,11 +19,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
-import java.util.UUID;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -32,9 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
-import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
-import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
@@ -89,326 +85,18 @@ import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
-import com.helger.scope.singleton.AbstractSessionSingleton;
 
-import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.types.AgentType;
-import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
-import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
-import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
+public class PagePublicDE_IM_User extends AbstractPageDE_User
 {
   private static final EPatternType OUR_PATTERN = EPatternType.IM;
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_User.class);
-
-  private static final String PARAM_DIRECTION = "dir";
-  // Select process
-  private static final String FIELD_PROCESS = "process";
-  // Select DE
-  private static final String FIELD_DE_ID = "de_id";
-  private static final String FIELD_DE_NAME = "de_name";
-  private static final String FIELD_DE_COUNTRY_CODE = "de_cc";
-  // Select DO
-  private static final String FIELD_DO_ID = "do_id";
-  private static final String FIELD_DO_NAME = "do_name";
-  private static final String FIELD_DO_COUNTRY_CODE = "do_cc";
-  // Select DRS
-  private static final String FIELD_DRS_ID = "id";
-  private static final String FIELD_DRS_NAME = "name";
-  private static final String FIELD_DRS_FIRSTNAME = "firstname";
-  private static final String FIELD_DRS_FAMILYNAME = "familyname";
-  private static final String FIELD_DRS_BIRTHDAY = "birthday";
-  // Request
-  private static final String FIELD_REQUEST_XML = "requestxml";
-  private static final String FIELD_TARGET_URL = "targeturl";
-  private static final String FIELD_CONFIRM = "confirm";
-
-  private static final String TARGET_URL_MOCK_DO = CApp.DEFAULT_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
-  private static final String TARGET_URL_TEST_DR = "https://de4a-dev-connector.egovlab.eu/requestTransferEvidenceIM";
-
-  private static enum EStep
-  {
-    // Order matters
-    SELECT_PROCESS,
-    SELECT_DATA_EVALUATOR,
-    SELECT_DATA_OWNER,
-    SELECT_DATA_REQUEST_SUBJECT,
-    EXPLICIT_CONSENT,
-    SEND_REQUEST;
-
-    public boolean isFirst ()
-    {
-      return ordinal () == 0;
-    }
-
-    public boolean isNextSendRequest ()
-    {
-      return ordinal () == SEND_REQUEST.ordinal () - 1;
-    }
-
-    public boolean isLast ()
-    {
-      return ordinal () == values ().length - 1;
-    }
-
-    public boolean wasRequestSent ()
-    {
-      return ordinal () >= SEND_REQUEST.ordinal ();
-    }
-
-    public boolean isLT (@Nonnull final EStep eOther)
-    {
-      return ordinal () < eOther.ordinal ();
-    }
-
-    public boolean isGT (@Nonnull final EStep eOther)
-    {
-      return ordinal () > eOther.ordinal ();
-    }
-
-    @Nullable
-    public EStep prev ()
-    {
-      if (isFirst ())
-        return null;
-      return values ()[ordinal () - 1];
-    }
-
-    @Nullable
-    public EStep next ()
-    {
-      if (isLast ())
-        return null;
-      return values ()[ordinal () + 1];
-    }
-
-    @Nonnull
-    public static EStep first ()
-    {
-      return values ()[0];
-    }
-
-    @Nonnull
-    public static EStep min (@Nonnull final EStep e1, @Nonnull final EStep e2)
-    {
-      return e1.ordinal () < e2.ordinal () ? e1 : e2;
-    }
-  }
-
-  public static final class SessionState extends AbstractSessionSingleton
-  {
-    private EStep m_eStep = EStep.first ();
-    // Process
-    private EUseCase m_eUseCase;
-    // DE
-    private Agent m_aDE;
-    // DO
-    private Agent m_aDO;
-    // DRS
-    private MDSCompany m_aDRSCompany;
-    private MDSPerson m_aDRSPerson;
-    // Consent to send this
-    private RequestTransferEvidenceUSIIMDRType m_aRequest;
-    private String m_sTargetURL;
-    private boolean m_bConfirmedToSend;
-    // Response received
-    private ResponseTransferEvidenceType m_aResponse;
-
-    @Deprecated
-    @UsedViaReflection
-    public SessionState ()
-    {}
-
-    @Nonnull
-    public static SessionState getInstance ()
-    {
-      return getSessionSingleton (SessionState.class);
-    }
-
-    public void validate ()
-    {
-      if (m_eStep == null)
-        throw new IllegalStateException ("No step");
-
-      if (m_eUseCase == null)
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_PROCESS);
-      if (m_aDE == null)
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_EVALUATOR);
-      if (m_aDO == null)
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_OWNER);
-      if (_allDRSNull ())
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_REQUEST_SUBJECT);
-      if (m_aRequest == null || !m_bConfirmedToSend)
-        m_eStep = EStep.min (m_eStep, EStep.EXPLICIT_CONSENT);
-    }
-
-    private void _onBack ()
-    {
-      if (m_eStep.isLT (EStep.SELECT_PROCESS))
-        m_eUseCase = null;
-      if (m_eStep.isLT (EStep.SELECT_DATA_EVALUATOR))
-        m_aDE = null;
-      if (m_eStep.isLT (EStep.SELECT_DATA_OWNER))
-        m_aDO = null;
-      if (m_eStep.isLT (EStep.SELECT_DATA_REQUEST_SUBJECT))
-        resetDRS ();
-      if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
-      {
-        m_aRequest = null;
-        m_sTargetURL = null;
-        m_bConfirmedToSend = false;
-      }
-    }
-
-    public void moveBack ()
-    {
-      m_eStep = m_eStep.prev ();
-      _onBack ();
-    }
-
-    public void moveForward ()
-    {
-      m_eStep = m_eStep.next ();
-    }
-
-    /**
-     * Restart the whole wizard to the start state
-     */
-    public void reset ()
-    {
-      m_eStep = EStep.first ();
-      _onBack ();
-    }
-
-    @Nullable
-    public String getProcessID ()
-    {
-      return m_eUseCase == null ? null : m_eUseCase.getID ();
-    }
-
-    @Nullable
-    public String getDataEvaluatorID ()
-    {
-      return m_aDE == null ? null : m_aDE.getID ();
-    }
-
-    @Nullable
-    public String getDataEvaluatorName ()
-    {
-      return m_aDE == null ? null : m_aDE.getName ();
-    }
-
-    @Nullable
-    public String getDataEvaluatorCountryCode ()
-    {
-      return m_aDE == null ? null : m_aDE.getCountryCode ();
-    }
-
-    @Nullable
-    public String getDataOwnerID ()
-    {
-      return m_aDO == null ? null : m_aDO.getID ();
-    }
-
-    @Nullable
-    public String getDataOwnerName ()
-    {
-      return m_aDO == null ? null : m_aDO.getName ();
-    }
-
-    @Nullable
-    public String getDataOwnerCountryCode ()
-    {
-      return m_aDO == null ? null : m_aDO.getCountryCode ();
-    }
-
-    private boolean _allDRSNull ()
-    {
-      return m_aDRSCompany == null && m_aDRSPerson == null;
-    }
-
-    public void resetDRS ()
-    {
-      m_aDRSCompany = null;
-      m_aDRSPerson = null;
-    }
-
-    @Nullable
-    public LocalDate getBirthDayOr (@Nullable final LocalDate aFallbackDate)
-    {
-      return m_aDRSPerson != null ? m_aDRSPerson.getBirthday () : aFallbackDate;
-    }
-
-    @Nonnull
-    public RequestTransferEvidenceUSIIMDRType buildRequest ()
-    {
-      final RequestTransferEvidenceUSIIMDRType aRequest = new RequestTransferEvidenceUSIIMDRType ();
-      aRequest.setRequestId (UUID.randomUUID ().toString ());
-      // TODO
-      aRequest.setSpecificationId ("SpecificationId");
-      aRequest.setTimeStamp (PDTFactory.getCurrentXMLOffsetDateTimeMillisOnly ());
-      // TODO
-      aRequest.setProcedureId ("ProcedureId");
-      {
-        final AgentType aDE = new AgentType ();
-        aDE.setAgentUrn (m_aDE.getID ());
-        aDE.setAgentName (m_aDE.getName ());
-        aRequest.setDataEvaluator (aDE);
-      }
-      {
-        final AgentType aDO = new AgentType ();
-        aDO.setAgentUrn (m_aDO.getID ());
-        aDO.setAgentName (m_aDO.getName ());
-        aRequest.setDataOwner (aDO);
-      }
-      {
-        final DataRequestSubjectCVType aDRS = new DataRequestSubjectCVType ();
-        switch (m_eUseCase.getDRSType ())
-        {
-          case PERSON:
-          {
-            final NaturalPersonIdentifierType aPerson = new NaturalPersonIdentifierType ();
-            aPerson.setPersonIdentifier (m_aDRSPerson.getID ());
-            aPerson.setFirstName (m_aDRSPerson.getFirstName ());
-            aPerson.setFamilyName (m_aDRSPerson.getFamilyName ());
-            aPerson.setDateOfBirth (m_aDRSPerson.getBirthday ());
-            // Ignore the optional stuff
-            aDRS.setDataSubjectPerson (aPerson);
-            break;
-          }
-          case COMPANY:
-          {
-            final LegalPersonIdentifierType aCompany = new LegalPersonIdentifierType ();
-            aCompany.setLegalPersonIdentifier (m_aDRSCompany.getID ());
-            aCompany.setLegalName (m_aDRSCompany.getName ());
-            // Ignore the optional stuff
-            aDRS.setDataSubjectCompany (aCompany);
-            break;
-          }
-          default:
-            throw new IllegalStateException ();
-        }
-        aRequest.setDataRequestSubject (aDRS);
-      }
-      {
-        final RequestGroundsType aRG = new RequestGroundsType ();
-        // TODO okay for now?
-        aRG.setExplicitRequest (ExplicitRequestType.SDGR_14);
-        aRequest.setRequestGrounds (aRG);
-      }
-      aRequest.setCanonicalEvidenceTypeId (m_eUseCase.getCanonicalEvidenceTypeID ());
-      return aRequest;
-    }
-  }
 
   public PagePublicDE_IM_User (@Nonnull @Nonempty final String sID)
   {
@@ -429,16 +117,17 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     if ("reset".equals (sDir))
       aState.reset ();
 
-    final Function <ErrorList, GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType>> aMP = aEL -> DE4AMarshaller.drImRequestMarshaller ()
-                                                                                                                      .setFormattedOutput (true)
-                                                                                                                      .setValidationEventHandlerFactory (aEL == null ? null
-                                                                                                                                                                     : x -> new WrappedCollectingValidationEventHandler (aEL));
+    final Function <ErrorList, GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType>> aMP;
+    aMP = aEL -> DE4AMarshaller.drImRequestMarshaller ()
+                               .setFormattedOutput (true)
+                               .setValidationEventHandlerFactory (aEL == null ? null
+                                                                              : x -> new WrappedCollectingValidationEventHandler (aEL));
 
     // Grab input parameters
     final FormErrorList aFormErrors = new FormErrorList ();
     final boolean bIsSubmitted = bGoBack || bGoNext;
     if (bGoNext)
-      switch (aState.m_eStep)
+      switch (aState.step ())
       {
         case SELECT_PROCESS:
         {
@@ -461,8 +150,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         {
           final String sDEID = aWPEC.params ().getAsStringTrimmed (FIELD_DE_ID, aState.getDataEvaluatorID ());
           final String sDEName = aWPEC.params ().getAsStringTrimmed (FIELD_DE_NAME, aState.getDataEvaluatorName ());
-          final String sDECC = aWPEC.params ()
-                                    .getAsStringTrimmed (FIELD_DE_COUNTRY_CODE, aState.getDataEvaluatorCountryCode ());
+          final String sDECC = aWPEC.params ().getAsStringTrimmed (FIELD_DE_COUNTRY_CODE, aState.getDataEvaluatorCountryCode ());
 
           if (StringHelper.hasNoText (sDEID))
             aFormErrors.addFieldError (FIELD_DE_ID, "A Data Evaluator ID is needed");
@@ -486,8 +174,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         {
           final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_ID, aState.getDataOwnerID ());
           final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
-          final String sDOCC = aWPEC.params ()
-                                    .getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
+          final String sDOCC = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
 
           if (StringHelper.hasNoText (sDOID))
             aFormErrors.addFieldError (FIELD_DO_ID, "A Data Owner ID is needed");
@@ -515,8 +202,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
             {
               final String sDRSID = aWPEC.params ()
                                          .getAsStringTrimmed (FIELD_DRS_ID,
-                                                              aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
-                                                                                          : null);
+                                                              aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID () : null);
               final String sDRSFirstName = aWPEC.params ()
                                                 .getAsStringTrimmed (FIELD_DRS_FIRSTNAME,
                                                                      aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
@@ -554,12 +240,10 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
             {
               final String sDRSID = aWPEC.params ()
                                          .getAsStringTrimmed (FIELD_DRS_ID,
-                                                              aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
-                                                                                           : null);
+                                                              aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID () : null);
               final String sDRSName = aWPEC.params ()
                                            .getAsStringTrimmed (FIELD_DRS_NAME,
-                                                                aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
-                                                                                             : null);
+                                                                aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName () : null);
 
               if (StringHelper.hasNoText (sDRSID))
                 aFormErrors.addFieldError (FIELD_DRS_ID, "A company ID must be provided");
@@ -607,22 +291,22 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           break;
         }
         default:
-          aNodeList.addChild (error ("Unsupported step " + aState.m_eStep));
+          aNodeList.addChild (error ("Unsupported step " + aState.step ()));
       }
 
     // Change step now
     final boolean bMoved;
-    if (bGoBack && !aState.m_eStep.isFirst ())
+    if (bGoBack && !aState.step ().isFirst ())
     {
-      LOGGER.info ("One step backwards from " + aState.m_eStep);
+      LOGGER.info ("One step backwards from " + aState.step ());
       aState.moveBack ();
       bMoved = true;
     }
     else
-      if (bGoNext && !aState.m_eStep.isLast () && aFormErrors.isEmpty ())
+      if (bGoNext && !aState.step ().isLast () && aFormErrors.isEmpty ())
       {
         // Forward moving only if no errors are found
-        LOGGER.info ("One step forward from " + aState.m_eStep);
+        LOGGER.info ("One step forward from " + aState.step ());
         aState.moveForward ();
         bMoved = true;
       }
@@ -642,7 +326,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     if (aFormErrors.isNotEmpty ())
       aForm.addChild (getUIHandler ().createIncorrectInputBox (aWPEC));
 
-    if (aState.m_eStep.isGT (EStep.SELECT_PROCESS))
+    if (aState.step ().isGT (EStep.SELECT_PROCESS))
       aForm.addChild (h2 ("Running use case " + aState.m_eUseCase.getDisplayName ()));
 
     final JSFunction aJSSetDE;
@@ -658,9 +342,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         final JSVar aElementCC = aJSSetDE.param ("ecc");
         final JSArray aMDE = new JSArray ();
         for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
-          aMDE.add (new JSAssocArray ().add ("id", e.getID ())
-                                       .add ("n", e.getDisplayName ())
-                                       .add ("cc", e.getCountryCode ()));
+          aMDE.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
         final JSVar aArray = aJSSetDE.body ().var ("array", aMDE);
         final JSVar aCallbackParam = new JSVar ("x");
         final JSVar aFound = aJSSetDE.body ()
@@ -681,9 +363,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         final JSVar aElementCC = aJSSetDO.param ("ecc");
         final JSArray aMDO = new JSArray ();
         for (final EMockDataOwner e : EMockDataOwner.values ())
-          aMDO.add (new JSAssocArray ().add ("id", e.getID ())
-                                       .add ("n", e.getDisplayName ())
-                                       .add ("cc", e.getCountryCode ()));
+          aMDO.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
         final JSVar aArray = aJSSetDO.body ().var ("array", aMDO);
         final JSVar aCallbackParam = new JSVar ("x");
         final JSVar aFound = aJSSetDO.body ()
@@ -702,13 +382,12 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
     }
 
     // Handle current step
-    switch (aState.m_eStep)
+    switch (aState.step ())
     {
       case SELECT_PROCESS:
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_PROCESS, aState.getProcessID ()));
-        for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (),
-                                                            IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+        for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (), IHasDisplayName.getComparatorCollating (aDisplayLocale)))
           if (e.getPatternType () == OUR_PATTERN)
             aSelect.addOption (e.getID (), e.getDisplayName ());
         if (aSelect.getOptionCount () > 1)
@@ -735,8 +414,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE_ID)));
 
         // Name
-        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME,
-                                                               aState.getDataEvaluatorName ())).ensureID ();
+        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME, aState.getDataEvaluatorName ())).ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator name")
                                                      .setCtrl (aEditName)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE_NAME)));
@@ -783,8 +461,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
 
         // Country
-        final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
-                                                                                aState.getDataOwnerCountryCode ()),
+        final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ()),
                                                               aDisplayLocale);
         aCSelect.ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
@@ -909,8 +586,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         // First column for all nested tables
         final HCCol aCol1 = new HCCol (150);
 
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
-                                                     .setCtrl (aState.m_eUseCase.getDisplayName ()));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type").setCtrl (aState.m_eUseCase.getDisplayName ()));
 
         {
           final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
@@ -919,8 +595,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorID ()));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
-           .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
-                                        : aState.getDataEvaluatorCountryCode ());
+           .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale) : aState.getDataEvaluatorCountryCode ());
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
         }
 
@@ -931,8 +606,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerID ()));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
-           .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
-                                        : aState.getDataOwnerCountryCode ());
+           .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
         }
 
@@ -972,8 +646,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                                                      .setHelpText ("This is the technical request. It is just shown for helping developers")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
-                                                     .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
-                                                                                             TARGET_URL_MOCK_DO)))
+                                                     .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_TEST_DR)))
                                                      .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO))
                                                                                                                 .addChild (" for the mock DO, or ")
                                                                                                                 .addChild (code (TARGET_URL_TEST_DR))
@@ -981,8 +654,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel (new HCFormLabel (span ("Confirmation to send request"),
                                                                                  ELabelType.MANDATORY))
-                                                     .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM,
-                                                                                                        false)))
+                                                     .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM, false)))
                                                      .setHelpText ("You need to give your explicit consent here to proceed")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
 
@@ -992,8 +664,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       {
         aForm.addChild (info ("Sending the mock request to ").addChild (code (aState.m_sTargetURL)));
 
-        DE4AKafkaClient.send (EErrorLevel.INFO,
-                              "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "'");
+        DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "'");
 
         final StopWatch aSW = StopWatch.createdStarted ();
         final HttpClientSettings aHCS = new HttpClientSettings ();
@@ -1036,9 +707,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
           {
             aForm.addChild (h2 ("The data could not be fetched from the Data Owner"));
             final HCUL aUL = new HCUL ();
-            aResponseObj.getErrorList ()
-                        .getError ()
-                        .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+            aResponseObj.getErrorList ().getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
             aForm.addChild (aUL);
           }
         }
@@ -1056,7 +725,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         break;
       }
       default:
-        aForm.addChild (error ("Unsupported step " + aState.m_eStep));
+        aForm.addChild (error ("Unsupported step " + aState.step ()));
     }
 
     // Buttons
@@ -1064,7 +733,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
       final HCDiv aRow = aForm.addAndReturnChild (div ());
 
       {
-        if (aState.m_eStep.isFirst () || aState.m_eStep.wasRequestSent ())
+        if (aState.step ().isFirst () || aState.step ().wasRequestSent ())
         {
           // Disable and no-action
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setDisabled (true));
@@ -1072,35 +741,28 @@ public class PagePublicDE_IM_User extends AbstractPageDE4ARequest
         else
         {
           final JSPackage aFunc = new JSPackage ();
-          aFunc.add (JQuery.idRef (aForm)
-                           .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='back'></input>")
-                           .submit ());
+          aFunc.add (JQuery.idRef (aForm).append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='back'></input>").submit ());
           aFunc._return (false);
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setOnClick (aFunc));
         }
       }
-      if (aState.m_eStep.isLast ())
+      if (aState.step ().isLast ())
       {
         aRow.addChild (new BootstrapButton ().addChild ("Next").setIcon (EDefaultIcon.NEXT).setDisabled (true));
       }
       else
       {
         final JSPackage aFunc = new JSPackage ();
-        aFunc.add (JQuery.idRef (aForm)
-                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='next'></input>")
-                         .submit ());
+        aFunc.add (JQuery.idRef (aForm).append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='next'></input>").submit ());
         aFunc._return (false);
-        aRow.addChild (new BootstrapButton ().addChild (aState.m_eStep.isNextSendRequest () ? "Send Request" : "Next")
-                                             .setIcon (aState.m_eStep.isNextSendRequest () ? EDefaultIcon.YES
-                                                                                           : EDefaultIcon.NEXT)
+        aRow.addChild (new BootstrapButton ().addChild (aState.step ().isNextSendRequest () ? "Send Request" : "Next")
+                                             .setIcon (aState.step ().isNextSendRequest () ? EDefaultIcon.YES : EDefaultIcon.NEXT)
                                              .setOnClick (aFunc));
       }
-      if (aState.m_eStep.wasRequestSent ())
+      if (aState.step ().wasRequestSent ())
       {
         final JSPackage aFunc = new JSPackage ();
-        aFunc.add (JQuery.idRef (aForm)
-                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='reset'></input>")
-                         .submit ());
+        aFunc.add (JQuery.idRef (aForm).append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='reset'></input>").submit ());
         aFunc._return (false);
         aRow.addChild (new BootstrapButton ().addChild ("Restart").setIcon (EFontAwesome5Icon.UNDO).setOnClick (aFunc));
       }

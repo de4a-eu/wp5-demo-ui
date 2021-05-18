@@ -30,6 +30,8 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
+import com.helger.commons.url.URLHelper;
+import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCUL;
@@ -52,7 +54,6 @@ import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
-import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
@@ -62,6 +63,7 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
 {
+  private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
 
   public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
@@ -77,13 +79,20 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
 
     // We're doing a DO-USI request
     final EDemoDocument eDemoDoc = EDemoDocument.DR_IM_REQ;
-    final String sTargetURL = CApp.DEFAULT_BASE_URL + eDemoDoc.getRelativeURL ();
 
     final FormErrorList aFormErrors = new FormErrorList ();
     boolean bShowForm = true;
     if (aWPEC.hasAction (CPageParam.ACTION_PERFORM))
     {
+      final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
       final String sPayload = aWPEC.params ().getAsStringTrimmed (FIELD_PAYLOAD);
+
+      if (StringHelper.hasNoText (sTargetURL))
+        aFormErrors.addFieldError (FIELD_TARGET_URL, "A target URL is required");
+      else
+        if (URLHelper.getAsURL (sTargetURL, false) == null)
+          aFormErrors.addFieldError (FIELD_TARGET_URL, "The target URL must be valid URL");
+
       if (StringHelper.hasNoText (sPayload))
         aFormErrors.addFieldError (FIELD_PAYLOAD, "Payload must be provided");
 
@@ -113,8 +122,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
             final HttpPost aPost = new HttpPost (sTargetURL);
-            aPost.setEntity (new StringEntity (sPayload,
-                                               ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
             final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
@@ -138,9 +146,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
             {
               aResNL.addChild (h2 ("The data could not be fetched from the Data Owner"));
               final HCUL aUL = new HCUL ();
-              aResponseObj.getErrorList ()
-                          .getError ()
-                          .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+              aResponseObj.getErrorList ().getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
               aResNL.addChild (aUL);
             }
           }
@@ -169,7 +175,13 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
 
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
-      aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Target URL").setCtrl (code (sTargetURL)));
+      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_TEST_DR)))
+                                                   .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO))
+                                                                                                              .addChild (" for the mock DO, or ")
+                                                                                                              .addChild (code (TARGET_URL_TEST_DR))
+                                                                                                              .addChild (" for the test DE4A Connector"))
+                                                   .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
                                                    .setCtrl (new HCTextArea (new RequestField (FIELD_PAYLOAD,
                                                                                                eDemoDoc.getAnyMessageAsString (aDemoRequest))).setRows (10)
