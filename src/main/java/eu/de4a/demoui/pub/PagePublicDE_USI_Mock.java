@@ -65,7 +65,7 @@ import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
+public class PagePublicDE_USI_Mock extends AbstractPageDE4ARequest
 {
   // We're doing a DO-USI request
   private static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.DO_USI_REQ;
@@ -97,9 +97,9 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
     });
   }
 
-  public PagePublicDE_USI_Expert (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_USI_Mock (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "USI Exchange (Expert)");
+    super (sID, "USI Exchange (Mock)");
   }
 
   @Override
