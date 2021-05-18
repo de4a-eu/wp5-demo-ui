@@ -18,6 +18,7 @@ package eu.de4a.demoui.pub;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.annotation.Nonnull;
 
@@ -30,14 +31,23 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
+import com.helger.commons.timing.StopWatch;
+import com.helger.commons.url.URLHelper;
+import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCUL;
 import com.helger.html.hc.impl.HCNodeList;
+import com.helger.html.jquery.JQuery;
+import com.helger.html.jquery.JQueryAjaxBuilder;
+import com.helger.html.jscode.JSAnonymousFunction;
+import com.helger.html.jscode.JSPackage;
+import com.helger.html.jscode.JSVar;
 import com.helger.html.jscode.html.JSHtml;
 import com.helger.httpclient.HttpClientManager;
 import com.helger.httpclient.HttpClientSettings;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
+import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
@@ -51,8 +61,8 @@ import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
+import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
@@ -62,7 +72,51 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
 {
+  // We're doing a DO-USI request
+  public static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.DR_IM_REQ;
+
+  private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
+
+  private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
+
+  @Nonnull
+  private static RequestTransferEvidenceUSIIMDRType _createDemoRequest ()
+  {
+    RequestTransferEvidenceUSIIMDRType aDemoRequest;
+    if (ThreadLocalRandom.current ().nextBoolean ())
+    {
+      while (true)
+      {
+        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
+          break;
+      }
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.PT.getID ());
+      aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getCanonicalEvidenceTypeID ());
+    }
+    else
+    {
+      while (true)
+      {
+        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (aDemoRequest.getDataRequestSubject ().getDataSubjectCompany () != null)
+          break;
+      }
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.AT.getID ());
+      aDemoRequest.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("AT/NL/???");
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getCanonicalEvidenceTypeID ());
+    }
+    return aDemoRequest;
+  }
+
+  static
+  {
+    CREATE_NEW_REQUEST = addAjax ( (aRequestScope, aAjaxResponse) -> {
+      aAjaxResponse.text (DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()));
+    });
+  }
 
   public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
   {
@@ -74,16 +128,21 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
-
-    // We're doing a DO-USI request
-    final EDemoDocument eDemoDoc = EDemoDocument.DR_IM_REQ;
-    final String sTargetURL = CApp.DEFAULT_BASE_URL + eDemoDoc.getRelativeURL ();
+    final IRequestWebScopeWithoutResponse aRequestScope = aWPEC.getRequestScope ();
 
     final FormErrorList aFormErrors = new FormErrorList ();
     boolean bShowForm = true;
     if (aWPEC.hasAction (CPageParam.ACTION_PERFORM))
     {
+      final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
       final String sPayload = aWPEC.params ().getAsStringTrimmed (FIELD_PAYLOAD);
+
+      if (StringHelper.hasNoText (sTargetURL))
+        aFormErrors.addFieldError (FIELD_TARGET_URL, "A target URL is required");
+      else
+        if (URLHelper.getAsURL (sTargetURL, false) == null)
+          aFormErrors.addFieldError (FIELD_TARGET_URL, "The target URL must be valid URL");
+
       if (StringHelper.hasNoText (sPayload))
         aFormErrors.addFieldError (FIELD_PAYLOAD, "Payload must be provided");
 
@@ -92,7 +151,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
         final HCNodeList aResNL = new HCNodeList ();
 
         // Check if document is valid
-        final IErrorList aEL = eDemoDoc.validateMessage (sPayload);
+        final IErrorList aEL = DEMO_DOC_TYPE.validateMessage (sPayload);
         if (aEL.containsAtLeastOneError ())
         {
           aResNL.addChild (error ("The provided document is not XSD compliant"));
@@ -105,16 +164,19 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
         else
         {
           // Send only valid documents
-          final RequestTransferEvidenceUSIIMDRType aParsedRequest = (RequestTransferEvidenceUSIIMDRType) eDemoDoc.parseMessage (sPayload);
+          final RequestTransferEvidenceUSIIMDRType aParsedRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
-          DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI sending IM request '" + aParsedRequest.getRequestId () + "'");
+          DE4AKafkaClient.send (EErrorLevel.INFO,
+                                "DemoUI sending IM request '" + aParsedRequest.getRequestId () + "' to '" + sTargetURL + "'");
 
+          final StopWatch aSW = StopWatch.createdStarted ();
           final HttpClientSettings aHCS = new HttpClientSettings ();
+          aHCS.setConnectionRequestTimeoutMS (120_000);
+          aHCS.setSocketTimeoutMS (120_000);
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
             final HttpPost aPost = new HttpPost (sTargetURL);
-            aPost.setEntity (new StringEntity (sPayload,
-                                               ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
             final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
@@ -136,18 +198,20 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
             }
             else
             {
-              aResNL.addChild (h2 ("The data could not be fetched from the Data Owner"));
               final HCUL aUL = new HCUL ();
-              aResponseObj.getErrorList ()
-                          .getError ()
-                          .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-              aResNL.addChild (aUL);
+              aResponseObj.getErrorList ().getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+              aResNL.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
             }
           }
           catch (final IOException ex)
           {
             aResNL.addChild (error ().addChild (div ("Error sending request to ").addChild (code (sTargetURL)))
                                      .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
+          }
+          finally
+          {
+            aSW.stop ();
+            aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
           }
         }
         aNodeList.addChild (aResNL);
@@ -156,26 +220,33 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
 
     if (bShowForm)
     {
-      RequestTransferEvidenceUSIIMDRType aDemoRequest;
-      while (true)
-      {
-        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) eDemoDoc.createDemoRequest ();
-        if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
-          break;
-      }
-      aDemoRequest.getDataOwner ().setAgentUrn ("iso6523-actorid-upis::9999:PT990000101");
-      aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
-      aDemoRequest.setCanonicalEvidenceTypeId ("urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma");
-
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
-      aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Target URL").setCtrl (code (sTargetURL)));
-      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
-                                                   .setCtrl (new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                                                               eDemoDoc.getAnyMessageAsString (aDemoRequest))).setRows (10)
-                                                                                                                                              .addClass (CBootstrapCSS.TEXT_MONOSPACE))
-                                                   .setHelpText ("The message you want to send. By default a randomly generated message is created")
-                                                   .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
+      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_MOCK_DO)))
+                                                   .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO))
+                                                                                                              .addChild (" for the mock DO, or ")
+                                                                                                              .addChild (code (TARGET_URL_TEST_DR))
+                                                                                                              .addChild (" for the test DE4A Connector"))
+                                                   .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
+      {
+        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+                                                                 DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
+                                                                                                                              .addClass (CBootstrapCSS.TEXT_MONOSPACE);
+        final JSAnonymousFunction aJSAppend = new JSAnonymousFunction ();
+        final JSVar aJSAppendData = aJSAppend.param ("data");
+        aJSAppend.body ().add (JQuery.idRef (aTA).val (aJSAppendData));
+
+        final JSPackage aOnClick = new JSPackage ();
+        aOnClick.add (new JQueryAjaxBuilder ().url (CREATE_NEW_REQUEST.getInvocationURL (aRequestScope)).success (aJSAppend).build ());
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
+                                                     .setCtrl (aTA,
+                                                               new BootstrapButton ().addChild ("Other message")
+                                                                                     .setIcon (EDefaultIcon.REFRESH)
+                                                                                     .setOnClick (aOnClick))
+                                                     .setHelpText ("The message you want to send. By default a randomly generated message is created")
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
+      }
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send IM request"));

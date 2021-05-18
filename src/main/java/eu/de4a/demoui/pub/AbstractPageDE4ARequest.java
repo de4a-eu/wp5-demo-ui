@@ -24,9 +24,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+import org.w3c.dom.Element;
+
 import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.builder.IBuilder;
+import com.helger.commons.collection.impl.CommonsArrayList;
 import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.id.IHasID;
@@ -34,23 +37,39 @@ import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.IHCNode;
+import com.helger.html.hc.ext.HCA_MailTo;
+import com.helger.html.hc.html.forms.HCTextArea;
+import com.helger.html.hc.html.grouping.HCDiv;
 import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.html.textlevel.HCA;
 import com.helger.html.hc.html.textlevel.HCCode;
 import com.helger.html.hc.html.textlevel.HCEM;
+import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.hc.impl.HCTextNode;
+import com.helger.jaxb.validation.DoNothingValidationEventHandler;
+import com.helger.photon.bootstrap4.CBootstrapCSS;
+import com.helger.photon.bootstrap4.alert.BootstrapErrorBox;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.form.BootstrapViewForm;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
+import com.helger.xml.serialize.write.EXMLSerializeIndent;
+import com.helger.xml.serialize.write.XMLWriter;
+import com.helger.xml.serialize.write.XMLWriterSettings;
 
+import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.AgentType;
+import eu.de4a.iem.jaxb.common.types.CanonicalEvidenceType;
 import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
+import eu.de4a.iem.jaxb.t42.v0_6.ActivityType;
+import eu.de4a.iem.jaxb.t42.v0_6.AddressType;
+import eu.de4a.iem.jaxb.t42.v0_6.LegalEntityType;
+import eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller;
 
 public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 {
@@ -332,9 +351,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     private final String m_sName;
     private final String m_sCountryCode;
 
-    public Agent (@Nonnull @Nonempty final String sID,
-                  @Nonnull @Nonempty final String sName,
-                  @Nonnull @Nonempty final String sCountryCode)
+    public Agent (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sName, @Nonnull @Nonempty final String sCountryCode)
     {
       ValueEnforcer.notEmpty (sID, "ID");
       ValueEnforcer.notEmpty (sName, "Name");
@@ -411,22 +428,13 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 
   protected static enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   {
-    ES ("iso6523-actorid-upis::9999:esq6250003h",
-        "(UJI) Universitat Jaume I de Castellón",
-        EUseCase.HIGHER_EDUCATION_DIPLOMA,
-        "ES"),
-    PT ("iso6523-actorid-upis::9999:pt990000101",
-        "Portuguese IST, University of Lisbon",
-        EUseCase.HIGHER_EDUCATION_DIPLOMA,
-        "PT"),
+    ES ("iso6523-actorid-upis::9999:esq6250003h", "(UJI) Universitat Jaume I de Castellón", EUseCase.HIGHER_EDUCATION_DIPLOMA, "ES"),
+    PT ("iso6523-actorid-upis::9999:pt990000101", "Portuguese IST, University of Lisbon", EUseCase.HIGHER_EDUCATION_DIPLOMA, "PT"),
     SI1 ("iso6523-actorid-upis::9999:si000000016",
          "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
          EUseCase.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
-    SI2 ("iso6523-actorid-upis::9999:si000000018",
-         "(JSI) Institut Jozef Stefan",
-         EUseCase.HIGHER_EDUCATION_DIPLOMA,
-         "SI"),
+    SI2 ("iso6523-actorid-upis::9999:si000000018", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
         EUseCase.COMPANY_REGISTRATION,
@@ -499,12 +507,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
         "(MPTFP-SGAD) Secretaría General de Administración Digital",
         EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "ES",
-        MDSPerson.builder ()
-                 .id ("53377873W")
-                 .firstName ("Francisco José")
-                 .familyName ("Aragó Monzonís")
-                 .birthday (1984, 7, 24)
-                 .build (),
+        MDSPerson.builder ().id ("53377873W").firstName ("Francisco José").familyName ("Aragó Monzonís").birthday (1984, 7, 24).build (),
         null),
     PT ("iso6523-actorid-upis::9999:pt990000101",
         "Portuguese IST, University of Lisbon",
@@ -611,6 +614,9 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
+  protected static final String TARGET_URL_MOCK_DO = CApp.DEFAULT_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+  protected static final String TARGET_URL_TEST_DR = "https://de4a-dev-connector.egovlab.eu/requestTransferEvidenceIM";
+
   public AbstractPageDE4ARequest (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
   {
     super (sID, sDisplayName);
@@ -669,16 +675,13 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP,
-                                                 @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP, @Nonnull final Locale aDisplayLocale)
   {
     final BootstrapTable aTable2 = new BootstrapTable (HCCol.fromString ("170"), HCCol.star ());
     aTable2.addBodyRow ().addCell ("Person Identifier:").addCell (_code (aNP.getPersonIdentifier ()));
     aTable2.addBodyRow ().addCell ("First Name:").addCell (_text (aNP.getFirstNameValue ()));
     aTable2.addBodyRow ().addCell ("Family Identifier:").addCell (_text (aNP.getFamilyNameValue ()));
-    aTable2.addBodyRow ()
-           .addCell ("Date of Birth:")
-           .addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
+    aTable2.addBodyRow ().addCell ("Date of Birth:").addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
     if (aNP.getGender () != null)
       aTable2.addBodyRow ().addCell ("Gender:").addCell (_text (aNP.getGender ().value ()));
     if (StringHelper.hasText (aNP.getBirthNameValue ()))
@@ -691,8 +694,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS,
-                                       @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS, @Nonnull final Locale aDisplayLocale)
   {
     if (aDRS == null)
       return _text (null);
@@ -702,9 +704,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 
     if (aDRS.getDataSubjectPerson () != null)
     {
-      aTable.addBodyRow ()
-            .addCell ("Natural Person")
-            .addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
+      aTable.addBodyRow ().addCell ("Natural Person").addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
     }
     if (aDRS.getDataSubjectCompany () != null)
     {
@@ -712,11 +712,182 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
     if (aDRS.getDataSubjectRepresentative () != null)
     {
-      aTable.addBodyRow ()
-            .addCell ("Representative")
-            .addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
+      aTable.addBodyRow ().addCell ("Representative").addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
     }
     return aTable;
+  }
+
+  @Nonnull
+  private static IHCNode _createDBAActivity (@Nonnull final ActivityType a)
+  {
+    final HCDiv aNaceCodes = new HCDiv ();
+    if (a.hasNaceCodeEntries ())
+      aNaceCodes.addChild ("NACE codes: ").addChild (StringHelper.imploder ().source (a.getNaceCode ()).separator (", ").build ());
+
+    final HCDiv aActDesc = new HCDiv ();
+    if (a.hasActivityDescriptionEntries ())
+      aActDesc.addChild ("Activity Description: ")
+              .addChild (StringHelper.imploder ().source (a.getActivityDescription ()).separator ("; ").build ());
+
+    return new HCNodeList ().addChild (aNaceCodes).addChild (aActDesc);
+  }
+
+  @Nonnull
+  private static IHCNode _createDBAAddresss (@Nonnull final AddressType a)
+  {
+    final HCDiv ret = new HCDiv ().addClasses (CBootstrapCSS.BORDER, CBootstrapCSS.BORDER_DARK, CBootstrapCSS.P_2);
+    if (StringHelper.hasText (a.getPoBox ()))
+      ret.addChild (new HCDiv ().addChild ("PO Box: " + a.getPoBox ()));
+    if (StringHelper.hasText (a.getThoroughfare ()))
+      ret.addChild (new HCDiv ().addChild ("Street: " + a.getThoroughfare ()));
+    if (StringHelper.hasText (a.getThoroughfare ()))
+      ret.addChild (new HCDiv ().addChild ("Building Number: " + a.getLocationDesignator ()));
+    if (StringHelper.hasText (a.getPostCode ()))
+      ret.addChild (new HCDiv ().addChild ("Post Code: " + a.getPostCode ()));
+    if (StringHelper.hasText (a.getPostName ()))
+      ret.addChild (new HCDiv ().addChild ("City: " + a.getPostName ()));
+    if (StringHelper.hasText (a.getAdminUnitL1 ()))
+      ret.addChild (new HCDiv ().addChild ("Admin Unit L1: " + a.getAdminUnitL1 ()));
+    if (StringHelper.hasText (a.getAdminUnitL2 ()))
+      ret.addChild (new HCDiv ().addChild ("Admin Unit L2: " + a.getAdminUnitL2 ()));
+    return ret;
+  }
+
+  @Nonnull
+  private static IHCNode _createCE_DBA (@Nonnull final LegalEntityType aLegalEntity, @Nonnull final Locale aDisplayLocale)
+  {
+    final BootstrapTable aTable = new BootstrapTable (HCCol.fromString ("180"), HCCol.star ());
+    if (aLegalEntity.hasCompanyNameEntries ())
+    {
+      aTable.addBodyRow ()
+            .addCell ("Company Name(s):")
+            .addCell (new CommonsArrayList <> (aLegalEntity.getCompanyName (),
+                                               x -> new HCDiv ().addChild (x.getLegalEntityLegalName ().getValue ())));
+    }
+
+    if (StringHelper.hasText (aLegalEntity.getCompanyType ()))
+      aTable.addBodyRow ().addCell ("Company Type:").addCell (aLegalEntity.getCompanyType ());
+
+    if (StringHelper.hasText (aLegalEntity.getCompanyStatus ()))
+      aTable.addBodyRow ().addCell ("Company Status:").addCell (aLegalEntity.getCompanyStatus ());
+
+    if (aLegalEntity.getCompanyActivity () != null)
+    {
+      aTable.addBodyRow ().addCell ("Company Activity:").addCell (_createDBAActivity (aLegalEntity.getCompanyActivity ()));
+    }
+
+    if (aLegalEntity.getRegistrationDate () != null)
+      aTable.addBodyRow ()
+            .addCell ("Registration Date:")
+            .addCell (PDTToString.getAsString (aLegalEntity.getRegistrationDate (), aDisplayLocale));
+
+    if (StringHelper.hasText (aLegalEntity.getCompanyEUID ()))
+      aTable.addBodyRow ().addCell ("Company EUID:").addCell (_code (aLegalEntity.getCompanyEUID ()));
+
+    if (aLegalEntity.hasVatNumberEntries ())
+    {
+      final HCNodeList aNL = new HCNodeList ();
+      for (final String s : aLegalEntity.getVatNumber ())
+        aNL.addChild (new HCDiv ().addChild (_code (s)));
+      aTable.addBodyRow ().addCell ("VAT Number(s):").addCell (aNL);
+    }
+
+    if (aLegalEntity.getCompanyContactData () != null)
+    {
+      final HCDiv aEmails = new HCDiv ();
+      if (aLegalEntity.getCompanyContactData ().hasEmailEntries ())
+      {
+        aEmails.addChild ("E-Mail Address(es): ");
+        int i = 0;
+        for (final String s : aLegalEntity.getCompanyContactData ().getEmail ())
+        {
+          if (i++ > 0)
+            aEmails.addChild (", ");
+          aEmails.addChild (HCA_MailTo.createLinkedEmail (s));
+        }
+      }
+
+      final HCDiv aPhones = new HCDiv ();
+      if (aLegalEntity.getCompanyContactData ().hasTelephoneEntries ())
+      {
+        aPhones.addChild ("Telephone number(s): ")
+               .addChild (StringHelper.imploder ()
+                                      .source (aLegalEntity.getCompanyContactData ().getTelephone ())
+                                      .separator (", ")
+                                      .build ());
+      }
+      aTable.addBodyRow ().addCell ("Company Contact Data:").addCell (aEmails, aPhones);
+    }
+
+    if (aLegalEntity.hasRegisteredAddressEntries ())
+    {
+      final HCNodeList aNL = new HCNodeList ();
+      for (final AddressType a : aLegalEntity.getRegisteredAddress ())
+        aNL.addChild (_createDBAAddresss (a));
+      aTable.addBodyRow ().addCell ("Registered Address(es):").addCell (aNL);
+    }
+
+    if (aLegalEntity.hasPostalAddressEntries ())
+    {
+      final HCNodeList aNL = new HCNodeList ();
+      for (final AddressType a : aLegalEntity.getPostalAddress ())
+        aNL.addChild (_createDBAAddresss (a));
+      aTable.addBodyRow ().addCell ("Postal Address(es):").addCell (aNL);
+    }
+
+    if (aLegalEntity.getHasBranch () != null)
+    {
+      final HCNodeList aNL = new HCNodeList ();
+      aNL.addChild (new HCDiv ().addChild ("Name: " +
+                                           aLegalEntity.getHasBranch ().getBranchName ().getLegalEntityLegalName ().getValue ()));
+      aNL.addChild (new HCDiv ().addChild ("EUID: ").addChild (_code (aLegalEntity.getHasBranch ().getBranchEUID ())));
+      if (aLegalEntity.getHasBranch ().getBranchActivity () != null)
+        aNL.addChild (new HCDiv ().addChild ("Activity: ")
+                                  .addChild (_createDBAActivity (aLegalEntity.getHasBranch ().getBranchActivity ())));
+      if (aLegalEntity.getHasBranch ().getBranchRegistredAddress () != null)
+        aNL.addChild (new HCDiv ().addChild ("Registered Address: ")
+                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ().getBranchRegistredAddress ())));
+      if (aLegalEntity.getHasBranch ().getBranchPostalAddress () != null)
+        aNL.addChild (new HCDiv ().addChild ("Postal Address: ")
+                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ().getBranchPostalAddress ())));
+      aTable.addBodyRow ().addCell ("Branch:").addCell (aNL);
+    }
+
+    return aTable;
+  }
+
+  @Nonnull
+  protected static IHCNode _createCE (@Nonnull final CanonicalEvidenceType aCanonicalEvidence, @Nonnull final Locale aDisplayLocale)
+  {
+    final Element aElement = (Element) aCanonicalEvidence.getAny ();
+
+    final HCNodeList ret = new HCNodeList ();
+
+    // DBA
+    final LegalEntityType aLegalEntity = DE4AT42Marshaller.legalEntity ()
+                                                          .setValidationEventHandlerFactory (x -> new DoNothingValidationEventHandler ())
+                                                          .read (aElement);
+    if (aLegalEntity != null)
+      ret.addChild (_createCE_DBA (aLegalEntity, aDisplayLocale));
+    else
+    {
+      // TODO higher education
+      ret.addChild (new BootstrapErrorBox ().addChild ("Unsupported canonical evidence using root namespace URL '" +
+                                                       aElement.getNamespaceURI () +
+                                                       "' and local name '" +
+                                                       aElement.getLocalName () +
+                                                       "'"));
+    }
+
+    // At the end to focus on the structured data
+    ret.addChild (new HCDiv ().addChild ("Raw XML representation of the canonical evidence:"));
+    ret.addChild (new HCTextArea ().setValue (XMLWriter.getNodeAsString (aElement,
+                                                                         new XMLWriterSettings ().setIndent (EXMLSerializeIndent.INDENT_AND_ALIGN)))
+                                   .setReadOnly (true)
+                                   .setRows (8)
+                                   .addClass (CBootstrapCSS.TEXT_MONOSPACE));
+
+    return ret;
   }
 
   @Nonnull
@@ -727,37 +898,29 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
 
     final BootstrapViewForm aTable = new BootstrapViewForm ();
     aTable.setSplitting (BootstrapGridSpec.create (-1, -1, -1, 2, 2), BootstrapGridSpec.create (-1, -1, -1, 10, 10));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID")
-                                                  .setCtrl (_code (aResponseObj.getRequestId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID")
-                                                  .setCtrl (_code (aResponseObj.getSpecificationId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID").setCtrl (_code (aResponseObj.getRequestId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID").setCtrl (_code (aResponseObj.getSpecificationId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Time stamp")
                                                   .setCtrl (_text (PDTToString.getAsString (aResponseObj.getTimeStamp (),
                                                                                             aDisplayLocale))));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID")
-                                                  .setCtrl (_code (aResponseObj.getProcedureId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
-                                                  .setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
-                                                  .setCtrl (_createAgent (aResponseObj.getDataOwner ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID").setCtrl (_code (aResponseObj.getProcedureId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (_createAgent (aResponseObj.getDataOwner ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
-                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject (),
-                                                                        aDisplayLocale)));
+                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject (), aDisplayLocale)));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
                                                   .setCtrl (_code (aResponseObj.getCanonicalEvidenceTypeId ())));
     if (aResponseObj.getCanonicalEvidence () != null)
     {
       // TODO
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
-                                                    .setCtrl (_text ("present, but not shown yet")));
+                                                    .setCtrl (_createCE (aResponseObj.getCanonicalEvidence (), aDisplayLocale)));
     }
-    if (aResponseObj.getDomesticEvidenceList () != null &&
-        aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
+    if (aResponseObj.getDomesticEvidenceList () != null && aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
     {
       // TODO
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
-                                                    .setCtrl (_text (aResponseObj.getDomesticEvidenceList ()
-                                                                                 .getDomesticEvidenceCount () +
+                                                    .setCtrl (_text (aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () +
                                                                      " present, but not shown yet")));
     }
     return aTable;
