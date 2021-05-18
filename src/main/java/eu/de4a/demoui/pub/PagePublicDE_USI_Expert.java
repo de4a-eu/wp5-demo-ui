@@ -35,10 +35,17 @@ import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCUL;
 import com.helger.html.hc.impl.HCNodeList;
+import com.helger.html.jquery.JQuery;
+import com.helger.html.jquery.JQueryAjaxBuilder;
+import com.helger.html.jscode.JSAnonymousFunction;
+import com.helger.html.jscode.JSPackage;
+import com.helger.html.jscode.JSVar;
 import com.helger.httpclient.HttpClientManager;
 import com.helger.httpclient.HttpClientSettings;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
+import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
+import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
@@ -48,6 +55,7 @@ import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
+import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AppCommonUI;
@@ -59,7 +67,35 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
 {
+  // We're doing a DO-USI request
+  private static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.DO_USI_REQ;
+
   private static final String FIELD_PAYLOAD = "payload";
+
+  private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
+
+  @Nonnull
+  private static RequestExtractEvidenceUSIType _createDemoRequest ()
+  {
+    RequestExtractEvidenceUSIType aDemoRequest;
+    while (true)
+    {
+      aDemoRequest = (RequestExtractEvidenceUSIType) DEMO_DOC_TYPE.createDemoRequest ();
+      if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
+        break;
+    }
+    aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.PT.getID ());
+    aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
+    aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getCanonicalEvidenceTypeID ());
+    return aDemoRequest;
+  }
+
+  static
+  {
+    CREATE_NEW_REQUEST = addAjax ( (aRequestScope, aAjaxResponse) -> {
+      aAjaxResponse.text (DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()));
+    });
+  }
 
   public PagePublicDE_USI_Expert (@Nonnull @Nonempty final String sID)
   {
@@ -71,10 +107,9 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
+    final IRequestWebScopeWithoutResponse aRequestScope = aWPEC.getRequestScope ();
 
-    // We're doing a DO-USI request
-    final EDemoDocument eDemoDoc = EDemoDocument.DO_USI_REQ;
-    final String sTargetURL = CApp.DEFAULT_BASE_URL + eDemoDoc.getRelativeURL ();
+    final String sTargetURL = CApp.DEFAULT_BASE_URL + DEMO_DOC_TYPE.getRelativeURL ();
 
     final FormErrorList aFormErrors = new FormErrorList ();
     boolean bShowForm = true;
@@ -111,7 +146,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
           final HCNodeList aResNL = new HCNodeList ();
 
           // Check if document is valid
-          final IErrorList aEL = eDemoDoc.validateMessage (sPayload);
+          final IErrorList aEL = DEMO_DOC_TYPE.validateMessage (sPayload);
           if (aEL.containsAtLeastOneError ())
           {
             aResNL.addChild (error ("The provided document is not XSD compliant"));
@@ -124,7 +159,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
           else
           {
             // Send only valid documents
-            final RequestExtractEvidenceUSIType aParsedRequest = (RequestExtractEvidenceUSIType) eDemoDoc.parseMessage (sPayload);
+            final RequestExtractEvidenceUSIType aParsedRequest = (RequestExtractEvidenceUSIType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
             DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI sending USI request '" + aParsedRequest.getRequestId () + "'");
 
@@ -176,27 +211,27 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE4ARequest
 
     if (bShowForm)
     {
-      RequestExtractEvidenceUSIType aDemoRequest;
-      while (true)
-      {
-        aDemoRequest = (RequestExtractEvidenceUSIType) eDemoDoc.createDemoRequest ();
-        if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
-          break;
-      }
-      aDemoRequest.getDataOwner ().setAgentUrn ("iso6523-actorid-upis::9999:PT990000101");
-      aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
-      aDemoRequest.setCanonicalEvidenceTypeId ("urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma");
-
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Target URL").setCtrl (code (sTargetURL)));
-      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
-                                                   .setCtrl (new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                                                               eDemoDoc.getAnyMessageAsString (aDemoRequest))).setRows (10)
-                                                                                                                                              .addClass (CBootstrapCSS.TEXT_MONOSPACE))
-                                                   .setHelpText ("The message you want to send. By default a randomly generated message is created")
-                                                   .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
+      {
+        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+                                                                 DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
+                                                                                                                              .addClass (CBootstrapCSS.TEXT_MONOSPACE);
+        final JSAnonymousFunction aJSAppend = new JSAnonymousFunction ();
+        final JSVar aJSAppendData = aJSAppend.param ("data");
+        aJSAppend.body ().add (JQuery.idRef (aTA).val (aJSAppendData));
 
+        final JSPackage aOnClick = new JSPackage ();
+        aOnClick.add (new JQueryAjaxBuilder ().url (CREATE_NEW_REQUEST.getInvocationURL (aRequestScope)).success (aJSAppend).build ());
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
+                                                     .setCtrl (aTA,
+                                                               new BootstrapButton ().addChild ("Other message")
+                                                                                     .setIcon (EDefaultIcon.REFRESH)
+                                                                                     .setOnClick (aOnClick))
+                                                     .setHelpText ("The message you want to send. By default a randomly generated message is created")
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
+      }
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send USI request"));
     }
