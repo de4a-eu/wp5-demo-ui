@@ -34,7 +34,7 @@ public final class MenuPublic
   public static final String MENU_DE_IM_USER = "de-im-user";
   public static final String MENU_DE_IM_EXPERT = "de-im-expert";
   public static final String MENU_DE_USI_USER = "de-usi-user";
-  public static final String MENU_DE_USI_EXPERT = "de-usi-expert";
+  public static final String MENU_DE_USI_MOCK = "de-usi-mock";
 
   public static final String MENU_DEMO_UI = "demoui";
   public static final String MENU_SEND_RANDOM_MESSAGE = "sendrandommessage";
@@ -49,20 +49,16 @@ public final class MenuPublic
   {
     // DE stuff
     {
-      final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE,
-                                                                                       "Data Evaluator",
-                                                                                       aMenuTree));
+      final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE, "Data Evaluator", aMenuTree));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_User (MENU_DE_IM_USER));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert (MENU_DE_IM_EXPERT));
       aMenuTree.createItem (aDE, new PagePublicDE_USI_User (MENU_DE_USI_USER));
-      aMenuTree.createItem (aDE, new PagePublicDE_USI_Expert (MENU_DE_USI_EXPERT));
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Mock (MENU_DE_USI_MOCK));
     }
 
     // Demo UI stuff
     {
-      final IMenuItemPage aDemoUI = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DEMO_UI,
-                                                                                           "Demo UI",
-                                                                                           aMenuTree));
+      final IMenuItemPage aDemoUI = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DEMO_UI, "Demo UI", aMenuTree));
       aMenuTree.createItem (aDemoUI, new PagePublicSendRandomMessage (MENU_SEND_RANDOM_MESSAGE));
       aMenuTree.createItem (aDemoUI, new PagePublicSendMessage (MENU_SEND_MESSAGE));
       aMenuTree.createItem (aDemoUI, new PagePublicCreateRandomMessage (MENU_EXAMPLE_MESSAGE));

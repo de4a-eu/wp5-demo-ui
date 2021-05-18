@@ -72,7 +72,7 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
 {
-  // We're doing a DO-USI request
+  // We're doing a DR-IM request
   public static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.DR_IM_REQ;
 
   private static final String FIELD_TARGET_URL = "targeturl";
