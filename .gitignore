@@ -8,3 +8,4 @@ runtime-data/
 .idea/
 *.iml
 hs_err_*.log
+private-*.properties

@@ -664,11 +664,13 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
       {
         aForm.addChild (info ("Sending the mock request to ").addChild (code (aState.m_sTargetURL)));
 
-        DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "'");
+        DE4AKafkaClient.send (EErrorLevel.INFO,
+                              "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "' to '" + aState.m_sTargetURL + "'");
 
         final StopWatch aSW = StopWatch.createdStarted ();
         final HttpClientSettings aHCS = new HttpClientSettings ();
         aHCS.setConnectionRequestTimeoutMS (120_000);
+        aHCS.setSocketTimeoutMS (120_000);
         try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
         {
           final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
@@ -705,10 +707,9 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
           }
           else
           {
-            aForm.addChild (h2 ("The data could not be fetched from the Data Owner"));
             final HCUL aUL = new HCUL ();
             aResponseObj.getErrorList ().getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-            aForm.addChild (aUL);
+            aForm.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
           }
         }
         catch (final IOException ex)
