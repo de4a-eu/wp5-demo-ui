@@ -694,7 +694,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
             aForm.addChild (h2 ("Preview of the response data"));
             aForm.addChild (_createPreview (aWPEC, aResponseObj));
 
-            if (false)
+            if (true)
             {
               final BootstrapButtonGroup aDiv = aForm.addAndReturnChild (new BootstrapButtonGroup ());
               aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
