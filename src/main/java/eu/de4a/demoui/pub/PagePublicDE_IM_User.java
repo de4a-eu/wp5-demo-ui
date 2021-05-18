@@ -662,7 +662,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
       }
       case SEND_REQUEST:
       {
-        aForm.addChild (info ("Sending the mock request to ").addChild (code (aState.m_sTargetURL)));
+        aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
 
         DE4AKafkaClient.send (EErrorLevel.INFO,
                               "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "' to '" + aState.m_sTargetURL + "'");

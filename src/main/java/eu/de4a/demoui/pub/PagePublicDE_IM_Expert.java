@@ -18,6 +18,7 @@ package eu.de4a.demoui.pub;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.annotation.Nonnull;
 
@@ -83,15 +84,30 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
   private static RequestTransferEvidenceUSIIMDRType _createDemoRequest ()
   {
     RequestTransferEvidenceUSIIMDRType aDemoRequest;
-    while (true)
+    if (ThreadLocalRandom.current ().nextBoolean ())
     {
-      aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
-      if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
-        break;
+      while (true)
+      {
+        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
+          break;
+      }
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.PT.getID ());
+      aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getCanonicalEvidenceTypeID ());
     }
-    aDemoRequest.getDataOwner ().setAgentUrn ("iso6523-actorid-upis::9999:PT990000101");
-    aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
-    aDemoRequest.setCanonicalEvidenceTypeId ("urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma");
+    else
+    {
+      while (true)
+      {
+        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (aDemoRequest.getDataRequestSubject ().getDataSubjectCompany () != null)
+          break;
+      }
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.AT.getID ());
+      aDemoRequest.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("AT/NL/???");
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getCanonicalEvidenceTypeID ());
+    }
     return aDemoRequest;
   }
 
@@ -207,7 +223,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_TEST_DR)))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_MOCK_DO)))
                                                    .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO))
                                                                                                               .addChild (" for the mock DO, or ")
                                                                                                               .addChild (code (TARGET_URL_TEST_DR))
