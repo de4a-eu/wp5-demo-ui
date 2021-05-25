@@ -117,9 +117,10 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
   {
     s_aAjaxCallIDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
+      final String sCountryCode = aRequestScope.params ().getAsString ("cc");
       final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
       aReq.setCanonicalEvidenceTypeId (aState.m_eUseCase.getDocumentTypeID ().getValue ());
-      aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
+      aReq.setCountryCode (sCountryCode);
       final String sPayload = DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("IDK request:\n" + sPayload);
@@ -130,7 +131,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
       try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
       {
         final String sTargetURL = CApp.CONNECTOR_BASE_URL + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
-        LOGGER.info ("Calling IDK '" + sTargetURL + "'");
+        LOGGER.info ("Calling IDK '" + sTargetURL + "' for country '" + sCountryCode + "'");
         final HttpPost aPost = new HttpPost (sTargetURL);
         aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
         final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
@@ -154,9 +155,16 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
         if (aResponse != null && aResponse.getErrorList () != null)
           for (final ErrorType aError : aResponse.getErrorList ().getError ())
             aJson.add ("error", StringHelper.getConcatenatedOnDemand (aError.getCode (), " - ", aError.getText ()));
-        aAjaxResponse.setStatus (CHttp.HTTP_BAD_REQUEST).setAllowContentOnStatusCode (true);
-        aJson.add ("id", "");
-        aJson.add ("name", "");
+        if (false)
+        {
+          // Causes JS popup
+          aAjaxResponse.setStatus (CHttp.HTTP_BAD_REQUEST).setAllowContentOnStatusCode (true);
+        }
+        else
+        {
+          aJson.add ("id", "");
+          aJson.add ("name", "");
+        }
       }
       else
       {
