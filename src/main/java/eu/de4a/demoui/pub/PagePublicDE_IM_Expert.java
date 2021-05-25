@@ -70,7 +70,7 @@ import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
+public class PagePublicDE_IM_Expert extends AbstractPageDE
 {
   // We're doing a DR-IM request
   public static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.DR_IM_REQ;

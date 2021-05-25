@@ -73,7 +73,7 @@ import eu.de4a.iem.jaxb.t42.v0_6.AddressType;
 import eu.de4a.iem.jaxb.t42.v0_6.LegalEntityType;
 import eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller;
 
-public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
+public abstract class AbstractPageDE extends AbstractAppWebPage
 {
   protected enum EPatternType
   {
@@ -620,7 +620,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
   protected static final String TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
   protected static final String TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
 
-  public AbstractPageDE4ARequest (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
+  public AbstractPageDE (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
   {
     super (sID, sDisplayName);
   }

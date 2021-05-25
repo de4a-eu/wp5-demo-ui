@@ -15,30 +15,14 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.util.Locale;
-
 import javax.annotation.Nonnull;
 
 import com.helger.commons.annotation.Nonempty;
-import com.helger.html.hc.impl.HCNodeList;
-import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 public class PagePublicDE_USI_User extends AbstractPageDE_User
 {
-  private static final EPatternType OUR_PATTERN = EPatternType.USI;
-
   public PagePublicDE_USI_User (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "USI Exchange (User)");
-  }
-
-  @Override
-  protected void fillContent (final WebPageExecutionContext aWPEC)
-  {
-    final HCNodeList aNodeList = aWPEC.getNodeList ();
-    final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
-
-    // TODO
-    aNodeList.addChild (info ("TODO"));
+    super (sID, "USI Exchange (User)", EPatternType.USI);
   }
 }
