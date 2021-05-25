@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +37,7 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
+import com.helger.commons.http.CHttp;
 import com.helger.commons.locale.country.CountryCache;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
@@ -51,11 +53,13 @@ import com.helger.html.hc.html.script.HCScriptInline;
 import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.jquery.JQuery;
+import com.helger.html.jquery.JQueryAjaxBuilder;
 import com.helger.html.js.EJSEvent;
 import com.helger.html.jscode.JSAnonymousFunction;
 import com.helger.html.jscode.JSArray;
 import com.helger.html.jscode.JSAssocArray;
 import com.helger.html.jscode.JSBlock;
+import com.helger.html.jscode.JSConditional;
 import com.helger.html.jscode.JSFunction;
 import com.helger.html.jscode.JSPackage;
 import com.helger.html.jscode.JSReturn;
@@ -66,6 +70,9 @@ import com.helger.httpclient.HttpClientSettings;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
 import com.helger.jaxb.GenericJAXBMarshaller;
 import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonObject;
+import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
@@ -73,7 +80,6 @@ import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonGroup;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
-import com.helger.photon.bootstrap4.nav.BootstrapTabBox;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePicker;
 import com.helger.photon.core.form.FormErrorList;
@@ -86,10 +92,17 @@ import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
+import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.ui.AppCommonUI;
+import eu.de4a.iem.jaxb.common.types.ErrorType;
+import eu.de4a.iem.jaxb.common.types.ProvisionItemType;
+import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
+import eu.de4a.iem.jaxb.common.types.ResponseLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
+import eu.de4a.iem.jaxb.common.types.SourceType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
@@ -98,6 +111,63 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
 {
   private static final EPatternType OUR_PATTERN = EPatternType.IM;
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_User.class);
+  private static AjaxFunctionDeclaration s_aAjaxCallIDK;
+
+  static
+  {
+    s_aAjaxCallIDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
+      final SessionState aState = SessionState.getInstance ();
+      final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
+      aReq.setCanonicalEvidenceTypeId (aState.m_eUseCase.getDocumentTypeID ().getValue ());
+      aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
+      final String sPayload = DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("IDK request:\n" + sPayload);
+
+      ResponseLookupRoutingInformationType aResponse = null;
+      String sErrorMsg = null;
+      final HttpClientSettings aHCS = new HttpClientSettings ();
+      try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+      {
+        final String sTargetURL = CApp.CONNECTOR_BASE_URL + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
+        LOGGER.info ("Calling IDK '" + sTargetURL + "'");
+        final HttpPost aPost = new HttpPost (sTargetURL);
+        aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+        final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("IDK response:\n" + new String (aResponseBytes, StandardCharsets.UTF_8));
+
+        aResponse = DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ().read (aResponseBytes);
+        if (aResponse == null)
+          sErrorMsg = "Failed to parse " + aResponseBytes.length + " response bytes as ResponseLookupRoutingInformationType";
+      }
+      catch (final IOException ex)
+      {
+        LOGGER.error ("Failed to query IDK", ex);
+        sErrorMsg = ex.getClass ().getName () + " - " + ex.getMessage ();
+      }
+      final IJsonObject aJson = new JsonObject ();
+      if (aResponse == null || aResponse.getErrorList () != null)
+      {
+        aJson.addIfNotNull ("errormsg", sErrorMsg);
+        if (aResponse != null && aResponse.getErrorList () != null)
+          for (final ErrorType aError : aResponse.getErrorList ().getError ())
+            aJson.add ("error", StringHelper.getConcatenatedOnDemand (aError.getCode (), " - ", aError.getText ()));
+        aAjaxResponse.setStatus (CHttp.HTTP_BAD_REQUEST).setAllowContentOnStatusCode (true);
+        aJson.add ("id", "");
+        aJson.add ("name", "");
+      }
+      else
+      {
+        final SourceType aSource = aResponse.getAvailableSources ().getSourceAtIndex (0);
+        final ProvisionItemType aPI = aSource.getProvisionItems ().getProvisionItemAtIndex (0);
+        aJson.add ("id", aPI.getDataOwnerId ().toLowerCase (Locale.ROOT));
+        aJson.add ("name", aPI.getDataOwnerPrefLabel ());
+      }
+      aAjaxResponse.json (aJson);
+    });
+  }
 
   public PagePublicDE_IM_User (@Nonnull @Nonempty final String sID)
   {
@@ -109,6 +179,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
+    final IRequestWebScopeWithoutResponse aRequestScope = aWPEC.getRequestScope ();
     final SessionState aState = SessionState.getInstance ();
 
     final String sDir = aWPEC.params ().getAsStringTrimmed (PARAM_DIRECTION);
@@ -173,8 +244,6 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
         }
         case SELECT_DATA_OWNER:
         {
-          final String sDOCC_IDK = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE_IDK, aState.getDataOwnerCountryCode ());
-
           final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_ID, aState.getDataOwnerID ());
           final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
           final String sDOCC = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
@@ -402,19 +471,22 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
       }
       case SELECT_DATA_EVALUATOR:
       {
-        final HCExtSelect aSelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorID ()));
+        final HCExtSelect aMockDESelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorID ()));
         for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
                                                                       IHasDisplayName.getComparatorCollating (aDisplayLocale)))
           if (e.supportsProcess (aState.m_eUseCase))
-            aSelect.addOption (e.getID (), e.getDisplayName ());
-        aSelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aSelect));
+            aMockDESelect.addOption (e.getID (), e.getDisplayName ());
+        aMockDESelect.addOptionPleaseSelect (aDisplayLocale);
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aMockDESelect));
 
-        // ID
-        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DE_ID, aState.getDataEvaluatorID ())).ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator ID")
-                                                     .setCtrl (aEditID)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_ID)));
+        // Country
+        final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
+                                                                                      aState.getDataEvaluatorCountryCode ()),
+                                                                    aDisplayLocale);
+        aCountrySelect.ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
+                                                     .setCtrl (aCountrySelect)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_COUNTRY_CODE)));
 
         // Name
         final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME, aState.getDataEvaluatorName ())).ensureID ();
@@ -422,14 +494,11 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
                                                      .setCtrl (aEditName)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE_NAME)));
 
-        // Country
-        final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
-                                                                                aState.getDataEvaluatorCountryCode ()),
-                                                              aDisplayLocale);
-        aCSelect.ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
-                                                     .setCtrl (aCSelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_COUNTRY_CODE)));
+        // ID
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DE_ID, aState.getDataEvaluatorID ())).ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator ID")
+                                                     .setCtrl (aEditID)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_ID)));
 
         // JS
         final JSPackage aJSOnChange = new JSPackage ();
@@ -437,115 +506,146 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
                                    .arg (JSHtml.getSelectSelectedValue ())
                                    .arg (aEditID.getID ())
                                    .arg (aEditName.getID ())
-                                   .arg (aCSelect.getID ()));
-        aSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+                                   .arg (aCountrySelect.getID ()));
+        aMockDESelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
         break;
       }
       case SELECT_DATA_OWNER:
       {
-        final BootstrapTabBox aTabBox = aForm.addAndReturnChild (new BootstrapTabBox ());
 
-        // IDK call
-        {
-          final HCNodeList aNL = new HCNodeList ();
+        /**
+         * request
+         *
+         * <pre>
+        <RequestLookupRoutingInformation xmlns=
+        "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
+        "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
+        "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
+        "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
+        "http://www.de4a.eu/2020/commons/type">
+        <de4a:CanonicalEvidenceTypeId>CompanyRegistration</de4a:CanonicalEvidenceTypeId>
+        <de4a:CountryCode>AT</de4a:CountryCode>
+        </RequestLookupRoutingInformation>
+         * </pre>
+         *
+         * response:
+         *
+         * <pre>
+        <ResponseLookupRoutingInformation xmlns=
+        "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
+        "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
+        "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
+        "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
+        "http://www.de4a.eu/2020/commons/type">
+        <de4a:AvailableSources>
+        <de4a:Source>
+        <de4a:CountryCode>AT</de4a:CountryCode>
+        <de4a:AtuLevel>nuts0</de4a:AtuLevel>
+        <de4a:ProvisionItems>
+        <de4a:ProvisionItem>
+        <de4a:AtuCode>AT</de4a:AtuCode>
+                <de4a:AtuLatinName>ÖSTERREICH</de4a:AtuLatinName>
+                <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271</de4a:DataOwnerId>
+                <de4a:DataOwnerPrefLabel>BUNDESMINISTERIUM FUER DIGITALISIERUNG UND WIRTSCHAFTSSTANDORT (BMDW)</de4a:DataOwnerPrefLabel>
+                <de4a:Provision>
+          <de4a:ProvisionType>ip</de4a:ProvisionType>
+        </de4a:Provision>
+        </de4a:ProvisionItem>
+        </de4a:ProvisionItems>
+        </de4a:Source>
+        </de4a:AvailableSources>
+        </ResponseLookupRoutingInformation>
+         * </pre>
+         */
 
-          // Country
-          final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE_IDK,
-                                                                                  aState.getDataOwnerCountryCode ()),
-                                                                aDisplayLocale);
-          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
-                                                                             .setCtrl (aCSelect)
-                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE_IDK))));
-
-          aTabBox.addTab ("idk", "IDK-based", aNL, true);
-
-          /**
-           * request
-           *
-           * <pre>
-          <RequestLookupRoutingInformation xmlns=
-          "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
-          "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
-          "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
-          "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
-          "http://www.de4a.eu/2020/commons/type">
-          <de4a:CanonicalEvidenceTypeId>CompanyRegistration</de4a:CanonicalEvidenceTypeId>
-          <de4a:CountryCode>AT</de4a:CountryCode>
-          </RequestLookupRoutingInformation>
-           * </pre>
-           *
-           * response:
-           *
-           * <pre>
-          <ResponseLookupRoutingInformation xmlns=
-          "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
-          "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
-          "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
-          "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
-          "http://www.de4a.eu/2020/commons/type">
-          <de4a:AvailableSources>
-          <de4a:Source>
-          <de4a:CountryCode>AT</de4a:CountryCode>
-          <de4a:AtuLevel>nuts0</de4a:AtuLevel>
-          <de4a:ProvisionItems>
-          <de4a:ProvisionItem>
-          <de4a:AtuCode>AT</de4a:AtuCode>
-                  <de4a:AtuLatinName>ÖSTERREICH</de4a:AtuLatinName>
-                  <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271</de4a:DataOwnerId>
-                  <de4a:DataOwnerPrefLabel>BUNDESMINISTERIUM FUER DIGITALISIERUNG UND WIRTSCHAFTSSTANDORT (BMDW)</de4a:DataOwnerPrefLabel>
-                  <de4a:Provision>
-            <de4a:ProvisionType>ip</de4a:ProvisionType>
-          </de4a:Provision>
-          </de4a:ProvisionItem>
-          </de4a:ProvisionItems>
-          </de4a:Source>
-          </de4a:AvailableSources>
-          </ResponseLookupRoutingInformation>
-           * </pre>
-           */
-        }
+        // Mock or IDK?
+        final RequestFieldBoolean aRF = new RequestFieldBoolean ("usemockdo", true);
+        final boolean bUseMockDO = aRF.isChecked (aRequestScope.params ());
+        final HCCheckBox aCB = new HCCheckBox (aRF);
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Check to use Mock DO, uncheck to use IDK").setCtrl (aCB));
 
         // Mock DO
+        final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
+        for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
+                                                                  IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+          if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
+            aMockDOSelect.addOption (e.getID (), e.getDisplayName ());
+        aMockDOSelect.addOptionPleaseSelect (aDisplayLocale);
+        aMockDOSelect.setDisabled (!bUseMockDO);
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used").setCtrl (aMockDOSelect));
+
+        // Country
+        final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
+                                                                                      aState.getDataOwnerCountryCode ()),
+                                                                    aDisplayLocale);
+        aCountrySelect.ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
+                                                     .setCtrl (aCountrySelect)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE)));
+
+        // Name
+        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ()
+                                                                                                          .setReadOnly (!bUseMockDO);
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
+                                                     .setCtrl (aEditName)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
+
+        // ID
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ().setReadOnly (!bUseMockDO);
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
+                                                     .setCtrl (aEditID)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID)));
+
+        // JS
         {
-          final HCNodeList aNL = new HCNodeList ();
-          final HCExtSelect aSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
-          for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
-                                                                    IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-            if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
-              aSelect.addOption (e.getID (), e.getDisplayName ());
-          aSelect.addOptionPleaseSelect (aDisplayLocale);
-          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used").setCtrl (aSelect)));
-
-          // ID
-          final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ();
-          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
-                                                                             .setCtrl (aEditID)
-                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID))));
-
-          // Name
-          final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ();
-          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
-                                                                             .setCtrl (aEditName)
-                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME))));
-
-          // Country
-          final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ()),
-                                                                aDisplayLocale);
-          aCSelect.ensureID ();
-          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
-                                                                             .setCtrl (aCSelect)
-                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE))));
-
-          // JS
-          final JSPackage aJSOnChange = new JSPackage ();
-          aJSOnChange.add (jFuncSetDO.invoke ()
-                                     .arg (JSHtml.getSelectSelectedValue ())
-                                     .arg (aEditID.getID ())
-                                     .arg (aEditName.getID ())
-                                     .arg (aCSelect.getID ()));
-          aSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
-          aTabBox.addTab ("mock", "Mock Data Owner", aNL);
+          // Checkbox
+          final JSPackage aJSHandler = new JSPackage ();
+          final JSVar jChecked = aJSHandler.var ("c", JQuery.idRef (aCB).propChecked ());
+          aJSHandler.add (JQuery.idRef (aMockDOSelect).setDisabled (jChecked.not ()));
+          aJSHandler.add (JQuery.idRef (aEditName).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+          aJSHandler.add (JQuery.idRef (aEditID).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+          aCB.setEventHandler (EJSEvent.CHANGE, aJSHandler);
         }
+
+        {
+          // Mock DO
+          final JSPackage aJSOnChange = new JSPackage ();
+          final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
+          final JSConditional jIf = aJSOnChange._if (jChecked);
+          jIf._then ()
+             .add (jFuncSetDO.invoke ()
+                             .arg (JSHtml.getSelectSelectedValue ())
+                             .arg (aEditID.getID ())
+                             .arg (aEditName.getID ())
+                             .arg (aCountrySelect.getID ()));
+          aMockDOSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+        }
+
+        {
+          // Country select
+          final JSPackage aJSOnChange = new JSPackage ();
+          final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
+          final JSBlock jIf = aJSOnChange._if (jChecked.not ())._then ();
+
+          final JSAnonymousFunction jsSetValues = new JSAnonymousFunction ();
+          {
+            final JSVar aJSAppendData = jsSetValues.param ("data");
+            jsSetValues.body ().add (JQuery.idRef (aEditName).val (aJSAppendData.ref ("name")));
+            jsSetValues.body ().add (JQuery.idRef (aEditID).val (aJSAppendData.ref ("id")));
+          }
+          final JSAnonymousFunction jsSeEmpty = new JSAnonymousFunction ();
+          {
+            jsSeEmpty.body ().add (JQuery.idRef (aEditName).val (""));
+            jsSeEmpty.body ().add (JQuery.idRef (aEditID).val (""));
+          }
+          jIf.add (new JQueryAjaxBuilder ().url (s_aAjaxCallIDK.getInvocationURI (aRequestScope))
+                                           .data (new JSAssocArray ().add ("cc", JQuery.idRef (aCountrySelect).val ()))
+                                           .success (jsSetValues)
+                                           .error (jsSeEmpty)
+                                           .build ());
+          aCountrySelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+        }
+
         break;
       }
       case SELECT_DATA_REQUEST_SUBJECT:

@@ -30,7 +30,6 @@ public abstract class AbstractPageDE_User extends AbstractPageDE4ARequest
   protected static final String FIELD_DE_NAME = "de_name";
   protected static final String FIELD_DE_COUNTRY_CODE = "de_cc";
   // Select DO
-  protected static final String FIELD_DO_COUNTRY_CODE_IDK = "do_cc_idk";
   protected static final String FIELD_DO_ID = "do_id";
   protected static final String FIELD_DO_NAME = "do_name";
   protected static final String FIELD_DO_COUNTRY_CODE = "do_cc";
