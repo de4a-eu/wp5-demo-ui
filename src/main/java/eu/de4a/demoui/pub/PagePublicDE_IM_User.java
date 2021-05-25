@@ -73,6 +73,7 @@ import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonGroup;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
+import com.helger.photon.bootstrap4.nav.BootstrapTabBox;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePicker;
 import com.helger.photon.core.form.FormErrorList;
@@ -161,7 +162,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
           if (StringHelper.hasNoText (sDECC))
             aFormErrors.addFieldError (FIELD_DE_COUNTRY_CODE, "A Data Evaluator country code is needed");
           else
-            if (!RegExHelper.stringMatchesPattern ("[A-Z]{2}", sDECC))
+            if (!RegExHelper.stringMatchesPattern (REGEX_COUNTRY_CODE, sDECC))
               aFormErrors.addFieldError (FIELD_DE_COUNTRY_CODE, "The Data Evaluator country code is invalid");
 
           if (aFormErrors.isEmpty ())
@@ -172,6 +173,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
         }
         case SELECT_DATA_OWNER:
         {
+          final String sDOCC_IDK = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE_IDK, aState.getDataOwnerCountryCode ());
+
           final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_ID, aState.getDataOwnerID ());
           final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
           final String sDOCC = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
@@ -185,7 +188,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
           if (StringHelper.hasNoText (sDOCC))
             aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "A Data Owner country code is needed");
           else
-            if (!RegExHelper.stringMatchesPattern ("[A-Z]{2}", sDOCC))
+            if (!RegExHelper.stringMatchesPattern (REGEX_COUNTRY_CODE, sDOCC))
               aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "The Data Owner country code is invalid");
 
           if (aFormErrors.isEmpty ())
@@ -329,52 +332,52 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
     if (aState.step ().isGT (EStep.SELECT_PROCESS))
       aForm.addChild (h2 ("Running use case " + aState.m_eUseCase.getDisplayName ()));
 
-    final JSFunction aJSSetDE;
-    final JSFunction aJSSetDO;
+    final JSFunction jFuncSetDE;
+    final JSFunction jFuncSetDO;
     {
       final HCScriptInline aScript = new HCScriptInline ();
       final JSPackage aJS = new JSPackage ();
-      aJSSetDE = aJS.function ("_setMDE");
+      jFuncSetDE = aJS.function ("_setMDE");
       {
-        final JSVar aJSID = aJSSetDE.param ("id");
-        final JSVar aElementID = aJSSetDE.param ("eid");
-        final JSVar aElementName = aJSSetDE.param ("en");
-        final JSVar aElementCC = aJSSetDE.param ("ecc");
-        final JSArray aMDE = new JSArray ();
+        final JSVar jID = jFuncSetDE.param ("id");
+        final JSVar jElementID = jFuncSetDE.param ("eid");
+        final JSVar jElementName = jFuncSetDE.param ("en");
+        final JSVar jElementCC = jFuncSetDE.param ("ecc");
+        final JSArray jMDE = new JSArray ();
         for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
-          aMDE.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
-        final JSVar aArray = aJSSetDE.body ().var ("array", aMDE);
-        final JSVar aCallbackParam = new JSVar ("x");
-        final JSVar aFound = aJSSetDE.body ()
-                                     .var ("f",
-                                           aArray.invoke ("find")
-                                                 .arg (new JSAnonymousFunction (aCallbackParam,
-                                                                                new JSReturn (aJSID.eq (aCallbackParam.ref ("id"))))));
-        final JSBlock aIfFound = aJSSetDE.body ()._if (aFound)._then ();
-        aIfFound.add (JQuery.idRef (aElementID).val (aFound.component ("id")));
-        aIfFound.add (JQuery.idRef (aElementName).val (aFound.component ("n")));
-        aIfFound.add (JQuery.idRef (aElementCC).val (aFound.component ("cc")));
+          jMDE.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+        final JSVar jArray = jFuncSetDE.body ().var ("array", jMDE);
+        final JSVar jCallbackParam = new JSVar ("x");
+        final JSVar jFound = jFuncSetDE.body ()
+                                       .var ("f",
+                                             jArray.invoke ("find")
+                                                   .arg (new JSAnonymousFunction (jCallbackParam,
+                                                                                  new JSReturn (jID.eq (jCallbackParam.ref ("id"))))));
+        final JSBlock jIfFound = jFuncSetDE.body ()._if (jFound)._then ();
+        jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
+        jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
+        jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
       }
-      aJSSetDO = aJS.function ("_setMDO");
+      jFuncSetDO = aJS.function ("_setMDO");
       {
-        final JSVar aJSID = aJSSetDO.param ("id");
-        final JSVar aElementID = aJSSetDO.param ("eid");
-        final JSVar aElementName = aJSSetDO.param ("en");
-        final JSVar aElementCC = aJSSetDO.param ("ecc");
-        final JSArray aMDO = new JSArray ();
+        final JSVar jID = jFuncSetDO.param ("id");
+        final JSVar jElementID = jFuncSetDO.param ("eid");
+        final JSVar jElementName = jFuncSetDO.param ("en");
+        final JSVar jElementCC = jFuncSetDO.param ("ecc");
+        final JSArray jMDO = new JSArray ();
         for (final EMockDataOwner e : EMockDataOwner.values ())
-          aMDO.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
-        final JSVar aArray = aJSSetDO.body ().var ("array", aMDO);
-        final JSVar aCallbackParam = new JSVar ("x");
-        final JSVar aFound = aJSSetDO.body ()
-                                     .var ("f",
-                                           aArray.invoke ("find")
-                                                 .arg (new JSAnonymousFunction (aCallbackParam,
-                                                                                new JSReturn (aJSID.eq (aCallbackParam.ref ("id"))))));
-        final JSBlock aIfFound = aJSSetDO.body ()._if (aFound)._then ();
-        aIfFound.add (JQuery.idRef (aElementID).val (aFound.component ("id")));
-        aIfFound.add (JQuery.idRef (aElementName).val (aFound.component ("n")));
-        aIfFound.add (JQuery.idRef (aElementCC).val (aFound.component ("cc")));
+          jMDO.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+        final JSVar jArray = jFuncSetDO.body ().var ("array", jMDO);
+        final JSVar jCallbackParam = new JSVar ("x");
+        final JSVar jFound = jFuncSetDO.body ()
+                                       .var ("f",
+                                             jArray.invoke ("find")
+                                                   .arg (new JSAnonymousFunction (jCallbackParam,
+                                                                                  new JSReturn (jID.eq (jCallbackParam.ref ("id"))))));
+        final JSBlock jIfFound = jFuncSetDO.body ()._if (jFound)._then ();
+        jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
+        jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
+        jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
       }
       aScript.setJSCodeProvider (aJS);
 
@@ -430,52 +433,74 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
 
         // JS
         final JSPackage aJSOnChange = new JSPackage ();
-        aJSOnChange.add (aJSSetDE.invoke ()
-                                 .arg (JSHtml.getSelectSelectedValue ())
-                                 .arg (aEditID.getID ())
-                                 .arg (aEditName.getID ())
-                                 .arg (aCSelect.getID ()));
+        aJSOnChange.add (jFuncSetDE.invoke ()
+                                   .arg (JSHtml.getSelectSelectedValue ())
+                                   .arg (aEditID.getID ())
+                                   .arg (aEditName.getID ())
+                                   .arg (aCSelect.getID ()));
         aSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
         break;
       }
       case SELECT_DATA_OWNER:
       {
-        final HCExtSelect aSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
-        for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
-                                                                  IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
-            aSelect.addOption (e.getID (), e.getDisplayName ());
-        aSelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used").setCtrl (aSelect));
+        final BootstrapTabBox aTabBox = aForm.addAndReturnChild (new BootstrapTabBox ());
 
-        // ID
-        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
-                                                     .setCtrl (aEditID)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID)));
+        // IDK call
+        {
+          final HCNodeList aNL = new HCNodeList ();
 
-        // Name
-        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
-                                                     .setCtrl (aEditName)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
+          // Country
+          final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE_IDK,
+                                                                                  aState.getDataOwnerCountryCode ()),
+                                                                aDisplayLocale);
+          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
+                                                                             .setCtrl (aCSelect)
+                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE_IDK))));
 
-        // Country
-        final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ()),
-                                                              aDisplayLocale);
-        aCSelect.ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
-                                                     .setCtrl (aCSelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE)));
+          aTabBox.addTab ("idk", "IDK-based", aNL, true);
+        }
 
-        // JS
-        final JSPackage aJSOnChange = new JSPackage ();
-        aJSOnChange.add (aJSSetDO.invoke ()
-                                 .arg (JSHtml.getSelectSelectedValue ())
-                                 .arg (aEditID.getID ())
-                                 .arg (aEditName.getID ())
-                                 .arg (aCSelect.getID ()));
-        aSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+        // Mock DO
+        {
+          final HCNodeList aNL = new HCNodeList ();
+          final HCExtSelect aSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
+          for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
+                                                                    IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+            if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
+              aSelect.addOption (e.getID (), e.getDisplayName ());
+          aSelect.addOptionPleaseSelect (aDisplayLocale);
+          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used").setCtrl (aSelect)));
+
+          // ID
+          final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ();
+          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
+                                                                             .setCtrl (aEditID)
+                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID))));
+
+          // Name
+          final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ();
+          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
+                                                                             .setCtrl (aEditName)
+                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME))));
+
+          // Country
+          final HCCountrySelect aCSelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ()),
+                                                                aDisplayLocale);
+          aCSelect.ensureID ();
+          aNL.addChild (aForm.getRenderedFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
+                                                                             .setCtrl (aCSelect)
+                                                                             .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE))));
+
+          // JS
+          final JSPackage aJSOnChange = new JSPackage ();
+          aJSOnChange.add (jFuncSetDO.invoke ()
+                                     .arg (JSHtml.getSelectSelectedValue ())
+                                     .arg (aEditID.getID ())
+                                     .arg (aEditName.getID ())
+                                     .arg (aCSelect.getID ()));
+          aSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+          aTabBox.addTab ("mock", "Mock Data Owner", aNL);
+        }
         break;
       }
       case SELECT_DATA_REQUEST_SUBJECT:
@@ -733,6 +758,7 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
     {
       final HCDiv aRow = aForm.addAndReturnChild (div ());
 
+      // Back?
       {
         if (aState.step ().isFirst () || aState.step ().wasRequestSent ())
         {
@@ -747,6 +773,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setOnClick (aFunc));
         }
       }
+
+      // Next?
       if (aState.step ().isLast ())
       {
         aRow.addChild (new BootstrapButton ().addChild ("Next").setIcon (EDefaultIcon.NEXT).setDisabled (true));
@@ -760,6 +788,8 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
                                              .setIcon (aState.step ().isNextSendRequest () ? EDefaultIcon.YES : EDefaultIcon.NEXT)
                                              .setOnClick (aFunc));
       }
+
+      // Restart?
       if (aState.step ().wasRequestSent ())
       {
         final JSPackage aFunc = new JSPackage ();

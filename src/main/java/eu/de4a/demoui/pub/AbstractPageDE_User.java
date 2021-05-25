@@ -30,6 +30,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE4ARequest
   protected static final String FIELD_DE_NAME = "de_name";
   protected static final String FIELD_DE_COUNTRY_CODE = "de_cc";
   // Select DO
+  protected static final String FIELD_DO_COUNTRY_CODE_IDK = "do_cc_idk";
   protected static final String FIELD_DO_ID = "do_id";
   protected static final String FIELD_DO_NAME = "do_name";
   protected static final String FIELD_DO_COUNTRY_CODE = "do_cc";
@@ -43,6 +44,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE4ARequest
   protected static final String FIELD_REQUEST_XML = "requestxml";
   protected static final String FIELD_TARGET_URL = "targeturl";
   protected static final String FIELD_CONFIRM = "confirm";
+
+  protected static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
 
   protected static enum EStep
   {
