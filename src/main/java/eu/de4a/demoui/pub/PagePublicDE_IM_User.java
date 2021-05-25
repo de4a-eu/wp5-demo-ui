@@ -458,6 +458,51 @@ public class PagePublicDE_IM_User extends AbstractPageDE_User
                                                                              .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE_IDK))));
 
           aTabBox.addTab ("idk", "IDK-based", aNL, true);
+
+          /**
+           * request
+           *
+           * <pre>
+          <RequestLookupRoutingInformation xmlns=
+          "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
+          "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
+          "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
+          "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
+          "http://www.de4a.eu/2020/commons/type">
+          <de4a:CanonicalEvidenceTypeId>CompanyRegistration</de4a:CanonicalEvidenceTypeId>
+          <de4a:CountryCode>AT</de4a:CountryCode>
+          </RequestLookupRoutingInformation>
+           * </pre>
+           *
+           * response:
+           *
+           * <pre>
+          <ResponseLookupRoutingInformation xmlns=
+          "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
+          "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
+          "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
+          "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
+          "http://www.de4a.eu/2020/commons/type">
+          <de4a:AvailableSources>
+          <de4a:Source>
+          <de4a:CountryCode>AT</de4a:CountryCode>
+          <de4a:AtuLevel>nuts0</de4a:AtuLevel>
+          <de4a:ProvisionItems>
+          <de4a:ProvisionItem>
+          <de4a:AtuCode>AT</de4a:AtuCode>
+                  <de4a:AtuLatinName>ÖSTERREICH</de4a:AtuLatinName>
+                  <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271</de4a:DataOwnerId>
+                  <de4a:DataOwnerPrefLabel>BUNDESMINISTERIUM FUER DIGITALISIERUNG UND WIRTSCHAFTSSTANDORT (BMDW)</de4a:DataOwnerPrefLabel>
+                  <de4a:Provision>
+            <de4a:ProvisionType>ip</de4a:ProvisionType>
+          </de4a:Provision>
+          </de4a:ProvisionItem>
+          </de4a:ProvisionItems>
+          </de4a:Source>
+          </de4a:AvailableSources>
+          </ResponseLookupRoutingInformation>
+           * </pre>
+           */
         }
 
         // Mock DO
