@@ -47,7 +47,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE4ARequest
 
   protected static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
 
-  protected static enum EStep
+  protected enum EStep
   {
     // Order matters
     SELECT_PROCESS,
@@ -182,7 +182,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE4ARequest
     }
 
     @Nonnull
-    protected final EStep step ()
+    protected EStep step ()
     {
       return m_eStep;
     }
@@ -323,7 +323,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE4ARequest
         aRG.setExplicitRequest (ExplicitRequestType.SDGR_14);
         aRequest.setRequestGrounds (aRG);
       }
-      aRequest.setCanonicalEvidenceTypeId (m_eUseCase.getCanonicalEvidenceTypeID ());
+      aRequest.setCanonicalEvidenceTypeId (m_eUseCase.getDocumentTypeID ().getURIEncoded ());
       return aRequest;
     }
   }

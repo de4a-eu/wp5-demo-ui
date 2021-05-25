@@ -86,7 +86,7 @@ public class PagePublicDE_USI_Mock extends AbstractPageDE4ARequest
     }
     aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.PT.getID ());
     aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
-    aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getCanonicalEvidenceTypeID ());
+    aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
     return aDemoRequest;
   }
 
@@ -109,7 +109,7 @@ public class PagePublicDE_USI_Mock extends AbstractPageDE4ARequest
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
     final IRequestWebScopeWithoutResponse aRequestScope = aWPEC.getRequestScope ();
 
-    final String sTargetURL = CApp.DEFAULT_BASE_URL + DEMO_DOC_TYPE.getRelativeURL ();
+    final String sTargetURL = CApp.MOCK_BASE_URL + DEMO_DOC_TYPE.getRelativeURL ();
 
     final FormErrorList aFormErrors = new FormErrorList ();
     boolean bShowForm = true;

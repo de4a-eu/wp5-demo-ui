@@ -122,7 +122,7 @@ public final class PagePublicSendRandomMessage extends AbstractAppWebPage
 
       if (aFormErrors.isEmpty ())
       {
-        final String sFinalURL = sTargetBaseURL + eMode.getRelativeURL ();
+        final String sFinalURL = StringHelper.getConcatenatedOnDemand (sTargetBaseURL, eMode.getRelativeURL ());
         final String sExampleDocument = eMode.getDemoMessageAsString ();
 
         final StopWatch aSW = StopWatch.createdStarted ();
@@ -205,8 +205,8 @@ public final class PagePublicSendRandomMessage extends AbstractAppWebPage
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
-          if (e.getDocumentType () == EDemoDocumentType.REQUEST)
-            aSelect.addOption (e.getID (), e.getDisplayName () + " (" + e.getRelativeURL () + ")");
+          if (e.getDocumentType () == EDemoDocumentType.REQUEST || e.getDocumentType () == EDemoDocumentType.IDK_REQUEST)
+            aSelect.addOption (e.getID (), e.getDisplayName () + (e.hasRelativeURL () ? " (" + e.getRelativeURL () + ")" : ""));
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")
                                                      .setCtrl (aSelect)
@@ -214,11 +214,12 @@ public final class PagePublicSendRandomMessage extends AbstractAppWebPage
       }
 
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, CApp.DEFAULT_BASE_URL)))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, CApp.MOCK_BASE_URL)))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
-                                                   .setHelpText ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
-                                                                 " The suffix of the Interface to test is added to this path." +
-                                                                 " The endpoint must be able to handle HTTP POST calls."));
+                                                   .setHelpText (span ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
+                                                                       " The suffix of the Interface to test is added to this path." +
+                                                                       " The endpoint must be able to handle HTTP POST calls. Use ").addChild (code (CApp.CONNECTOR_BASE_URL))
+                                                                                                                                    .addChild (" for the connector IDK request.")));
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Mock request"));
     }

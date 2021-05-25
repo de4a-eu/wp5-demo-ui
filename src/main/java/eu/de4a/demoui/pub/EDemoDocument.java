@@ -40,6 +40,7 @@ import com.helger.commons.lang.GenericReflection;
 import com.helger.commons.locale.country.ECountry;
 import com.helger.commons.math.MathHelper;
 import com.helger.commons.name.IHasDisplayName;
+import com.helger.commons.string.StringHelper;
 import com.helger.jaxb.validation.IValidationEventHandlerFactory;
 import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.pdflayout4.PDFCreationException;
@@ -200,7 +201,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                DE4AMarshaller.doUsiResponseMarshaller ()),
   IDK_LOOKUP_ROUTING_INFO_REQUEST ("idk-lri-req",
                                    "IDK routing information lookup request",
-                                   null,
+                                   "/lookupRoutingInformation",
                                    EDemoDocumentType.IDK_REQUEST,
                                    EDemoDocument::createIDKRequestLookupRoutingInformation,
                                    DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ()),
@@ -271,6 +272,11 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     // Only for requests
     return m_sRelativeURL;
+  }
+
+  public boolean hasRelativeURL ()
+  {
+    return StringHelper.hasText (m_sRelativeURL);
   }
 
   @Nonnull
@@ -448,10 +454,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
       final FontSpec r16 = new FontSpec (PreloadFont.REGULAR, 16);
       final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
 
-      aPS1.addElement (new PLText ("Dummy DE4A " +
-                                   sWhat +
-                                   " - Current time: " +
-                                   PDTFactory.getCurrentLocalDateTime ().toString (),
+      aPS1.addElement (new PLText ("Dummy DE4A " + sWhat + " - Current time: " + PDTFactory.getCurrentLocalDateTime ().toString (),
                                    r16).setBorder (Color.BLUE));
 
       final PageLayoutPDF aPageLayout = new PageLayoutPDF ().setCompressPDF (true);
@@ -541,11 +544,9 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ErrorListType ret = new ErrorListType ();
     // Max length 10
-    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000),
-                                                          "Ooops - something went wrong"));
+    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something went wrong"));
     if (aTLR.nextBoolean ())
-      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000),
-                                                            "Ooops - something else also went wrong"));
+      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something else also went wrong"));
     return ret;
   }
 
