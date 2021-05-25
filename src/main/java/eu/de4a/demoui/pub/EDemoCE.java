@@ -27,7 +27,7 @@ import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.math.MathHelper;
 
 import eu.de4a.iem.jaxb.t41.uc1.v2021_02_11.ModeOfStudy;
-import eu.de4a.iem.jaxb.w3.cv.bc.LegalEntityLegalNameType;
+import eu.de4a.iem.jaxb.w3.cv11.bc.LegalEntityLegalNameType;
 import eu.de4a.iem.xml.XSDDataTypeHelper;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
 import eu.europa.data.europass.model.credentials_.IscedFOetCodeType;
@@ -128,9 +128,7 @@ public enum EDemoCE
       p.setHolderOfAchievement (a);
     }
 
-    return eu.de4a.iem.xml.de4a.t41.v2021_02_11.DE4AT41Marshaller.higherEducationEvidence ()
-                                                                 .getAsDocument (p)
-                                                                 .getDocumentElement ();
+    return eu.de4a.iem.xml.de4a.t41.v2021_02_11.DE4AT41Marshaller.higherEducationEvidence ().getAsDocument (p).getDocumentElement ();
   }
 
   @Nonnull
@@ -192,9 +190,7 @@ public enum EDemoCE
       p.setHolderOfAchievement (a);
     }
 
-    return eu.de4a.iem.xml.de4a.t41.v2021_04_13.DE4AT41Marshaller.higherEducationDiploma ()
-                                                                 .getAsDocument (p)
-                                                                 .getDocumentElement ();
+    return eu.de4a.iem.xml.de4a.t41.v2021_04_13.DE4AT41Marshaller.higherEducationDiploma ().getAsDocument (p).getDocumentElement ();
   }
 
   @Nonnull
