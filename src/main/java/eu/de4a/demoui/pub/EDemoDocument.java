@@ -16,6 +16,7 @@
 package eu.de4a.demoui.pub;
 
 import java.awt.Color;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -613,7 +614,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestLookupRoutingInformationType ret = new RequestLookupRoutingInformationType ();
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setCountryCode (random (ECountry.values ()).getISOCountryCode ());
+    ret.setCountryCode (random (ECountry.values ()).getISOCountryCode ().toUpperCase (Locale.ROOT));
     return ret;
   }
 
