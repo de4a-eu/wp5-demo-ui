@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2021 DE4A
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
-
-import javax.annotation.Nonnull;
-
-import com.helger.commons.annotation.Nonempty;
-
-public class PagePublicDE_USI_User extends AbstractPageDE_User
+// Extend jQuery
+(function($)
 {
-  public PagePublicDE_USI_User (@Nonnull @Nonempty final String sID)
+  // Enable or disable an element
+  $.fn.setReadOnly = function(bReadOnly)
   {
-    super (sID, "USI Exchange (User)", EPatternType.USI);
-  }
-}
+    return $(this).each(function()
+    {
+      if (bReadOnly)
+        $(this).attr("readonly", "readonly");
+      else
+        $(this).removeAttr("readonly");
+    });
+  };
+})(jQuery);

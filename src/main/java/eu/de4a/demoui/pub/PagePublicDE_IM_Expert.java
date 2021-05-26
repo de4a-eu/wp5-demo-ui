@@ -70,7 +70,7 @@ import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
+public class PagePublicDE_IM_Expert extends AbstractPageDE
 {
   // We're doing a DR-IM request
   public static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.DR_IM_REQ;
@@ -94,7 +94,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
       }
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.PT.getID ());
       aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
-      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getCanonicalEvidenceTypeID ());
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
     }
     else
     {
@@ -106,7 +106,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE4ARequest
       }
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.AT.getID ());
       aDemoRequest.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("AT/NL/???");
-      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getCanonicalEvidenceTypeID ());
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
     }
     return aDemoRequest;
   }

@@ -47,6 +47,8 @@ import com.helger.html.hc.html.textlevel.HCEM;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.hc.impl.HCTextNode;
 import com.helger.jaxb.validation.DoNothingValidationEventHandler;
+import com.helger.peppolid.IDocumentTypeIdentifier;
+import com.helger.peppolid.factory.SimpleIdentifierFactory;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.alert.BootstrapErrorBox;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
@@ -71,50 +73,52 @@ import eu.de4a.iem.jaxb.t42.v0_6.AddressType;
 import eu.de4a.iem.jaxb.t42.v0_6.LegalEntityType;
 import eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller;
 
-public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
+public abstract class AbstractPageDE extends AbstractAppWebPage
 {
-  protected static enum EPatternType
+  protected enum EPatternType
   {
     IM,
     USI;
   }
 
-  protected static enum EDataRequestSubjectType
+  protected enum EDataRequestSubjectType
   {
     PERSON,
     COMPANY;
   }
 
-  protected static enum EUseCase implements IHasID <String>, IHasDisplayName
+  protected enum EUseCase implements IHasID <String>, IHasDisplayName
   {
     HIGHER_EDUCATION_DIPLOMA ("t41uc1",
                               "Studying Abroad – Application to public higher education",
                               EPatternType.USI,
                               EDataRequestSubjectType.PERSON,
-                              "urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma"),
+                              SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                             "HigherEducationDiploma")),
     COMPANY_REGISTRATION ("t42cr",
                           "Doing Business Abroad – Starting a business in another Member State",
                           EPatternType.IM,
                           EDataRequestSubjectType.COMPANY,
-                          "urn:de4a-eu:CanonicalEvidenceType::CompanyRegistration");
+                          SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                         "CompanyRegistration"));
 
     private final String m_sID;
     private final String m_sDisplayName;
     private final EPatternType m_ePatternType;
     private final EDataRequestSubjectType m_eDRSType;
-    private final String m_sCETID;
+    private final IDocumentTypeIdentifier m_aDocTypeID;
 
     EUseCase (@Nonnull @Nonempty final String sID,
               @Nonnull @Nonempty final String sDisplayName,
               @Nonnull final EPatternType ePatternType,
               @Nonnull final EDataRequestSubjectType eDRSType,
-              @Nonnull @Nonempty final String sCETID)
+              @Nonnull final IDocumentTypeIdentifier aDocTypeID)
     {
       m_sID = sID;
       m_sDisplayName = sDisplayName;
       m_ePatternType = ePatternType;
       m_eDRSType = eDRSType;
-      m_sCETID = sCETID;
+      m_aDocTypeID = aDocTypeID;
     }
 
     @Nonnull
@@ -144,10 +148,9 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
 
     @Nonnull
-    @Nonempty
-    public String getCanonicalEvidenceTypeID ()
+    public IDocumentTypeIdentifier getDocumentTypeID ()
     {
-      return m_sCETID;
+      return m_aDocTypeID;
     }
 
     @Nullable
@@ -426,7 +429,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
-  protected static enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
+  protected enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   {
     ES ("iso6523-actorid-upis::9999:esq6250003h", "(UJI) Universitat Jaume I de Castellón", EUseCase.HIGHER_EDUCATION_DIPLOMA, "ES"),
     PT ("iso6523-actorid-upis::9999:pt990000101", "Portuguese IST, University of Lisbon", EUseCase.HIGHER_EDUCATION_DIPLOMA, "PT"),
@@ -501,7 +504,7 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
-  protected static enum EMockDataOwner implements IHasID <String>, IHasDisplayName
+  protected enum EMockDataOwner implements IHasID <String>, IHasDisplayName
   {
     ES ("iso6523-actorid-upis::9999:ess2833002e",
         "(MPTFP-SGAD) Secretaría General de Administración Digital",
@@ -614,10 +617,10 @@ public abstract class AbstractPageDE4ARequest extends AbstractAppWebPage
     }
   }
 
-  protected static final String TARGET_URL_MOCK_DO = CApp.DEFAULT_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
-  protected static final String TARGET_URL_TEST_DR = "https://de4a-dev-connector.egovlab.eu/requestTransferEvidenceIM";
+  protected static final String TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+  protected static final String TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
 
-  public AbstractPageDE4ARequest (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
+  public AbstractPageDE (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
   {
     super (sID, sDisplayName);
   }
