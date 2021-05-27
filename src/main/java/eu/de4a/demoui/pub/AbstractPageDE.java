@@ -472,12 +472,12 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     if (ePattern == EPatternType.IM)
     {
       TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
-      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
     }
     else
     {
       TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_USI_REQ.getRelativeURL ();
-      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + EDemoDocument.DR_USI_REQ.getRelativeURL ();
+      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
     }
   }
 
