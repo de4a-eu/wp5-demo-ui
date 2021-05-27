@@ -90,8 +90,6 @@ import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.core.form.RequestFieldBoolean;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
-import com.helger.photon.uicore.html.formlabel.ELabelType;
-import com.helger.photon.uicore.html.formlabel.HCFormLabel;
 import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
@@ -296,7 +294,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
   public static final class SessionState extends AbstractSessionSingleton
   {
+    private EPatternType m_ePattern;
     private EStep m_eStep = EStep.first ();
+    private String m_sRequestID = UUID.randomUUID ().toString ();
+
     // Process
     EUseCase m_eUseCase;
     // DE
@@ -324,10 +325,22 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       return getSessionSingleton (SessionState.class);
     }
 
-    public void validate ()
+    public void validate (@Nonnull final EPatternType eExpectedPattern)
     {
       if (m_eStep == null)
         throw new IllegalStateException ("No step");
+      if (m_ePattern == null)
+      {
+        // First time init
+        m_ePattern = eExpectedPattern;
+      }
+      else
+        if (m_ePattern != eExpectedPattern)
+        {
+          // Switch between IM and USI
+          m_ePattern = eExpectedPattern;
+          reset ();
+        }
 
       if (m_eUseCase == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_PROCESS);
@@ -382,6 +395,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     public void reset ()
     {
       m_eStep = EStep.first ();
+      m_sRequestID = UUID.randomUUID ().toString ();
       _onBack ();
     }
 
@@ -454,7 +468,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     public RequestTransferEvidenceUSIIMDRType buildRequest ()
     {
       final RequestTransferEvidenceUSIIMDRType aRequest = new RequestTransferEvidenceUSIIMDRType ();
-      aRequest.setRequestId (UUID.randomUUID ().toString ());
+      aRequest.setRequestId (m_sRequestID);
       // TODO
       aRequest.setSpecificationId ("SpecificationId");
       aRequest.setTimeStamp (PDTFactory.getCurrentXMLOffsetDateTimeMillisOnly ());
@@ -512,14 +526,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
   }
 
-  private final EPatternType m_ePattern;
-
   public AbstractPageDE_User (@Nonnull @Nonempty final String sID,
                               @Nonnull @Nonempty final String sDisplayName,
                               @Nonnull final EPatternType ePattern)
   {
-    super (sID, sDisplayName);
-    m_ePattern = ePattern;
+    super (sID, sDisplayName, ePattern);
   }
 
   @Override
@@ -748,7 +759,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     final boolean bIsResubmitted = bIsSubmitted && !bMoved;
 
     // Check the requirements for the current step are fulfilled
-    aState.validate ();
+    aState.validate (m_ePattern);
 
     final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC).ensureID ());
     aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 3, 2, 2), BootstrapGridSpec.create (-1, -1, 9, 10, 10));
@@ -1152,6 +1163,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           t.addBodyRow ()
            .addCell (strong ("Country:"))
            .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
+          if (m_ePattern == EPatternType.USI)
+          {
+            t.addBodyRow ().addCell (strong ("Redirect URL:")).addCell (code (aState.getDataOwnerRedirectURL ()));
+          }
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
         }
 
@@ -1197,8 +1212,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                                                                                 .addChild (code (TARGET_URL_TEST_DR))
                                                                                                                 .addChild (" for the test DE4A Connector"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel (new HCFormLabel (span ("Confirmation to send request"),
-                                                                                 ELabelType.MANDATORY))
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Confirmation to send request")
                                                      .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM, false)))
                                                      .setHelpText ("You need to give your explicit consent here to proceed")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));

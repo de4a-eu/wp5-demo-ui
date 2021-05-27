@@ -59,6 +59,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.AckType;
 import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceUSIType;
@@ -100,7 +101,7 @@ public class PagePublicDE_USI_Mock extends AbstractPageDE
 
   public PagePublicDE_USI_Mock (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "USI Exchange (Mock)");
+    super (sID, "USI Exchange (Mock)", EPatternType.USI);
   }
 
   @Override
