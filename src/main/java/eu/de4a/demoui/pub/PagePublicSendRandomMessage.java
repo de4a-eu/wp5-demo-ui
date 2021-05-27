@@ -64,6 +64,8 @@ import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EDemoDocumentType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;

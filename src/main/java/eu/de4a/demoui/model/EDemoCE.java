@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.model;
 
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;

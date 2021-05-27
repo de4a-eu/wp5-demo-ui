@@ -61,6 +61,7 @@ import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
