@@ -101,6 +101,9 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.MDSCompany;
+import eu.de4a.demoui.model.MDSPerson;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
@@ -109,6 +112,7 @@ import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.iem.jaxb.common.types.ErrorType;
 import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
 import eu.de4a.iem.jaxb.common.types.ProvisionItemType;
+import eu.de4a.iem.jaxb.common.types.ProvisionType;
 import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
@@ -132,6 +136,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   protected static final String FIELD_DO_ID = "do_id";
   protected static final String FIELD_DO_NAME = "do_name";
   protected static final String FIELD_DO_COUNTRY_CODE = "do_cc";
+  protected static final String FIELD_DO_REDIRECT_URL = "do_rurl";
   // Select DRS
   protected static final String FIELD_DRS_ID = "id";
   protected static final String FIELD_DRS_NAME = "name";
@@ -176,8 +181,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
         final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("IDK response:\n" + new String (aResponseBytes, StandardCharsets.UTF_8));
+        if (LOGGER.isInfoEnabled ())
+          LOGGER.info ("IDK response:\n" + new String (aResponseBytes, StandardCharsets.UTF_8));
 
         aResponse = DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ().read (aResponseBytes);
         if (aResponse == null)
@@ -204,6 +209,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         {
           aJson.add ("id", "");
           aJson.add ("name", "");
+          aJson.add ("redirecturl", "");
         }
       }
       else
@@ -212,6 +218,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final ProvisionItemType aPI = aSource.getProvisionItems ().getProvisionItemAtIndex (0);
         aJson.add ("id", aPI.getDataOwnerId ().toLowerCase (Locale.ROOT));
         aJson.add ("name", aPI.getDataOwnerPrefLabel ());
+        final ProvisionType aP = aPI.getProvision ();
+        aJson.add ("redirecturl", aP != null ? StringHelper.getNotNull (aP.getRedirectURL (), "") : "");
       }
       aAjaxResponse.json (aJson);
     });
@@ -419,6 +427,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       return m_aDO == null ? null : m_aDO.getCountryCode ();
     }
 
+    @Nullable
+    public String getDataOwnerRedirectURL ()
+    {
+      return m_aDO == null ? null : m_aDO.getRedirectURL ();
+    }
+
     private boolean _allDRSNull ()
     {
       return m_aDRSCompany == null && m_aDRSPerson == null;
@@ -581,6 +595,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_ID, aState.getDataOwnerID ());
           final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
           final String sDOCC = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
+          final String sDORedirectURL = aWPEC.params ().getAsStringTrimmed (FIELD_DO_REDIRECT_URL, aState.getDataOwnerRedirectURL ());
 
           if (StringHelper.hasNoText (sDOID))
             aFormErrors.addFieldError (FIELD_DO_ID, "A Data Owner ID is needed");
@@ -594,9 +609,18 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             if (!RegExHelper.stringMatchesPattern (REGEX_COUNTRY_CODE, sDOCC))
               aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "The Data Owner country code is invalid");
 
+          if (m_ePattern == EPatternType.USI)
+          {
+            if (StringHelper.hasNoText (sDORedirectURL))
+              aFormErrors.addFieldError (FIELD_DO_REDIRECT_URL, "A Data Owner redirect URL is needed");
+            else
+              if (URLHelper.getAsURL (sDORedirectURL) == null)
+                aFormErrors.addFieldError (FIELD_DO_REDIRECT_URL, "A valid Data Owner redirect URL must be provided");
+          }
+
           if (aFormErrors.isEmpty ())
           {
-            aState.m_aDO = Agent.builder ().id (sDOID).name (sDOName).countryCode (sDOCC).build ();
+            aState.m_aDO = Agent.builder ().id (sDOID).name (sDOName).countryCode (sDOCC).redirectURL (sDORedirectURL).build ();
           }
           break;
         }
@@ -930,6 +954,17 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setCtrl (aEditID)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID)));
 
+        // Redirect URL (USI only)
+        HCEdit aEditRedirectURL = null;
+        if (m_ePattern == EPatternType.USI)
+        {
+          aEditRedirectURL = new HCEdit (new RequestField (FIELD_DO_REDIRECT_URL,
+                                                           aState.getDataOwnerRedirectURL ())).ensureID ().setReadOnly (!bUseMockDO);
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner redirect URL")
+                                                       .setCtrl (aEditRedirectURL)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DO_REDIRECT_URL)));
+        }
+
         // JS
         {
           // Checkbox
@@ -938,6 +973,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           aJSHandler.add (JQuery.idRef (aMockDOSelect).setDisabled (jChecked.not ()));
           aJSHandler.add (JQuery.idRef (aEditName).jqinvoke ("setReadOnly").arg (jChecked.not ()));
           aJSHandler.add (JQuery.idRef (aEditID).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+          if (aEditRedirectURL != null)
+            aJSHandler.add (JQuery.idRef (aEditRedirectURL).jqinvoke ("setReadOnly").arg (jChecked.not ()));
           aCB.setEventHandler (EJSEvent.CHANGE, aJSHandler);
         }
 
@@ -966,11 +1003,15 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             final JSVar aJSAppendData = jsSetValues.param ("data");
             jsSetValues.body ().add (JQuery.idRef (aEditName).val (aJSAppendData.ref ("name")));
             jsSetValues.body ().add (JQuery.idRef (aEditID).val (aJSAppendData.ref ("id")));
+            if (aEditRedirectURL != null)
+              jsSetValues.body ().add (JQuery.idRef (aEditRedirectURL).val (aJSAppendData.ref ("redirecturl")));
           }
           final JSAnonymousFunction jsSeEmpty = new JSAnonymousFunction ();
           {
             jsSeEmpty.body ().add (JQuery.idRef (aEditName).val (""));
             jsSeEmpty.body ().add (JQuery.idRef (aEditID).val (""));
+            if (aEditRedirectURL != null)
+              jsSeEmpty.body ().add (JQuery.idRef (aEditRedirectURL).val (""));
           }
           jIf.add (new JQueryAjaxBuilder ().url (s_aAjaxCallIDK.getInvocationURI (aRequestScope))
                                            .data (new JSAssocArray ().add ("cc", JQuery.idRef (aCountrySelect).val ()))

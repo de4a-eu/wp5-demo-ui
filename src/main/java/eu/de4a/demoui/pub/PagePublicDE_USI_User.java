@@ -19,6 +19,8 @@ import javax.annotation.Nonnull;
 
 import com.helger.commons.annotation.Nonempty;
 
+import eu.de4a.demoui.model.EPatternType;
+
 public class PagePublicDE_USI_User extends AbstractPageDE_User
 {
   public PagePublicDE_USI_User (@Nonnull @Nonempty final String sID)
