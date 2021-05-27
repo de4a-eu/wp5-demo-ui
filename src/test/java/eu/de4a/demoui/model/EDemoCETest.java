@@ -33,5 +33,7 @@ public final class EDemoCETest
     assertNotNull (EDemoCE.createT41_UC1_v2021_04_13 ());
     assertNotNull (EDemoCE.createDBA_v06 ());
     assertNotNull (EDemoCE.createMA_Birth_v16 ());
+    assertNotNull (EDemoCE.createMA_DomesticRegistration_v16 ());
+    assertNotNull (EDemoCE.createMA_Marriage_v16 ());
   }
 }

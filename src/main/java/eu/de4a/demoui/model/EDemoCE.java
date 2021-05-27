@@ -32,8 +32,8 @@ import eu.de4a.iem.jaxb.t41.uc1.v2021_02_11.ModeOfStudy;
 import eu.de4a.iem.jaxb.t43.birth.v1_6.BirthType;
 import eu.de4a.iem.jaxb.t43.birth.v1_6.ChildType;
 import eu.de4a.iem.jaxb.t43.birth.v1_6.DateObjectType;
-import eu.de4a.iem.jaxb.t43.birth.v1_6.NameType;
-import eu.de4a.iem.jaxb.t43.birth.v1_6.PublicOrganisationType;
+import eu.de4a.iem.jaxb.t43.domreg.v1_6.DomicileType;
+import eu.de4a.iem.jaxb.t43.marriage.v1_6.MarriageType;
 import eu.de4a.iem.jaxb.w3.cv10.ac.CvaddressType;
 import eu.de4a.iem.jaxb.w3.cv10.ac.CvidentifierType;
 import eu.de4a.iem.jaxb.w3.cv10.bc.AdminunitFirstlineType;
@@ -66,7 +66,9 @@ public enum EDemoCE
   T41_UC1_2021_02_11 (EDE4ACanonicalEvidenceType.T41_UC1_2021_02_11, EDemoCE::createT41_UC1_v2021_02_11),
   T41_UC1_2021_04_13 (EDE4ACanonicalEvidenceType.T41_UC1_2021_04_13, EDemoCE::createT41_UC1_v2021_04_13),
   T42_COMPANY_INFO_V06 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V06, EDemoCE::createDBA_v06),
-  T43_BIRTH_EVIDENCE_V16 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V16, EDemoCE::createMA_Birth_v16);
+  T43_BIRTH_EVIDENCE_V16 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V16, EDemoCE::createMA_Birth_v16),
+  T43_DOMREG_EVIDENCE_V16 (EDE4ACanonicalEvidenceType.T43_DOMREG_EVIDENCE_V16, EDemoCE::createMA_DomesticRegistration_v16),
+  T43_MARRIAGE_EVIDENCE_V16 (EDE4ACanonicalEvidenceType.T43_MARRIAGE_EVIDENCE_V16, EDemoCE::createMA_Marriage_v16);
 
   private final EDE4ACanonicalEvidenceType m_eCEType;
   private final Supplier <Element> m_aAnyCreator;
@@ -256,10 +258,32 @@ public enum EDemoCE
   }
 
   @Nonnull
-  private static PublicOrganisationType _createPubOrg ()
+  private static eu.de4a.iem.jaxb.t43.birth.v1_6.PublicOrganisationType _createBirthPubOrg ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final PublicOrganisationType ret = new PublicOrganisationType ();
+    final eu.de4a.iem.jaxb.t43.birth.v1_6.PublicOrganisationType ret = new eu.de4a.iem.jaxb.t43.birth.v1_6.PublicOrganisationType ();
+    ret.addIdentifier (_createCvID ());
+    ret.addPrefLabel (new oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.TextType ("PrefLabel-" +
+                                                                                                      MathHelper.abs (aTLR.nextInt ())));
+    return ret;
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.domreg.v1_6.PublicOrganisationType _createDomRegPubOrg ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.domreg.v1_6.PublicOrganisationType ret = new eu.de4a.iem.jaxb.t43.domreg.v1_6.PublicOrganisationType ();
+    ret.addIdentifier (_createCvID ());
+    ret.addPrefLabel (new oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.TextType ("PrefLabel-" +
+                                                                                                      MathHelper.abs (aTLR.nextInt ())));
+    return ret;
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.marriage.v1_6.PublicOrganisationType _createMarriagePubOrg ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.marriage.v1_6.PublicOrganisationType ret = new eu.de4a.iem.jaxb.t43.marriage.v1_6.PublicOrganisationType ();
     ret.addIdentifier (_createCvID ());
     ret.addPrefLabel (new oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.TextType ("PrefLabel-" +
                                                                                                       MathHelper.abs (aTLR.nextInt ())));
@@ -313,13 +337,49 @@ public enum EDemoCE
   }
 
   @Nonnull
+  private static eu.de4a.iem.jaxb.t43.domreg.v1_6.ConstrainedLocationAddressType _createDomRegCLA ()
+  {
+    final eu.de4a.iem.jaxb.t43.domreg.v1_6.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.domreg.v1_6.ConstrainedLocationAddressType ();
+    {
+      final AdminunitSecondlineType a = new AdminunitSecondlineType ();
+      a.setValue ("L2");
+      ret.setAdminUnitL2 (a);
+    }
+    {
+      final AdminunitFirstlineType a = new AdminunitFirstlineType ();
+      a.setValue ("L1");
+      ret.setAdminUnitL1 (a);
+    }
+    _fill (ret);
+    return ret;
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.marriage.v1_6.ConstrainedLocationAddressType _createMarriageCLA ()
+  {
+    final eu.de4a.iem.jaxb.t43.marriage.v1_6.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.marriage.v1_6.ConstrainedLocationAddressType ();
+    {
+      final AdminunitSecondlineType a = new AdminunitSecondlineType ();
+      a.setValue ("L2");
+      ret.setAdminUnitL2 (a);
+    }
+    {
+      final AdminunitFirstlineType a = new AdminunitFirstlineType ();
+      a.setValue ("L1");
+      ret.setAdminUnitL1 (a);
+    }
+    _fill (ret);
+    return ret;
+  }
+
+  @Nonnull
   private static ChildType _createChildType ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ChildType ret = new ChildType ();
 
     {
-      final NameType a = new NameType ();
+      final eu.de4a.iem.jaxb.t43.birth.v1_6.NameType a = new eu.de4a.iem.jaxb.t43.birth.v1_6.NameType ();
       {
         final GivenNameType b = new GivenNameType ();
         b.setValue ("Given-" + MathHelper.abs (aTLR.nextInt ()));
@@ -370,9 +430,115 @@ public enum EDemoCE
     final eu.de4a.iem.jaxb.t43.birth.v1_6.BirthEvidenceType p = new eu.de4a.iem.jaxb.t43.birth.v1_6.BirthEvidenceType ();
     p.setIdentifier (_createCvID ());
     p.setIssueDate (new DateType (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextLong (2000))));
-    p.setIssuingAuthority (_createPubOrg ());
+    p.setIssuingAuthority (_createBirthPubOrg ());
     p.setIssuingPlace (_createBirthCLA ());
     p.setCertifiesBirth (_createBirthType ());
     return eu.de4a.iem.xml.de4a.t43.v1_6.DE4AT43Marshaller.birthEvidence ().getAsDocument (p).getDocumentElement ();
+  }
+
+  @Nonnull
+  private static DomicileType _createDomicileType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final DomicileType ret = new DomicileType ();
+    {
+      final eu.de4a.iem.jaxb.t43.domreg.v1_6.PersonType a = new eu.de4a.iem.jaxb.t43.domreg.v1_6.PersonType ();
+      {
+        final eu.de4a.iem.jaxb.t43.domreg.v1_6.NameType b = new eu.de4a.iem.jaxb.t43.domreg.v1_6.NameType ();
+        {
+          final GivenNameType c = new GivenNameType ();
+          c.setValue ("Given-" + MathHelper.abs (aTLR.nextInt ()));
+          b.addGivenName (c);
+        }
+        {
+          final FamilyNameType c = new FamilyNameType ();
+          c.setValue ("Family-" + MathHelper.abs (aTLR.nextInt ()));
+          b.addFamilyName (c);
+        }
+        a.setPersonName (b);
+      }
+      a.setGender (new CodeType (aTLR.nextBoolean () ? "m" : "f"));
+      ret.setInhabitant (a);
+    }
+    {
+      final eu.de4a.iem.jaxb.t43.domreg.v1_6.AddressType a = new eu.de4a.iem.jaxb.t43.domreg.v1_6.AddressType ();
+      _fill (a);
+      ret.setDomicile (a);
+    }
+    return ret;
+  }
+
+  @Nonnull
+  public static Element createMA_DomesticRegistration_v16 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.domreg.v1_6.DomicileRegistrationEvidenceType p = new eu.de4a.iem.jaxb.t43.domreg.v1_6.DomicileRegistrationEvidenceType ();
+    p.setIdentifier (_createCvID ());
+    p.setIssueDate (new DateType (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextLong (2000))));
+    p.setIssuingAuthority (_createDomRegPubOrg ());
+    p.setIssuingPlace (_createDomRegCLA ());
+    p.setCertifiesDomicile (_createDomicileType ());
+    return eu.de4a.iem.xml.de4a.t43.v1_6.DE4AT43Marshaller.domicileRegistrationEvidence ().getAsDocument (p).getDocumentElement ();
+  }
+
+  @Nonnull
+  private static MarriageType _createMarriageType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final MarriageType ret = new MarriageType ();
+    ret.setDateOfMarriage (new DateType (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextLong (2000))));
+
+    {
+      final eu.de4a.iem.jaxb.t43.marriage.v1_6.MarriedPersonType a = new eu.de4a.iem.jaxb.t43.marriage.v1_6.MarriedPersonType ();
+      {
+        final eu.de4a.iem.jaxb.t43.marriage.v1_6.NameType b = new eu.de4a.iem.jaxb.t43.marriage.v1_6.NameType ();
+        {
+          final GivenNameType c = new GivenNameType ();
+          c.setValue ("Given-" + MathHelper.abs (aTLR.nextInt ()));
+          b.addGivenName (c);
+        }
+        {
+          final FamilyNameType c = new FamilyNameType ();
+          c.setValue ("Family-" + MathHelper.abs (aTLR.nextInt ()));
+          b.addFamilyName (c);
+        }
+        a.setPersonName (b);
+      }
+      a.setGender (new CodeType (aTLR.nextBoolean () ? "m" : "f"));
+      ret.addSpouse (a);
+    }
+    {
+      final eu.de4a.iem.jaxb.t43.marriage.v1_6.MarriedPersonType a = new eu.de4a.iem.jaxb.t43.marriage.v1_6.MarriedPersonType ();
+      {
+        final eu.de4a.iem.jaxb.t43.marriage.v1_6.NameType b = new eu.de4a.iem.jaxb.t43.marriage.v1_6.NameType ();
+        {
+          final GivenNameType c = new GivenNameType ();
+          c.setValue ("Given-" + MathHelper.abs (aTLR.nextInt ()));
+          b.addGivenName (c);
+        }
+        {
+          final FamilyNameType c = new FamilyNameType ();
+          c.setValue ("Family-" + MathHelper.abs (aTLR.nextInt ()));
+          b.addFamilyName (c);
+        }
+        a.setPersonName (b);
+      }
+      a.setGender (new CodeType (aTLR.nextBoolean () ? "m" : "f"));
+      ret.addSpouse (a);
+    }
+    return ret;
+  }
+
+  @Nonnull
+  public static Element createMA_Marriage_v16 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.marriage.v1_6.MarriageEvidenceType p = new eu.de4a.iem.jaxb.t43.marriage.v1_6.MarriageEvidenceType ();
+    p.setIdentifier (_createCvID ());
+    p.setIssueDate (new DateType (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextLong (2000))));
+    p.setIssuingAuthority (_createMarriagePubOrg ());
+    p.setIssuingPlace (_createMarriageCLA ());
+    p.setCertifiesMarriage (_createMarriageType ());
+    return eu.de4a.iem.xml.de4a.t43.v1_6.DE4AT43Marshaller.marriageEvidence ().getAsDocument (p).getDocumentElement ();
   }
 }
