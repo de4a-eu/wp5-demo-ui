@@ -15,11 +15,13 @@
  */
 package eu.de4a.demoui.model;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.w3c.dom.Element;
 
@@ -27,6 +29,18 @@ import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.math.MathHelper;
 
 import eu.de4a.iem.jaxb.t41.uc1.v2021_02_11.ModeOfStudy;
+import eu.de4a.iem.jaxb.t43.birth.v1_6.BirthType;
+import eu.de4a.iem.jaxb.t43.birth.v1_6.ChildType;
+import eu.de4a.iem.jaxb.t43.birth.v1_6.DateObjectType;
+import eu.de4a.iem.jaxb.t43.birth.v1_6.NameType;
+import eu.de4a.iem.jaxb.t43.birth.v1_6.PublicOrganisationType;
+import eu.de4a.iem.jaxb.w3.cv10.ac.CvaddressType;
+import eu.de4a.iem.jaxb.w3.cv10.ac.CvidentifierType;
+import eu.de4a.iem.jaxb.w3.cv10.bc.AdminunitFirstlineType;
+import eu.de4a.iem.jaxb.w3.cv10.bc.AdminunitSecondlineType;
+import eu.de4a.iem.jaxb.w3.cv10.bc.GivenNameType;
+import eu.de4a.iem.jaxb.w3.cv10.bc.IdentifierType;
+import eu.de4a.iem.jaxb.w3.cv10.bc.PostCodeType;
 import eu.de4a.iem.jaxb.w3.cv11.bc.LegalEntityLegalNameType;
 import eu.de4a.iem.xml.XSDDataTypeHelper;
 import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
@@ -37,9 +51,10 @@ import eu.europa.data.europass.model.credentials_.LegalIdentifierType;
 import eu.europa.data.europass.model.credentials_.LocationType;
 import eu.europa.data.europass.model.credentials_.PersonType;
 import eu.europa.data.europass.model.credentials_.TextContentTypeCodeEnumType;
-import eu.europa.data.europass.model.credentials_.TextType;
+import oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.CodeType;
 import oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.NumericType;
 import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.DateType;
+import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.FamilyNameType;
 
 /**
  * Demo canonical evidence type
@@ -50,7 +65,8 @@ public enum EDemoCE
 {
   T41_UC1_2021_02_11 (EDE4ACanonicalEvidenceType.T41_UC1_2021_02_11, EDemoCE::createT41_UC1_v2021_02_11),
   T41_UC1_2021_04_13 (EDE4ACanonicalEvidenceType.T41_UC1_2021_04_13, EDemoCE::createT41_UC1_v2021_04_13),
-  T42_COMPANY_INFO_V06 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V06, EDemoCE::createDBA_v06);
+  T42_COMPANY_INFO_V06 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V06, EDemoCE::createDBA_v06),
+  T43_BIRTH_EVIDENCE_V16 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V16, EDemoCE::createMA_Birth_v16);
 
   private final EDE4ACanonicalEvidenceType m_eCEType;
   private final Supplier <Element> m_aAnyCreator;
@@ -74,10 +90,10 @@ public enum EDemoCE
   }
 
   @Nonnull
-  private static TextType _createText ()
+  private static eu.europa.data.europass.model.credentials_.TextType _createText ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final TextType t = new TextType ();
+    final eu.europa.data.europass.model.credentials_.TextType t = new eu.europa.data.europass.model.credentials_.TextType ();
     t.setValue ("Text-" + MathHelper.abs (aTLR.nextInt ()));
     t.setContentType (EDemoDocument.random (TextContentTypeCodeEnumType.values ()));
     t.setLang (EDemoDocument.random (LanguageCharCodeEnumType.values ()));
@@ -220,5 +236,143 @@ public enum EDemoCE
       p.addRegisteredAddress (a);
     }
     return eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller.legalEntity ().getAsDocument (p).getDocumentElement ();
+  }
+
+  @Nonnull
+  private static IdentifierType _createID ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final IdentifierType ret = new IdentifierType ();
+    ret.setValue ("ID-" + MathHelper.abs (aTLR.nextInt ()));
+    return ret;
+  }
+
+  @Nonnull
+  private static CvidentifierType _createCvID ()
+  {
+    final CvidentifierType ret = new CvidentifierType ();
+    ret.setIdentifier (_createID ());
+    return ret;
+  }
+
+  @Nonnull
+  private static PublicOrganisationType _createPubOrg ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final PublicOrganisationType ret = new PublicOrganisationType ();
+    ret.addIdentifier (_createCvID ());
+    ret.addPrefLabel (new oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.TextType ("PrefLabel-" +
+                                                                                                      MathHelper.abs (aTLR.nextInt ())));
+    return ret;
+  }
+
+  private static void _fill (@Nonnull final CvaddressType aAddr)
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    {
+      final PostCodeType a = new PostCodeType ();
+      a.setValue ("PostCode-" + MathHelper.abs (aTLR.nextInt ()));
+      aAddr.addPostCode (a);
+    }
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.birth.v1_6.LocationAddressType _createBirthLA ()
+  {
+    final eu.de4a.iem.jaxb.t43.birth.v1_6.LocationAddressType ret = new eu.de4a.iem.jaxb.t43.birth.v1_6.LocationAddressType ();
+    {
+      final AdminunitSecondlineType a = new AdminunitSecondlineType ();
+      a.setValue ("L2");
+      ret.setAdminUnitL2 (a);
+    }
+    {
+      final AdminunitFirstlineType a = new AdminunitFirstlineType ();
+      a.setValue ("L1");
+      ret.setAdminUnitL1 (a);
+    }
+    _fill (ret);
+    return ret;
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.birth.v1_6.ConstrainedLocationAddressType _createBirthCLA ()
+  {
+    final eu.de4a.iem.jaxb.t43.birth.v1_6.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.birth.v1_6.ConstrainedLocationAddressType ();
+    {
+      final AdminunitSecondlineType a = new AdminunitSecondlineType ();
+      a.setValue ("L2");
+      ret.setAdminUnitL2 (a);
+    }
+    {
+      final AdminunitFirstlineType a = new AdminunitFirstlineType ();
+      a.setValue ("L1");
+      ret.setAdminUnitL1 (a);
+    }
+    _fill (ret);
+    return ret;
+  }
+
+  @Nonnull
+  private static ChildType _createChildType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ChildType ret = new ChildType ();
+
+    {
+      final NameType a = new NameType ();
+      {
+        final GivenNameType b = new GivenNameType ();
+        b.setValue ("Given-" + MathHelper.abs (aTLR.nextInt ()));
+        a.addGivenName (b);
+      }
+      {
+        final FamilyNameType b = new FamilyNameType ();
+        b.setValue ("Family-" + MathHelper.abs (aTLR.nextInt ()));
+        a.addFamilyName (b);
+      }
+      ret.setPersonName (a);
+    }
+
+    {
+      final LocalDate aLD = PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextInt (2000));
+      final DateObjectType a = new DateObjectType ();
+      XMLGregorianCalendar c = XSDDataTypeHelper.getFactory ().newXMLGregorianCalendar ();
+      c.setYear (aLD.getYear ());
+      a.setYear (c);
+
+      c = XSDDataTypeHelper.getFactory ().newXMLGregorianCalendar ();
+      c.setMonth (aLD.getMonthValue ());
+      a.setMonth (c);
+
+      c = XSDDataTypeHelper.getFactory ().newXMLGregorianCalendar ();
+      c.setDay (aLD.getDayOfMonth ());
+      a.setDay (c);
+
+      ret.setDateOfBirth (a);
+    }
+    ret.setGender (new CodeType (aTLR.nextBoolean () ? "m" : "f"));
+    ret.setPlaceOfBirth (_createBirthLA ());
+    return ret;
+  }
+
+  @Nonnull
+  private static BirthType _createBirthType ()
+  {
+    final BirthType ret = new BirthType ();
+    ret.setChild (_createChildType ());
+    return ret;
+  }
+
+  @Nonnull
+  public static Element createMA_Birth_v16 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.birth.v1_6.BirthEvidenceType p = new eu.de4a.iem.jaxb.t43.birth.v1_6.BirthEvidenceType ();
+    p.setIdentifier (_createCvID ());
+    p.setIssueDate (new DateType (PDTFactory.getCurrentLocalDate ().minusDays (aTLR.nextLong (2000))));
+    p.setIssuingAuthority (_createPubOrg ());
+    p.setIssuingPlace (_createBirthCLA ());
+    p.setCertifiesBirth (_createBirthType ());
+    return eu.de4a.iem.xml.de4a.t43.v1_6.DE4AT43Marshaller.birthEvidence ().getAsDocument (p).getDocumentElement ();
   }
 }
