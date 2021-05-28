@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.model;
+
+import static org.junit.Assert.assertNotNull;
+
+import org.junit.Test;
 
 /**
- * Type of document
+ * Test class for class {@link EDemoCE}.
  *
  * @author Philip Helger
  */
-public enum EDemoDocumentType
+public final class EDemoCETest
 {
-  REQUEST,
-  RESPONSE,
-  IDK_REQUEST,
-  IDK_RESPONSE
+  @Test
+  public void testBasic ()
+  {
+    assertNotNull (EDemoCE.createT41_UC1_v2021_02_11 ());
+    assertNotNull (EDemoCE.createT41_UC1_v2021_04_13 ());
+    assertNotNull (EDemoCE.createDBA_v06 ());
+    assertNotNull (EDemoCE.createMA_Birth_v16 ());
+    assertNotNull (EDemoCE.createMA_DomesticRegistration_v16 ());
+    assertNotNull (EDemoCE.createMA_Marriage_v16 ());
+  }
 }

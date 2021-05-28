@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.model;
 
-import javax.annotation.Nonnull;
-
-import com.helger.commons.annotation.Nonempty;
-
-import eu.de4a.demoui.model.EPatternType;
-
-public class PagePublicDE_USI_User extends AbstractPageDE_User
+/**
+ * Type of document
+ *
+ * @author Philip Helger
+ */
+public enum EDemoDocumentType
 {
-  public PagePublicDE_USI_User (@Nonnull @Nonempty final String sID)
-  {
-    super (sID, "USI Exchange (User)", EPatternType.USI);
-  }
+  REQUEST,
+  RESPONSE,
+  IDK_REQUEST,
+  IDK_RESPONSE
 }

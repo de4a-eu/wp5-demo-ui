@@ -15,8 +15,6 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.time.LocalDate;
-import java.time.Month;
 import java.util.EnumSet;
 import java.util.Locale;
 
@@ -30,7 +28,6 @@ import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.builder.IBuilder;
 import com.helger.commons.collection.impl.CommonsArrayList;
-import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
@@ -61,6 +58,11 @@ import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.model.EDataRequestSubjectType;
+import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.MDSCompany;
+import eu.de4a.demoui.model.MDSPerson;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
@@ -75,18 +77,6 @@ import eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller;
 
 public abstract class AbstractPageDE extends AbstractAppWebPage
 {
-  protected enum EPatternType
-  {
-    IM,
-    USI;
-  }
-
-  protected enum EDataRequestSubjectType
-  {
-    PERSON,
-    COMPANY;
-  }
-
   protected enum EUseCase implements IHasID <String>, IHasDisplayName
   {
     HIGHER_EDUCATION_DIPLOMA ("t41uc1",
@@ -100,7 +90,21 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
                           EPatternType.IM,
                           EDataRequestSubjectType.COMPANY,
                           SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                         "CompanyRegistration"));
+                                                                                         "CompanyRegistration")),
+    /*
+     * BIRTH_EVIDENCE ("t43birth", "Moving Abroad – Birth Evidence",
+     * EPatternType.USI, EDataRequestSubjectType.PERSON,
+     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
+     * ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")), DOMREG_EVIDENCE
+     * ("t43domreg", "Moving Abroad – Domicile Registration Evidence",
+     * EPatternType.USI, EDataRequestSubjectType.PERSON,
+     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
+     * ("urn:de4a-eu:CanonicalEvidenceType", "DomicileRegistrationEvidence")),
+     * MARRIAGE_EVIDENCE ("t43marriage", "Moving Abroad – Marriage Evidence",
+     * EPatternType.USI, EDataRequestSubjectType.PERSON,
+     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
+     * ("urn:de4a-eu:CanonicalEvidenceType", "MarriageEvidence"))
+     */;
 
     private final String m_sID;
     private final String m_sDisplayName;
@@ -161,188 +165,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   /**
-   * Minimum Data Set for a Company
-   *
-   * @author Philip Helger
-   */
-  @Immutable
-  protected static class MDSCompany
-  {
-    private final String m_sID;
-    private final String m_sName;
-
-    public MDSCompany (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sName)
-    {
-      ValueEnforcer.notEmpty (sID, "ID");
-      ValueEnforcer.notEmpty (sName, "Name");
-      m_sID = sID;
-      m_sName = sName;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getID ()
-    {
-      return m_sID;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getName ()
-    {
-      return m_sName;
-    }
-
-    @Nonnull
-    public static MDSCompany.Builder builder ()
-    {
-      return new MDSCompany.Builder ();
-    }
-
-    public static class Builder implements IBuilder <MDSCompany>
-    {
-      private String m_sID;
-      private String m_sName;
-
-      public Builder ()
-      {}
-
-      @Nonnull
-      public Builder id (@Nullable final String s)
-      {
-        m_sID = s;
-        return this;
-      }
-
-      @Nonnull
-      public Builder name (@Nullable final String s)
-      {
-        m_sName = s;
-        return this;
-      }
-
-      @Nonnull
-      public MDSCompany build ()
-      {
-        return new MDSCompany (m_sID, m_sName);
-      }
-    }
-  }
-
-  /**
-   * Minimum Data Set for a Person
-   *
-   * @author Philip Helger
-   */
-  @Immutable
-  protected static class MDSPerson
-  {
-    private final String m_sID;
-    private final String m_sFirstName;
-    private final String m_sFamilyName;
-    private final LocalDate m_aBirthday;
-
-    public MDSPerson (@Nonnull @Nonempty final String sID,
-                      @Nonnull @Nonempty final String sFirstName,
-                      @Nonnull @Nonempty final String sFamilyName,
-                      @Nonnull final LocalDate aBirthday)
-    {
-      ValueEnforcer.notEmpty (sID, "ID");
-      ValueEnforcer.notEmpty (sFirstName, "FirstName");
-      ValueEnforcer.notEmpty (sFamilyName, "FamilyName");
-      ValueEnforcer.notNull (aBirthday, "Birthday");
-      m_sID = sID;
-      m_sFirstName = sFirstName;
-      m_sFamilyName = sFamilyName;
-      m_aBirthday = aBirthday;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getID ()
-    {
-      return m_sID;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getFirstName ()
-    {
-      return m_sFirstName;
-    }
-
-    @Nonnull
-    @Nonempty
-    public String getFamilyName ()
-    {
-      return m_sFamilyName;
-    }
-
-    @Nonnull
-    public LocalDate getBirthday ()
-    {
-      return m_aBirthday;
-    }
-
-    @Nonnull
-    public static MDSPerson.Builder builder ()
-    {
-      return new MDSPerson.Builder ();
-    }
-
-    public static class Builder implements IBuilder <MDSPerson>
-    {
-      private String m_sID;
-      private String m_sFirstName;
-      private String m_sFamilyName;
-      private LocalDate m_aBirthday;
-
-      public Builder ()
-      {}
-
-      @Nonnull
-      public Builder id (@Nullable final String s)
-      {
-        m_sID = s;
-        return this;
-      }
-
-      @Nonnull
-      public Builder firstName (@Nullable final String s)
-      {
-        m_sFirstName = s;
-        return this;
-      }
-
-      @Nonnull
-      public Builder familyName (@Nullable final String s)
-      {
-        m_sFamilyName = s;
-        return this;
-      }
-
-      @Nonnull
-      public Builder birthday (final int y, final int m, final int d)
-      {
-        return birthday (PDTFactory.createLocalDate (y, Month.of (m), d));
-      }
-
-      @Nonnull
-      public Builder birthday (@Nullable final LocalDate a)
-      {
-        m_aBirthday = a;
-        return this;
-      }
-
-      @Nonnull
-      public MDSPerson build ()
-      {
-        return new MDSPerson (m_sID, m_sFirstName, m_sFamilyName, m_aBirthday);
-      }
-    }
-  }
-
-  /**
    * DE/DO data
    *
    * @author Philip Helger
@@ -353,8 +175,13 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     private final String m_sID;
     private final String m_sName;
     private final String m_sCountryCode;
+    // Only for USI DO
+    private final String m_sRedirectURL;
 
-    public Agent (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sName, @Nonnull @Nonempty final String sCountryCode)
+    public Agent (@Nonnull @Nonempty final String sID,
+                  @Nonnull @Nonempty final String sName,
+                  @Nonnull @Nonempty final String sCountryCode,
+                  @Nullable final String sRedirectURL)
     {
       ValueEnforcer.notEmpty (sID, "ID");
       ValueEnforcer.notEmpty (sName, "Name");
@@ -362,6 +189,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       m_sID = sID;
       m_sName = sName;
       m_sCountryCode = sCountryCode;
+      m_sRedirectURL = sRedirectURL;
     }
 
     @Nonnull
@@ -385,6 +213,12 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       return m_sCountryCode;
     }
 
+    @Nullable
+    public String getRedirectURL ()
+    {
+      return m_sRedirectURL;
+    }
+
     @Nonnull
     public static Agent.Builder builder ()
     {
@@ -396,6 +230,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       private String m_sID;
       private String m_sName;
       private String m_sCountryCode;
+      private String m_sRedirectURL;
 
       public Builder ()
       {}
@@ -422,9 +257,16 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       }
 
       @Nonnull
+      public Builder redirectURL (@Nullable final String s)
+      {
+        m_sRedirectURL = s;
+        return this;
+      }
+
+      @Nonnull
       public Agent build ()
       {
-        return new Agent (m_sID, m_sName, m_sCountryCode);
+        return new Agent (m_sID, m_sName, m_sCountryCode, m_sRedirectURL);
       }
     }
   }
@@ -437,7 +279,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
          "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
          EUseCase.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
-    SI2 ("iso6523-actorid-upis::9999:si000000018", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
+    SI2 ("iso6523-actorid-upis::9999:si000000016", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
         EUseCase.COMPANY_REGISTRATION,
@@ -617,12 +459,26 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     }
   }
 
-  protected static final String TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
-  protected static final String TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
+  protected final EPatternType m_ePattern;
+  protected final String TARGET_URL_MOCK_DO;
+  protected final String TARGET_URL_TEST_DR;
 
-  public AbstractPageDE (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
+  public AbstractPageDE (@Nonnull @Nonempty final String sID,
+                         @Nonnull @Nonempty final String sDisplayName,
+                         @Nonnull final EPatternType ePattern)
   {
     super (sID, sDisplayName);
+    m_ePattern = ePattern;
+    if (ePattern == EPatternType.IM)
+    {
+      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
+    }
+    else
+    {
+      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_USI_REQ.getRelativeURL ();
+      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
+    }
   }
 
   @Nonnull

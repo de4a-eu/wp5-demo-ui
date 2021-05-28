@@ -63,6 +63,8 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
@@ -120,7 +122,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
 
   public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "IM Exchange (Expert)");
+    super (sID, "IM Exchange (Expert)", EPatternType.IM);
   }
 
   @Override

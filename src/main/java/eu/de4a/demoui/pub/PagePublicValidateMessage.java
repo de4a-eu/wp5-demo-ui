@@ -36,6 +36,7 @@ import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
+import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 
 /**

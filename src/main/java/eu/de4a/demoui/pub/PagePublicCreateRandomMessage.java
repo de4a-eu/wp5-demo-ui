@@ -35,6 +35,7 @@ import com.helger.photon.uictrls.prism.HCPrismJS;
 import com.helger.photon.uictrls.prism.PrismPluginCopyToClipboard;
 import com.helger.photon.uictrls.prism.PrismPluginLineNumbers;
 
+import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 
 /**

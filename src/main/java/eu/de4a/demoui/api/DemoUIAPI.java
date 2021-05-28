@@ -31,6 +31,9 @@ import com.helger.photon.api.IAPIRegistry;
 @Immutable
 public final class DemoUIAPI
 {
+  public static final String API_USI_RESPONSE = "/usi-response";
+  public static final String API_USI_REDIRECT_RESPONSE = "/usi-redirect-response";
+
   private DemoUIAPI ()
   {}
 
@@ -38,17 +41,24 @@ public final class DemoUIAPI
   {
     final IAPIExceptionMapper aExceptionMapper = new APIExceptionMapper ();
 
-    // POST /response
+    // POST /usi-response
     {
-      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/response"),
-                                                           new APIExecutorPostUSIResponse ());
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post (API_USI_RESPONSE), new APIExecutorPostUSIResponse ());
       aDescriptor.setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
 
-    // GET /response
+    // GET /usi-response
     {
-      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get ("/response"), new APIExecutorGetUSIResponse ());
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get (API_USI_RESPONSE), new APIExecutorGetUSIResponse ());
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
+
+    // POST /usi-redirect-response
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post (API_USI_REDIRECT_RESPONSE),
+                                                           new APIExecutorPostUSIRedirectResponse ());
+      aDescriptor.setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
   }

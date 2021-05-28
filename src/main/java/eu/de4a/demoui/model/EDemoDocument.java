@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.model;
 
 import java.awt.Color;
 import java.util.Locale;
@@ -68,6 +68,7 @@ import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryOb
  */
 public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 {
+  // Data Evaluator
   DE_USI_REQ_T41_UC1_V2021_02_11 ("de-usi-req-t41-uc1-2021-02-11",
                                   "Request to DE (USI) - SA UC1 2021-02-11",
                                   "/de1/usi/forwardevidence",
@@ -95,6 +96,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.deUsiResponseMarshaller ()),
+  // Data Requestor
   DR_IM_REQ ("dr-im-req",
              "Request to DR (IM)",
              "/requestTransferEvidenceIM",
@@ -122,6 +124,27 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                       EDemoCE.T42_COMPANY_INFO_V06,
                       EDemoDocument::createResponseTransferEvidence,
                       DE4AMarshaller::drImResponseMarshaller),
+  DR_IM_RESP_T43_BIRTH_V16 ("dr-im-resp-ma-birth-v16",
+                            "Response from DR (IM) - MA Birth Evidence v1.6",
+                            null,
+                            EDemoDocumentType.RESPONSE,
+                            EDemoCE.T43_BIRTH_EVIDENCE_V16,
+                            EDemoDocument::createResponseTransferEvidence,
+                            DE4AMarshaller::drImResponseMarshaller),
+  DR_IM_RESP_T43_DOMREG_V16 ("dr-im-resp-ma-domreg-v16",
+                             "Response from DR (IM) - MA Domestic Registration Evidence v1.6",
+                             null,
+                             EDemoDocumentType.RESPONSE,
+                             EDemoCE.T43_DOMREG_EVIDENCE_V16,
+                             EDemoDocument::createResponseTransferEvidence,
+                             DE4AMarshaller::drImResponseMarshaller),
+  DR_IM_RESP_T43_MARRIAGE_V16 ("dr-im-resp-ma-marriage-v16",
+                               "Response from DR (IM) - MA Marriage Evidence v1.6",
+                               null,
+                               EDemoDocumentType.RESPONSE,
+                               EDemoCE.T43_MARRIAGE_EVIDENCE_V16,
+                               EDemoDocument::createResponseTransferEvidence,
+                               DE4AMarshaller::drImResponseMarshaller),
   DR_USI_REQ ("dr-usi-req",
               "Request to DR (USI)",
               "/dr1/usi/transferevidence",
@@ -134,6 +157,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.drUsiResponseMarshaller ()),
+  // Data Transferor
   DT_USI_REQ_T41_UC1_V2021_02_11 ("dt-usi-req-t41-uc1-2021-02-11",
                                   "Request to DT (USI) - SA UC1 2021-02-11",
                                   "/dt1/usi/transferevidence",
@@ -161,6 +185,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.dtUsiResponseMarshaller ()),
+  // Data Owner
   DO_IM_REQ ("do-im-req",
              "Request to DO (IM)",
              "/requestExtractEvidenceIM",
@@ -200,6 +225,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                EDemoDocumentType.RESPONSE,
                EDemoDocument::createResponseError,
                DE4AMarshaller.doUsiResponseMarshaller ()),
+  // IDK
   IDK_LOOKUP_ROUTING_INFO_REQUEST ("idk-lri-req",
                                    "IDK routing information lookup request",
                                    "/lookupRoutingInformation",
