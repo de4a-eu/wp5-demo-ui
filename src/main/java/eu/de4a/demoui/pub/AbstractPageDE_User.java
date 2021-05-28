@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2021 DE4A
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
 package eu.de4a.demoui.pub;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -25,6 +25,8 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.http.Header;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -44,6 +46,7 @@ import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
 import com.helger.commons.http.CHttp;
+import com.helger.commons.http.CHttpHeader;
 import com.helger.commons.locale.country.CountryCache;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
@@ -80,7 +83,7 @@ import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.json.IJsonObject;
 import com.helger.json.JsonObject;
 import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
-import com.helger.photon.app.PhotonWorkerPool;
+import com.helger.photon.api.servlet.PhotonAPIServlet;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
@@ -99,16 +102,21 @@ import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.scope.singleton.AbstractSessionSingleton;
+import com.helger.servlet.StaticServerInfo;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.api.APIExecutorPostUSIRedirectResponse;
+import eu.de4a.demoui.api.DemoUIAPI;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
+import eu.de4a.demoui.model.RedirectResponseMap;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
+import eu.de4a.iem.jaxb.common.types.AckType;
 import eu.de4a.iem.jaxb.common.types.AgentType;
 import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.iem.jaxb.common.types.ErrorListType;
@@ -119,9 +127,11 @@ import eu.de4a.iem.jaxb.common.types.ProvisionType;
 import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
+import eu.de4a.iem.jaxb.common.types.RequestUserRedirectionType;
 import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.jaxb.common.types.ResponseLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
+import eu.de4a.iem.jaxb.common.types.ResponseUserRedirectionType;
 import eu.de4a.iem.jaxb.common.types.SourceType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
@@ -129,30 +139,33 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public abstract class AbstractPageDE_User extends AbstractPageDE
 {
-  protected static final String PARAM_DIRECTION = "dir";
-  // Select process
-  protected static final String FIELD_PROCESS = "process";
-  // Select DE
-  protected static final String FIELD_DE_ID = "de_id";
-  protected static final String FIELD_DE_NAME = "de_name";
-  protected static final String FIELD_DE_COUNTRY_CODE = "de_cc";
-  // Select DO
-  protected static final String FIELD_DO_ID = "do_id";
-  protected static final String FIELD_DO_NAME = "do_name";
-  protected static final String FIELD_DO_COUNTRY_CODE = "do_cc";
-  protected static final String FIELD_DO_REDIRECT_URL = "do_rurl";
-  // Select DRS
-  protected static final String FIELD_DRS_ID = "id";
-  protected static final String FIELD_DRS_NAME = "name";
-  protected static final String FIELD_DRS_FIRSTNAME = "firstname";
-  protected static final String FIELD_DRS_FAMILYNAME = "familyname";
-  protected static final String FIELD_DRS_BIRTHDAY = "birthday";
-  // Request
-  protected static final String FIELD_REQUEST_XML = "requestxml";
-  protected static final String FIELD_TARGET_URL = "targeturl";
-  protected static final String FIELD_CONFIRM = "confirm";
+  private static final String PARAM_DIRECTION = "dir";
 
-  protected static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
+  // Select process
+  private static final String FIELD_PROCESS = "process";
+  // Select DE
+  private static final String FIELD_DE_ID = "de_id";
+  private static final String FIELD_DE_NAME = "de_name";
+  private static final String FIELD_DE_COUNTRY_CODE = "de_cc";
+  // Select DO
+  private static final String FIELD_DO_ID = "do_id";
+  private static final String FIELD_DO_NAME = "do_name";
+  private static final String FIELD_DO_COUNTRY_CODE = "do_cc";
+  private static final String FIELD_DO_REDIRECT_URL = "do_rurl";
+  // Select DRS
+  private static final String FIELD_DRS_ID = "id";
+  private static final String FIELD_DRS_NAME = "name";
+  private static final String FIELD_DRS_FIRSTNAME = "firstname";
+  private static final String FIELD_DRS_FAMILYNAME = "familyname";
+  private static final String FIELD_DRS_BIRTHDAY = "birthday";
+  // Request
+  private static final String FIELD_REQUEST_XML = "requestxml";
+  private static final String FIELD_TARGET_URL = "targeturl";
+  private static final String FIELD_CONFIRM = "confirm";
+
+  private static final String ACTION_USIBRB = "usibrb";
+
+  private static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
 
   private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE_User.class);
   private static AjaxFunctionDeclaration s_aAjaxCallIDK;
@@ -163,7 +176,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     if (s == null)
       return "";
     // TODO typo in example URLs
-    return s.replace ("?backUrl={backUrl}", "&backUrl={backUrl}");
+    String ret = s;
+    if (ret.endsWith ("?requestId={requestId}&backUrl={backUrl}"))
+      ret = ret.substring (0, ret.length () - "?requestId={requestId}&backUrl={backUrl}".length ());
+    return ret;
   }
 
   static
@@ -238,7 +254,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     });
   }
 
-  protected enum EStep
+  private enum EStep
   {
     // Order matters
     SELECT_PROCESS,
@@ -550,7 +566,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   }
 
   @Override
-  protected void fillContent (final WebPageExecutionContext aWPEC)
+  protected void fillContent (@Nonnull final WebPageExecutionContext aWPEC)
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
@@ -564,6 +580,39 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     if ("reset".equals (sDir))
       aState.reset ();
 
+    if (m_ePattern == EPatternType.USI)
+    {
+      if (aWPEC.hasAction (ACTION_USIBRB) && aWPEC.params ().containsKey (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID))
+      {
+        // We came back from the DE
+        final String sRequestID = aWPEC.params ().getAsString (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID);
+        final ResponseUserRedirectionType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
+
+        if (aResponse != null)
+        {
+          String sText = "";
+          switch (aResponse.getEvidenceStatus ())
+          {
+            case AGREE:
+              sText = "The user approved to use the data";
+              break;
+            case DISAGREE:
+              sText = "The user denied to use the data";
+              break;
+            case ERROR:
+              sText = "An error occurred and the user could not make a decision";
+              break;
+          }
+          aNodeList.addChild (info ("The USI based status for request ID '" + sRequestID + "' is: " + sText));
+        }
+        else
+        {
+          aNodeList.addChild (error ("Not expecting any result for request ID '" + sRequestID + "'"));
+        }
+        return;
+      }
+    }
+
     final CountryCache aCC = CountryCache.getInstance ();
     final ICommonsList <Locale> aAllowedCountries = new CommonsArrayList <> (aCC.getCountry ("AT"),
                                                                              aCC.getCountry ("ES"),
@@ -575,14 +624,13 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
     final Function <ErrorList, GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType>> aMP;
     aMP = aEL -> {
+      final DE4AMarshaller <RequestTransferEvidenceUSIIMDRType> m;
       if (m_ePattern == EPatternType.IM)
-        return DE4AMarshaller.drImRequestMarshaller ()
-                             .setFormattedOutput (true)
-                             .setValidationEventHandlerFactory (aEL == null ? null
-                                                                            : x -> new WrappedCollectingValidationEventHandler (aEL));
-      return DE4AMarshaller.drUsiRequestMarshaller ()
-                           .setFormattedOutput (true)
-                           .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
+        m = DE4AMarshaller.drImRequestMarshaller ();
+      else
+        m = DE4AMarshaller.drUsiRequestMarshaller ();
+      return m.setFormattedOutput (true)
+              .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
     };
 
     // Grab input parameters
@@ -1254,109 +1302,156 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       case SEND_REQUEST:
       {
-        final Runnable aSendRequest = () -> {
-          aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
+        aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
 
-          DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "' to '" + aState.m_sTargetURL + "'");
+        DE4AKafkaClient.send (EErrorLevel.INFO,
+                              "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "' to '" + aState.m_sTargetURL + "'");
 
-          final StopWatch aSW = StopWatch.createdStarted ();
-          final HttpClientSettings aHCS = new HttpClientSettings ();
-          aHCS.setConnectionRequestTimeoutMS (120_000);
-          aHCS.setSocketTimeoutMS (120_000);
-          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+        final StopWatch aSW = StopWatch.createdStarted ();
+        final HttpClientSettings aHCS = new HttpClientSettings ();
+        aHCS.setConnectionRequestTimeoutMS (120_000);
+        aHCS.setSocketTimeoutMS (120_000);
+        try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+        {
+          final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
+
+          final byte [] aRequestBytes = aMP.apply (null).getAsBytes (aState.m_aRequest);
+          LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
+
+          aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+          // Main POST
+          final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+
+          DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
+          LOGGER.info ("Response received (in UTF-8): " + new String (aResponseBytes, StandardCharsets.UTF_8));
+
+          final ErrorListType aErrorList;
+          if (m_ePattern == EPatternType.IM)
           {
-            final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
-            aPost.setEntity (new ByteArrayEntity (aMP.apply (null).getAsBytes (aState.m_aRequest),
-                                                  ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            // Main POST
-            final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+            // IM request
+            final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                            .read (aResponseBytes);
+            if (aResponseObj == null)
+              throw new IOException ("Failed to parse IM response XML - see log for details");
 
-            DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
-            LOGGER.info ("Received (in UTF-8): " + new String (aResponseBytes, StandardCharsets.UTF_8));
-
-            final ErrorListType aErrorList;
-            if (m_ePattern == EPatternType.IM)
+            aState.m_aResponseIM = aResponseObj;
+            aErrorList = aResponseObj.getErrorList ();
+            if (aErrorList == null)
             {
-              final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                              .read (aResponseBytes);
-              if (aResponseObj == null)
-                throw new IOException ("Failed to parse IM response XML - see log for details");
+              aForm.addChild (h2 ("Preview of the response data"));
+              aForm.addChild (_createPreview (aWPEC, aResponseObj));
 
-              aState.m_aResponseIM = aResponseObj;
-              aErrorList = aResponseObj.getErrorList ();
-              if (aErrorList == null)
+              if (true)
               {
-                aForm.addChild (h2 ("Preview of the response data"));
-                aForm.addChild (_createPreview (aWPEC, aResponseObj));
+                final BootstrapButtonGroup aDiv = aForm.addAndReturnChild (new BootstrapButtonGroup ());
+                aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
+                                                                                 .setIcon (EDefaultIcon.YES)
+                                                                                 .setOnClick (JSHtml.windowAlert ("Okay, you accepted")));
+                aDiv.addChild (new BootstrapButton (EBootstrapButtonType.OUTLINE_DANGER).addChild ("Reject data")
+                                                                                        .setIcon (EDefaultIcon.NO)
+                                                                                        .setOnClick (JSHtml.windowAlert ("Okay, you rejected")));
+              }
+            }
+          }
+          else
+          {
+            // USI request
+            final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytes);
+            if (aResponseObj == null)
+              throw new IOException ("Failed to parse USI response XML - see log for details");
 
-                if (true)
+            aState.m_aResponseUSI = aResponseObj;
+            aErrorList = aResponseObj.getErrorList ();
+
+            if (aResponseObj.getAck () == AckType.OK && aErrorList == null)
+            {
+              // Redirect user on AS4 success only
+              final RequestUserRedirectionType aRequestRedirect = new RequestUserRedirectionType ();
+              aRequestRedirect.setRequestId (aState.m_sRequestID);
+              // Our DE URL that we send to the DO, so that he can redirect back
+              // to us later (this is the API where we take the POST request and
+              // forward back to this page)
+              aRequestRedirect.setRedirectURL (new SimpleURL (StaticServerInfo.getInstance ().getFullServerPath () +
+                                                              PhotonAPIServlet.SERVLET_DEFAULT_PATH +
+                                                              DemoUIAPI.API_USI_REDIRECT_RESPONSE).add (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID,
+                                                                                                        aState.m_sRequestID)
+                                                                                                  .getAsStringWithEncodedParameters ());
+              final byte [] aRedirectRequestBytes = DE4AMarshaller.deUsiRedirectRequestMarshaller ()
+                                                                  .setFormattedOutput (true)
+                                                                  .getAsBytes (aRequestRedirect);
+
+              LOGGER.info ("Redirect request to be send (in UTF-8): " + new String (aRedirectRequestBytes, StandardCharsets.UTF_8));
+
+              // Important to not follow redirects, because we are investigating
+              // the HTTP header used for redirects
+              final HttpClientSettings aHCS2 = aHCS.getClone ().setFollowRedirects (false);
+              try (final HttpClientManager aHCM2 = HttpClientManager.create (aHCS2))
+              {
+                LOGGER.info ("Sending redirect request to the DO redirect URL '" + aState.getDataOwnerRedirectURL () + "'");
+
+                final HttpPost aPost2 = new HttpPost (aState.getDataOwnerRedirectURL ());
+                aPost2.setEntity (new ByteArrayEntity (aRedirectRequestBytes));
+
+                // Main POST
+                final String sGetLocation = aHCM.execute (aPost, aHttpResponse -> {
+                  final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
+                  if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY)
+                  {
+                    final Header h = aHttpResponse.getFirstHeader (CHttpHeader.LOCATION);
+                    if (h != null)
+                    {
+                      LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + h.getValue () + "'");
+                      return h.getValue ();
+                    }
+                    final String sMsg = "HTTP Response has no '" + CHttpHeader.LOCATION + "' header";
+                    LOGGER.error (sMsg);
+                    aForm.addChild (error (sMsg));
+                  }
+                  else
+                  {
+                    final String sMsg = "HTTP Response has unexpected status code: " + aStatusLine.toString ();
+                    LOGGER.error (sMsg);
+                    aForm.addChild (error (sMsg));
+                  }
+                  return null;
+                });
+
+                if (sGetLocation != null)
                 {
-                  final BootstrapButtonGroup aDiv = aForm.addAndReturnChild (new BootstrapButtonGroup ());
-                  aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
-                                                                                   .setIcon (EDefaultIcon.YES)
-                                                                                   .setOnClick (JSHtml.windowAlert ("Okay, you accepted")));
-                  aDiv.addChild (new BootstrapButton (EBootstrapButtonType.OUTLINE_DANGER).addChild ("Reject data")
-                                                                                          .setIcon (EDefaultIcon.NO)
-                                                                                          .setOnClick (JSHtml.windowAlert ("Okay, you rejected")));
+                  final URL aURL = URLHelper.getAsURL (sGetLocation);
+                  if (aURL != null && !aURL.getHost ().equals ("localhost") && !aURL.getHost ().equals ("127.0.0.1"))
+                  {
+                    LOGGER.info ("Redirecting user to '" + sGetLocation + "'");
+                    aWPEC.postRedirectGetExternal (new SimpleURL (sGetLocation));
+                  }
+                  else
+                    aForm.addChild (error ("Received an invalid redirection URL ").addChild (code (sGetLocation)));
                 }
               }
             }
-            else
-            {
-              final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytes);
-              if (aResponseObj == null)
-                throw new IOException ("Failed to parse USI response XML - see log for details");
-
-              aState.m_aResponseUSI = aResponseObj;
-              aErrorList = aResponseObj.getErrorList ();
-            }
-
-            if (aErrorList != null)
-            {
-              final HCUL aUL = new HCUL ();
-              aErrorList.getError ().forEach (x -> {
-                final String sMsg = "[" + x.getCode () + "] " + x.getText ();
-                aUL.addItem (sMsg);
-                LOGGER.info ("Response error: " + sMsg);
-              });
-              aForm.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
-            }
           }
-          catch (final IOException ex)
+
+          if (aErrorList != null)
           {
-            aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sTargetURL)))
-                                    .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
+            final HCUL aUL = new HCUL ();
+            aErrorList.getError ().forEach (x -> {
+              final String sMsg = "[" + x.getCode () + "] " + x.getText ();
+              aUL.addItem (sMsg);
+              LOGGER.info ("Response error: " + sMsg);
+            });
+            aForm.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
           }
-          finally
-          {
-            aSW.stop ();
-            aForm.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
-          }
-        };
-
-        if (m_ePattern == EPatternType.IM)
-        {
-          // Run in foreround
-          aSendRequest.run ();
         }
-        else
+        catch (final IOException ex)
         {
-          // Run in background
-          PhotonWorkerPool.getInstance ().run ("send-usi-request", aSendRequest);
-
-          // Redirect user
-          String sRealURL = aState.getDataOwnerRedirectURL ();
-          sRealURL = sRealURL.replace ("{requestId}", aState.m_sRequestID);
-          sRealURL = sRealURL.replace ("{backUrl}",
-                                       aWPEC.getSelfHref ()
-                                            .add ("action", "brb")
-                                            .add ("reqid", aState.m_sRequestID)
-                                            .getAsStringWithEncodedParameters ());
-          LOGGER.info ("Redirecting user to '" + sRealURL + "'");
-          aWPEC.postRedirectGetExternal (new SimpleURL (sRealURL));
+          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sTargetURL)))
+                                  .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
         }
-        // TODO
+        finally
+        {
+          aSW.stop ();
+          aForm.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
+        }
 
         break;
       }
@@ -1370,7 +1465,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
       // Back?
       {
-        if (aState.step ().isFirst () || aState.step ().wasRequestSent ())
+        if (aState.step ().isFirst () /* || aState.step ().wasRequestSent () */)
         {
           // Disable and no-action
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setDisabled (true));
