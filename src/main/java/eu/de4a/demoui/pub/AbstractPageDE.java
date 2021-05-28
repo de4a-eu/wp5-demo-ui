@@ -279,7 +279,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
          "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
          EUseCase.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
-    SI2 ("iso6523-actorid-upis::9999:si000000018", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
+    SI2 ("iso6523-actorid-upis::9999:si000000016", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
         EUseCase.COMPANY_REGISTRATION,

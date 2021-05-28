@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
+import com.helger.commons.collection.impl.CommonsArrayList;
+import com.helger.commons.collection.impl.ICommonsList;
 import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.error.IError;
@@ -562,11 +564,26 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     if ("reset".equals (sDir))
       aState.reset ();
 
+    final CountryCache aCC = CountryCache.getInstance ();
+    final ICommonsList <Locale> aAllowedCountries = new CommonsArrayList <> (aCC.getCountry ("AT"),
+                                                                             aCC.getCountry ("ES"),
+                                                                             aCC.getCountry ("PT"),
+                                                                             aCC.getCountry ("RO"),
+                                                                             aCC.getCountry ("NL"),
+                                                                             aCC.getCountry ("SI"),
+                                                                             aCC.getCountry ("SE"));
+
     final Function <ErrorList, GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType>> aMP;
-    aMP = aEL -> DE4AMarshaller.drImRequestMarshaller ()
-                               .setFormattedOutput (true)
-                               .setValidationEventHandlerFactory (aEL == null ? null
-                                                                              : x -> new WrappedCollectingValidationEventHandler (aEL));
+    aMP = aEL -> {
+      if (m_ePattern == EPatternType.IM)
+        return DE4AMarshaller.drImRequestMarshaller ()
+                             .setFormattedOutput (true)
+                             .setValidationEventHandlerFactory (aEL == null ? null
+                                                                            : x -> new WrappedCollectingValidationEventHandler (aEL));
+      return DE4AMarshaller.drUsiRequestMarshaller ()
+                           .setFormattedOutput (true)
+                           .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
+    };
 
     // Grab input parameters
     final FormErrorList aFormErrors = new FormErrorList ();
@@ -865,7 +882,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         // Country
         final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
                                                                                       aState.getDataEvaluatorCountryCode ()),
-                                                                    aDisplayLocale);
+                                                                    aDisplayLocale,
+                                                                    aAllowedCountries);
         aCountrySelect.ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
                                                      .setCtrl (aCountrySelect)
@@ -960,7 +978,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         // Country
         final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
                                                                                       aState.getDataOwnerCountryCode ()),
-                                                                    aDisplayLocale);
+                                                                    aDisplayLocale,
+                                                                    aAllowedCountries);
         aCountrySelect.ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
                                                      .setCtrl (aCountrySelect)
