@@ -64,6 +64,7 @@ import com.helger.commons.error.list.ErrorList;
 import com.helger.commons.http.CHttp;
 import com.helger.commons.http.CHttpHeader;
 import com.helger.commons.locale.country.CountryCache;
+import com.helger.commons.mime.CMimeType;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
@@ -1345,7 +1346,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
           aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-          // Main POST
+          aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
+
+          // Main POST to DR
           final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
           DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
@@ -1408,15 +1411,18 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
               LOGGER.info ("Redirect request to be send (in UTF-8): " + new String (aRedirectRequestBytes, StandardCharsets.UTF_8));
 
+              final String sPost2URL = aState.getDataOwnerRedirectURL ();
+
               // Important to not follow redirects, because we are investigating
               // the HTTP header used for redirects
               final HttpClientSettings aHCS2 = aHCS.getClone ().setFollowRedirects (false);
               try (final HttpClientManager aHCM2 = HttpClientManager.create (aHCS2))
               {
-                LOGGER.info ("Sending redirect request to the DO redirect URL '" + aState.getDataOwnerRedirectURL () + "'");
+                LOGGER.info ("Sending redirect request to the DO redirect URL '" + sPost2URL + "'");
 
-                final HttpPost aPost2 = new HttpPost (aState.getDataOwnerRedirectURL ());
+                final HttpPost aPost2 = new HttpPost (sPost2URL);
                 aPost2.setEntity (new ByteArrayEntity (aRedirectRequestBytes));
+                aPost2.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
                 // Main POST
                 final String sGetLocation = aHCM.execute (aPost2, aHttpResponse -> {
@@ -1429,13 +1435,13 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                       LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + h.getValue () + "'");
                       return h.getValue ();
                     }
-                    final String sMsg = "HTTP Response has no '" + CHttpHeader.LOCATION + "' header";
+                    final String sMsg = "HTTP Response to '" + sPost2URL + "' has no '" + CHttpHeader.LOCATION + "' header";
                     LOGGER.error (sMsg);
                     aForm.addChild (error (sMsg));
                   }
                   else
                   {
-                    final String sMsg = "HTTP Response has unexpected status code: " + aStatusLine.toString ();
+                    final String sMsg = "HTTP Response to '" + sPost2URL + "' has unexpected status code: " + aStatusLine.toString ();
                     LOGGER.error (sMsg);
                     aForm.addChild (error (sMsg));
                   }
