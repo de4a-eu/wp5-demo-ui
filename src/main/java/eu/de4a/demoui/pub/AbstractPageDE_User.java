@@ -919,577 +919,586 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
 
     // Handle current step
-    switch (aState.step ())
-    {
-      case SELECT_PROCESS:
+    if (!aWPEC.params ().containsKey ("stop"))
+      switch (aState.step ())
       {
-        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_PROCESS, aState.getProcessID ()));
-        for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (), IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.getPatternType () == m_ePattern)
-            aSelect.addOption (e.getID (), e.getDisplayName ());
-        if (aSelect.getOptionCount () > 1)
-          aSelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Use Case")
-                                                     .setCtrl (aSelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_PROCESS)));
-        break;
-      }
-      case SELECT_DATA_EVALUATOR:
-      {
-        final HCExtSelect aMockDESelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorID ()));
-        for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
-                                                                      IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsProcess (aState.m_eUseCase))
-            aMockDESelect.addOption (e.getID (), e.getDisplayName ());
-        aMockDESelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aMockDESelect));
-
-        // Country
-        final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
-                                                                                      aState.getDataEvaluatorCountryCode ()),
-                                                                    aDisplayLocale,
-                                                                    aAllowedCountries);
-        aCountrySelect.ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
-                                                     .setCtrl (aCountrySelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_COUNTRY_CODE)));
-
-        // Name
-        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME, aState.getDataEvaluatorName ())).ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator name")
-                                                     .setCtrl (aEditName)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_NAME)));
-
-        // ID
-        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DE_ID, aState.getDataEvaluatorID ())).ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator ID")
-                                                     .setCtrl (aEditID)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_ID)));
-
-        // JS
-        final JSPackage aJSOnChange = new JSPackage ();
-        aJSOnChange.add (jFuncSetDE.invoke ()
-                                   .arg (JSHtml.getSelectSelectedValue ())
-                                   .arg (aEditID.getID ())
-                                   .arg (aEditName.getID ())
-                                   .arg (aCountrySelect.getID ()));
-        aMockDESelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
-        break;
-      }
-      case SELECT_DATA_OWNER:
-      {
-
-        /**
-         * request
-         *
-         * <pre>
-        <RequestLookupRoutingInformation xmlns=
-        "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
-        "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
-        "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
-        "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
-        "http://www.de4a.eu/2020/commons/type">
-        <de4a:CanonicalEvidenceTypeId>CompanyRegistration</de4a:CanonicalEvidenceTypeId>
-        <de4a:CountryCode>AT</de4a:CountryCode>
-        </RequestLookupRoutingInformation>
-         * </pre>
-         *
-         * response:
-         *
-         * <pre>
-        <ResponseLookupRoutingInformation xmlns=
-        "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
-        "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
-        "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
-        "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
-        "http://www.de4a.eu/2020/commons/type">
-        <de4a:AvailableSources>
-        <de4a:Source>
-        <de4a:CountryCode>AT</de4a:CountryCode>
-        <de4a:AtuLevel>nuts0</de4a:AtuLevel>
-        <de4a:ProvisionItems>
-        <de4a:ProvisionItem>
-        <de4a:AtuCode>AT</de4a:AtuCode>
-                <de4a:AtuLatinName>ÖSTERREICH</de4a:AtuLatinName>
-                <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271</de4a:DataOwnerId>
-                <de4a:DataOwnerPrefLabel>BUNDESMINISTERIUM FUER DIGITALISIERUNG UND WIRTSCHAFTSSTANDORT (BMDW)</de4a:DataOwnerPrefLabel>
-                <de4a:Provision>
-          <de4a:ProvisionType>ip</de4a:ProvisionType>
-        </de4a:Provision>
-        </de4a:ProvisionItem>
-        </de4a:ProvisionItems>
-        </de4a:Source>
-        </de4a:AvailableSources>
-        </ResponseLookupRoutingInformation>
-         * </pre>
-         */
-
-        final boolean bUseMockDOByDefault = m_ePattern == EPatternType.IM;
-
-        // Mock or IDK?
-        final RequestFieldBoolean aRF = new RequestFieldBoolean ("usemockdo", bUseMockDOByDefault);
-        final boolean bUseMockDO = aRF.isChecked (aRequestScope.params ());
-        final HCCheckBox aCB = new HCCheckBox (aRF);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Check to use Mock DO, uncheck to use IDK").setCtrl (aCB));
-
-        // Mock DO
-        final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
-        for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
-                                                                  IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
-            aMockDOSelect.addOption (e.getID (), e.getDisplayName ());
-        aMockDOSelect.addOptionPleaseSelect (aDisplayLocale);
-        aMockDOSelect.setDisabled (!bUseMockDO);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used").setCtrl (aMockDOSelect));
-
-        // Country
-        final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
-                                                                                      aState.getDataOwnerCountryCode ()),
-                                                                    aDisplayLocale,
-                                                                    aAllowedCountries);
-        aCountrySelect.ensureID ();
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
-                                                     .setCtrl (aCountrySelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE)));
-
-        // Name
-        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ()
-                                                                                                          .setReadOnly (!bUseMockDO);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
-                                                     .setCtrl (aEditName)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
-
-        // ID
-        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ().setReadOnly (!bUseMockDO);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
-                                                     .setCtrl (aEditID)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID)));
-
-        // Redirect URL (USI only)
-        HCEdit aEditRedirectURL = null;
-        if (m_ePattern == EPatternType.USI)
+        case SELECT_PROCESS:
         {
-          aEditRedirectURL = new HCEdit (new RequestField (FIELD_DO_REDIRECT_URL,
-                                                           aState.getDataOwnerRedirectURL ())).ensureID ().setReadOnly (!bUseMockDO);
-          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner redirect URL")
-                                                       .setCtrl (aEditRedirectURL)
-                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DO_REDIRECT_URL)));
+          final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_PROCESS, aState.getProcessID ()));
+          for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (), IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+            if (e.getPatternType () == m_ePattern)
+              aSelect.addOption (e.getID (), e.getDisplayName ());
+          if (aSelect.getOptionCount () > 1)
+            aSelect.addOptionPleaseSelect (aDisplayLocale);
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Use Case")
+                                                       .setCtrl (aSelect)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_PROCESS)));
+          break;
         }
-
-        // JS
+        case SELECT_DATA_EVALUATOR:
         {
-          // Checkbox
-          final JSPackage aJSHandler = new JSPackage ();
-          final JSVar jChecked = aJSHandler.var ("c", JQuery.idRef (aCB).propChecked ());
-          aJSHandler.add (JQuery.idRef (aMockDOSelect).setDisabled (jChecked.not ()));
-          aJSHandler.add (JQuery.idRef (aEditName).jqinvoke ("setReadOnly").arg (jChecked.not ()));
-          aJSHandler.add (JQuery.idRef (aEditID).jqinvoke ("setReadOnly").arg (jChecked.not ()));
-          if (aEditRedirectURL != null)
-            aJSHandler.add (JQuery.idRef (aEditRedirectURL).jqinvoke ("setReadOnly").arg (jChecked.not ()));
-          aCB.setEventHandler (EJSEvent.CHANGE, aJSHandler);
+          final HCExtSelect aMockDESelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorID ()));
+          for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
+                                                                        IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+            if (e.supportsProcess (aState.m_eUseCase))
+              aMockDESelect.addOption (e.getID (), e.getDisplayName ());
+          aMockDESelect.addOptionPleaseSelect (aDisplayLocale);
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aMockDESelect));
+
+          // Country
+          final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
+                                                                                        aState.getDataEvaluatorCountryCode ()),
+                                                                      aDisplayLocale,
+                                                                      aAllowedCountries);
+          aCountrySelect.ensureID ();
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
+                                                       .setCtrl (aCountrySelect)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DE_COUNTRY_CODE)));
+
+          // Name
+          final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME, aState.getDataEvaluatorName ())).ensureID ();
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator name")
+                                                       .setCtrl (aEditName)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DE_NAME)));
+
+          // ID
+          final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DE_ID, aState.getDataEvaluatorID ())).ensureID ();
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator ID")
+                                                       .setCtrl (aEditID)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DE_ID)));
+
+          // JS
+          final JSPackage aJSOnChange = new JSPackage ();
+          aJSOnChange.add (jFuncSetDE.invoke ()
+                                     .arg (JSHtml.getSelectSelectedValue ())
+                                     .arg (aEditID.getID ())
+                                     .arg (aEditName.getID ())
+                                     .arg (aCountrySelect.getID ()));
+          aMockDESelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+          break;
         }
-
+        case SELECT_DATA_OWNER:
         {
+
+          /**
+           * request
+           *
+           * <pre>
+          <RequestLookupRoutingInformation xmlns=
+          "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
+          "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
+          "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
+          "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
+          "http://www.de4a.eu/2020/commons/type">
+          <de4a:CanonicalEvidenceTypeId>CompanyRegistration</de4a:CanonicalEvidenceTypeId>
+          <de4a:CountryCode>AT</de4a:CountryCode>
+          </RequestLookupRoutingInformation>
+           * </pre>
+           *
+           * response:
+           *
+           * <pre>
+          <ResponseLookupRoutingInformation xmlns=
+          "http://www.de4a.eu/2020/data/requestor/idk" xmlns:eilp=
+          "http://eidas.europa.eu/attributes/legalperson" xmlns:einp=
+          "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
+          "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
+          "http://www.de4a.eu/2020/commons/type">
+          <de4a:AvailableSources>
+          <de4a:Source>
+          <de4a:CountryCode>AT</de4a:CountryCode>
+          <de4a:AtuLevel>nuts0</de4a:AtuLevel>
+          <de4a:ProvisionItems>
+          <de4a:ProvisionItem>
+          <de4a:AtuCode>AT</de4a:AtuCode>
+                  <de4a:AtuLatinName>ÖSTERREICH</de4a:AtuLatinName>
+                  <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271</de4a:DataOwnerId>
+                  <de4a:DataOwnerPrefLabel>BUNDESMINISTERIUM FUER DIGITALISIERUNG UND WIRTSCHAFTSSTANDORT (BMDW)</de4a:DataOwnerPrefLabel>
+                  <de4a:Provision>
+            <de4a:ProvisionType>ip</de4a:ProvisionType>
+          </de4a:Provision>
+          </de4a:ProvisionItem>
+          </de4a:ProvisionItems>
+          </de4a:Source>
+          </de4a:AvailableSources>
+          </ResponseLookupRoutingInformation>
+           * </pre>
+           */
+
+          final boolean bUseMockDOByDefault = m_ePattern == EPatternType.IM;
+
+          // Mock or IDK?
+          final RequestFieldBoolean aRF = new RequestFieldBoolean ("usemockdo", bUseMockDOByDefault);
+          final boolean bUseMockDO = aRF.isChecked (aRequestScope.params ());
+          final HCCheckBox aCB = new HCCheckBox (aRF);
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Check to use Mock DO, uncheck to use IDK").setCtrl (aCB));
+
           // Mock DO
-          final JSPackage aJSOnChange = new JSPackage ();
-          final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
-          final JSConditional jIf = aJSOnChange._if (jChecked);
-          jIf._then ()
-             .add (jFuncSetDO.invoke ()
-                             .arg (JSHtml.getSelectSelectedValue ())
-                             .arg (aEditID.getID ())
-                             .arg (aEditName.getID ())
-                             .arg (aCountrySelect.getID ()));
-          aMockDOSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
-        }
+          final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
+          for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
+                                                                    IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+            if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
+              aMockDOSelect.addOption (e.getID (), e.getDisplayName ());
+          aMockDOSelect.addOptionPleaseSelect (aDisplayLocale);
+          aMockDOSelect.setDisabled (!bUseMockDO);
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used").setCtrl (aMockDOSelect));
 
-        {
-          // Country select
-          final JSPackage aJSOnChange = new JSPackage ();
-          final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
-          final JSBlock jIf = aJSOnChange._if (jChecked.not ())._then ();
+          // Country
+          final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
+                                                                                        aState.getDataOwnerCountryCode ()),
+                                                                      aDisplayLocale,
+                                                                      aAllowedCountries);
+          aCountrySelect.ensureID ();
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
+                                                       .setCtrl (aCountrySelect)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE)));
 
-          final JSAnonymousFunction jsSetValues = new JSAnonymousFunction ();
-          {
-            final JSVar aJSAppendData = jsSetValues.param ("data");
-            jsSetValues.body ().add (JQuery.idRef (aEditName).val (aJSAppendData.ref ("name")));
-            jsSetValues.body ().add (JQuery.idRef (aEditID).val (aJSAppendData.ref ("id")));
-            if (aEditRedirectURL != null)
-              jsSetValues.body ().add (JQuery.idRef (aEditRedirectURL).val (aJSAppendData.ref ("redirecturl")));
-          }
-          final JSAnonymousFunction jsSeEmpty = new JSAnonymousFunction ();
-          {
-            jsSeEmpty.body ().add (JQuery.idRef (aEditName).val (""));
-            jsSeEmpty.body ().add (JQuery.idRef (aEditID).val (""));
-            if (aEditRedirectURL != null)
-              jsSeEmpty.body ().add (JQuery.idRef (aEditRedirectURL).val (""));
-          }
-          jIf.add (new JQueryAjaxBuilder ().url (s_aAjaxCallIDK.getInvocationURI (aRequestScope))
-                                           .data (new JSAssocArray ().add ("cc", JQuery.idRef (aCountrySelect).val ()))
-                                           .success (jsSetValues)
-                                           .error (jsSeEmpty)
-                                           .build ());
-          aCountrySelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
-        }
+          // Name
+          final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ()
+                                                                                                            .setReadOnly (!bUseMockDO);
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
+                                                       .setCtrl (aEditName)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
 
-        break;
-      }
-      case SELECT_DATA_REQUEST_SUBJECT:
-      {
-        switch (aState.m_eUseCase.getDRSType ())
-        {
-          case PERSON:
-          {
-            aForm.addChild (info ("The selected use case " +
-                                  aState.m_eUseCase.getDisplayName () +
-                                  " requires a person as Data Request Subject"));
+          // ID
+          final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ()
+                                                                                                      .setReadOnly (!bUseMockDO);
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
+                                                       .setCtrl (aEditID)
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID)));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
-
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
-                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
-                                                                                                 bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
-                                                                                                                                                                        : null,
-                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
-                                                                                                                                                                     .getID ()
-                                                                                                                                                            : null))))
-                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person First Name")
-                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FIRSTNAME,
-                                                                                                 bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
-                                                                                                                                                                        : null,
-                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
-                                                                                                                                                                     .getFirstName ()
-                                                                                                                                                            : null))))
-                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FIRSTNAME)));
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Family Name")
-                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FAMILYNAME,
-                                                                                                 bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFamilyName ()
-                                                                                                                                                                        : null,
-                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
-                                                                                                                                                                     .getFamilyName ()
-                                                                                                                                                            : null))))
-                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FAMILYNAME)));
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Birthday")
-                                                         .setCtrl (BootstrapDateTimePicker.create (FIELD_DRS_BIRTHDAY,
-                                                                                                   bIsResubmitted ? null
-                                                                                                                  : aState.getBirthDayOr (eMockDO != null ? eMockDO.getMDSPerson ()
-                                                                                                                                                                   .getBirthday ()
-                                                                                                                                                          : null),
-                                                                                                   aDisplayLocale))
-                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_BIRTHDAY)));
-            break;
-          }
-          case COMPANY:
-          {
-            aForm.addChild (info ("The selected use case " +
-                                  aState.m_eUseCase.getDisplayName () +
-                                  " requires a company as Data Request Subject"));
-
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
-
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
-                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
-                                                                                                 bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
-                                                                                                                                                                         : null,
-                                                                                                                                            aState.getDataOwnerCountryCode () +
-                                                                                                                                                                                 "/" +
-                                                                                                                                                                                 aState.getDataEvaluatorCountryCode () +
-                                                                                                                                                                                 "/" +
-                                                                                                                                                                                 (eMockDO != null ? eMockDO.getMDSCompany ()
-                                                                                                                                                                                                           .getID ()
-                                                                                                                                                                                                  : "")))))
-                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company Name")
-                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_NAME,
-                                                                                                 bIsResubmitted ? null
-                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
-                                                                                                                                                                         : null,
-                                                                                                                                            eMockDO != null ? eMockDO.getMDSCompany ()
-                                                                                                                                                                     .getName ()
-                                                                                                                                                            : null))))
-                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_NAME)));
-            break;
-          }
-          default:
-            throw new IllegalStateException ();
-        }
-        break;
-      }
-      case EXPLICIT_CONSENT:
-      {
-        // Create request
-        final RequestTransferEvidenceUSIIMDRType aRequest = aState.buildRequest ();
-
-        // Check against XSD
-        final ErrorList aErrorList = new ErrorList ();
-        final byte [] aRequestBytes = aMP.apply (aErrorList).getAsBytes (aRequest);
-        if (aRequestBytes == null)
-        {
-          aState.m_aRequest = null;
-          for (final IError a : aErrorList)
-            aFormErrors.add (SingleError.builder (a).errorFieldName (FIELD_REQUEST_XML).build ());
-        }
-        else
-        {
-          aState.m_aRequest = aRequest;
-        }
-
-        // First column for all nested tables
-        final HCCol aCol1 = new HCCol (150);
-
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type").setCtrl (aState.m_eUseCase.getDisplayName ()));
-
-        {
-          final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
-          final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
-          t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataEvaluatorName ());
-          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorID ()));
-          t.addBodyRow ()
-           .addCell (strong ("Country:"))
-           .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale) : aState.getDataEvaluatorCountryCode ());
-          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
-        }
-
-        {
-          final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
-          final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
-          t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataOwnerName ());
-          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerID ()));
-          t.addBodyRow ()
-           .addCell (strong ("Country:"))
-           .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
+          // Redirect URL (USI only)
+          HCEdit aEditRedirectURL = null;
           if (m_ePattern == EPatternType.USI)
           {
-            t.addBodyRow ().addCell (strong ("Redirect URL:")).addCell (code (aState.getDataOwnerRedirectURL ()));
+            aEditRedirectURL = new HCEdit (new RequestField (FIELD_DO_REDIRECT_URL,
+                                                             aState.getDataOwnerRedirectURL ())).ensureID ().setReadOnly (!bUseMockDO);
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner redirect URL")
+                                                         .setCtrl (aEditRedirectURL)
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DO_REDIRECT_URL)));
           }
-          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
-        }
 
-        switch (aState.m_eUseCase.getDRSType ())
-        {
-          case PERSON:
+          // JS
           {
-            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
-            t.addBodyRow ().addCell (strong ("Person ID:")).addCell (aState.m_aDRSPerson.getID ());
-            t.addBodyRow ().addCell (strong ("First Name:")).addCell (aState.m_aDRSPerson.getFirstName ());
-            t.addBodyRow ().addCell (strong ("Family Name:")).addCell (aState.m_aDRSPerson.getFamilyName ());
-            t.addBodyRow ()
-             .addCell (strong ("Birthday:"))
-             .addCell (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (), aDisplayLocale));
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
-            break;
+            // Checkbox
+            final JSPackage aJSHandler = new JSPackage ();
+            final JSVar jChecked = aJSHandler.var ("c", JQuery.idRef (aCB).propChecked ());
+            aJSHandler.add (JQuery.idRef (aMockDOSelect).setDisabled (jChecked.not ()));
+            aJSHandler.add (JQuery.idRef (aEditName).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+            aJSHandler.add (JQuery.idRef (aEditID).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+            if (aEditRedirectURL != null)
+              aJSHandler.add (JQuery.idRef (aEditRedirectURL).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+            aCB.setEventHandler (EJSEvent.CHANGE, aJSHandler);
           }
-          case COMPANY:
+
           {
-            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
-            t.addBodyRow ().addCell (strong ("Company ID:")).addCell (aState.m_aDRSCompany.getID ());
-            t.addBodyRow ().addCell (strong ("Company Name:")).addCell (aState.m_aDRSCompany.getName ());
-            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
-            break;
+            // Mock DO
+            final JSPackage aJSOnChange = new JSPackage ();
+            final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
+            final JSConditional jIf = aJSOnChange._if (jChecked);
+            jIf._then ()
+               .add (jFuncSetDO.invoke ()
+                               .arg (JSHtml.getSelectSelectedValue ())
+                               .arg (aEditID.getID ())
+                               .arg (aEditName.getID ())
+                               .arg (aCountrySelect.getID ()));
+            aMockDOSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
           }
-          default:
-            throw new IllegalStateException ();
-        }
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
-                                                     .setCtrl (aState.m_aRequest == null ? error ("Failed to create Request Object")
-                                                                                         : new HCTextArea (new RequestField (FIELD_REQUEST_XML,
-                                                                                                                             aMP.apply (null)
-                                                                                                                                .getAsString (aState.m_aRequest))).setRows (10)
-                                                                                                                                                                  .setReadOnly (true)
-                                                                                                                                                                  .addClass (CBootstrapCSS.FORM_CONTROL)
-                                                                                                                                                                  .addClass (CBootstrapCSS.TEXT_MONOSPACE))
-                                                     .setHelpText ("This is the technical request. It is just shown for helping developers")
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
-                                                     .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_TEST_DR)))
-                                                     .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO))
-                                                                                                                .addChild (" for the mock DO, or ")
-                                                                                                                .addChild (code (TARGET_URL_TEST_DR))
-                                                                                                                .addChild (" for the test DE4A Connector"))
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Confirmation to send request")
-                                                     .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM, false)))
-                                                     .setHelpText ("You need to give your explicit consent here to proceed")
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
 
-        break;
-      }
-      case SEND_REQUEST:
-      {
-        aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
-
-        DE4AKafkaClient.send (EErrorLevel.INFO,
-                              "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "' to '" + aState.m_sTargetURL + "'");
-
-        final StopWatch aSW = StopWatch.createdStarted ();
-        final HttpClientSettings aHCS = new HttpClientSettings ();
-        aHCS.setConnectionRequestTimeoutMS (120_000);
-        aHCS.setSocketTimeoutMS (120_000);
-        try
-        {
-          // Required for Spain
-          aHCS.setSSLContextTrustAll ();
-        }
-        catch (final GeneralSecurityException ex)
-        {}
-
-        try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
-        {
-          final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
-
-          final byte [] aRequestBytes = aMP.apply (null).getAsBytes (aState.m_aRequest);
-          LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
-
-          aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-          aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
-
-          // Main POST to DR
-          final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-
-          DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
-          LOGGER.info ("Response received (in UTF-8): " + new String (aResponseBytes, StandardCharsets.UTF_8));
-
-          final ErrorListType aErrorList;
-          if (m_ePattern == EPatternType.IM)
           {
-            // IM request
-            final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                            .read (aResponseBytes);
-            if (aResponseObj == null)
-              throw new IOException ("Failed to parse IM response XML - see log for details");
+            // Country select
+            final JSPackage aJSOnChange = new JSPackage ();
+            final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
+            final JSBlock jIf = aJSOnChange._if (jChecked.not ())._then ();
 
-            aState.m_aResponseIM = aResponseObj;
-            aErrorList = aResponseObj.getErrorList ();
-            if (aErrorList == null)
+            final JSAnonymousFunction jsSetValues = new JSAnonymousFunction ();
             {
-              aForm.addChild (h2 ("Preview of the response data"));
-              aForm.addChild (_createPreview (aWPEC, aResponseObj));
-
-              if (true)
-              {
-                final BootstrapButtonGroup aDiv = aForm.addAndReturnChild (new BootstrapButtonGroup ());
-                aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
-                                                                                 .setIcon (EDefaultIcon.YES)
-                                                                                 .setOnClick (JSHtml.windowAlert ("Okay, you accepted")));
-                aDiv.addChild (new BootstrapButton (EBootstrapButtonType.OUTLINE_DANGER).addChild ("Reject data")
-                                                                                        .setIcon (EDefaultIcon.NO)
-                                                                                        .setOnClick (JSHtml.windowAlert ("Okay, you rejected")));
-              }
+              final JSVar aJSAppendData = jsSetValues.param ("data");
+              jsSetValues.body ().add (JQuery.idRef (aEditName).val (aJSAppendData.ref ("name")));
+              jsSetValues.body ().add (JQuery.idRef (aEditID).val (aJSAppendData.ref ("id")));
+              if (aEditRedirectURL != null)
+                jsSetValues.body ().add (JQuery.idRef (aEditRedirectURL).val (aJSAppendData.ref ("redirecturl")));
             }
+            final JSAnonymousFunction jsSeEmpty = new JSAnonymousFunction ();
+            {
+              jsSeEmpty.body ().add (JQuery.idRef (aEditName).val (""));
+              jsSeEmpty.body ().add (JQuery.idRef (aEditID).val (""));
+              if (aEditRedirectURL != null)
+                jsSeEmpty.body ().add (JQuery.idRef (aEditRedirectURL).val (""));
+            }
+            jIf.add (new JQueryAjaxBuilder ().url (s_aAjaxCallIDK.getInvocationURI (aRequestScope))
+                                             .data (new JSAssocArray ().add ("cc", JQuery.idRef (aCountrySelect).val ()))
+                                             .success (jsSetValues)
+                                             .error (jsSeEmpty)
+                                             .build ());
+            aCountrySelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+          }
+
+          break;
+        }
+        case SELECT_DATA_REQUEST_SUBJECT:
+        {
+          switch (aState.m_eUseCase.getDRSType ())
+          {
+            case PERSON:
+            {
+              aForm.addChild (info ("The selected use case " +
+                                    aState.m_eUseCase.getDisplayName () +
+                                    " requires a person as Data Request Subject"));
+
+              final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
+
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
+                                                           .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
+                                                                                                   bIsResubmitted ? null
+                                                                                                                  : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
+                                                                                                                                                                          : null,
+                                                                                                                                              aState.getDataOwnerCountryCode () +
+                                                                                                                                                                                  "/" +
+                                                                                                                                                                                  aState.getDataEvaluatorCountryCode () +
+                                                                                                                                                                                  "/" +
+                                                                                                                                                                                  (eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                                                            .getID ()
+                                                                                                                                                                                                   : "")))))
+                                                           .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person First Name")
+                                                           .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FIRSTNAME,
+                                                                                                   bIsResubmitted ? null
+                                                                                                                  : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
+                                                                                                                                                                          : null,
+                                                                                                                                              eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                       .getFirstName ()
+                                                                                                                                                              : null))))
+                                                           .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FIRSTNAME)));
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Family Name")
+                                                           .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FAMILYNAME,
+                                                                                                   bIsResubmitted ? null
+                                                                                                                  : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFamilyName ()
+                                                                                                                                                                          : null,
+                                                                                                                                              eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                       .getFamilyName ()
+                                                                                                                                                              : null))))
+                                                           .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FAMILYNAME)));
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Birthday")
+                                                           .setCtrl (BootstrapDateTimePicker.create (FIELD_DRS_BIRTHDAY,
+                                                                                                     bIsResubmitted ? null
+                                                                                                                    : aState.getBirthDayOr (eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                     .getBirthday ()
+                                                                                                                                                            : null),
+                                                                                                     aDisplayLocale))
+                                                           .setErrorList (aFormErrors.getListOfField (FIELD_DRS_BIRTHDAY)));
+              break;
+            }
+            case COMPANY:
+            {
+              aForm.addChild (info ("The selected use case " +
+                                    aState.m_eUseCase.getDisplayName () +
+                                    " requires a company as Data Request Subject"));
+
+              final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
+
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
+                                                           .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
+                                                                                                   bIsResubmitted ? null
+                                                                                                                  : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
+                                                                                                                                                                           : null,
+                                                                                                                                              aState.getDataOwnerCountryCode () +
+                                                                                                                                                                                   "/" +
+                                                                                                                                                                                   aState.getDataEvaluatorCountryCode () +
+                                                                                                                                                                                   "/" +
+                                                                                                                                                                                   (eMockDO != null ? eMockDO.getMDSCompany ()
+                                                                                                                                                                                                             .getID ()
+                                                                                                                                                                                                    : "")))))
+                                                           .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company Name")
+                                                           .setCtrl (new HCEdit (new RequestField (FIELD_DRS_NAME,
+                                                                                                   bIsResubmitted ? null
+                                                                                                                  : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
+                                                                                                                                                                           : null,
+                                                                                                                                              eMockDO != null ? eMockDO.getMDSCompany ()
+                                                                                                                                                                       .getName ()
+                                                                                                                                                              : null))))
+                                                           .setErrorList (aFormErrors.getListOfField (FIELD_DRS_NAME)));
+              break;
+            }
+            default:
+              throw new IllegalStateException ();
+          }
+          break;
+        }
+        case EXPLICIT_CONSENT:
+        {
+          // Create request
+          final RequestTransferEvidenceUSIIMDRType aRequest = aState.buildRequest ();
+
+          // Check against XSD
+          final ErrorList aErrorList = new ErrorList ();
+          final byte [] aRequestBytes = aMP.apply (aErrorList).getAsBytes (aRequest);
+          if (aRequestBytes == null)
+          {
+            aState.m_aRequest = null;
+            for (final IError a : aErrorList)
+              aFormErrors.add (SingleError.builder (a).errorFieldName (FIELD_REQUEST_XML).build ());
           }
           else
           {
-            // USI request
-            final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytes);
-            if (aResponseObj == null)
-              throw new IOException ("Failed to parse USI response XML - see log for details");
+            aState.m_aRequest = aRequest;
+          }
 
-            aState.m_aResponseUSI = aResponseObj;
-            aErrorList = aResponseObj.getErrorList ();
+          // First column for all nested tables
+          final HCCol aCol1 = new HCCol (150);
 
-            if (aResponseObj.getAck () == AckType.OK && aErrorList == null)
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type").setCtrl (aState.m_eUseCase.getDisplayName ()));
+
+          {
+            final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
+            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+            t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataEvaluatorName ());
+            t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorID ()));
+            t.addBodyRow ()
+             .addCell (strong ("Country:"))
+             .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale) : aState.getDataEvaluatorCountryCode ());
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
+          }
+
+          {
+            final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
+            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+            t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataOwnerName ());
+            t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerID ()));
+            t.addBodyRow ()
+             .addCell (strong ("Country:"))
+             .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
+            if (m_ePattern == EPatternType.USI)
             {
-              // Redirect user on AS4 success only
-              final RequestUserRedirectionType aRequestRedirect = new RequestUserRedirectionType ();
-              aRequestRedirect.setRequestId (aState.m_sRequestID);
-              // Our DE URL that we send to the DO, so that he can redirect back
-              // to us later (this is the API where we take the POST request and
-              // forward back to this page)
-              aRequestRedirect.setRedirectURL (new SimpleURL (StaticServerInfo.getInstance ().getFullServerPath () +
-                                                              PhotonAPIServlet.SERVLET_DEFAULT_PATH +
-                                                              DemoUIAPI.API_USI_REDIRECT_RESPONSE).add (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID,
-                                                                                                        aState.m_sRequestID)
-                                                                                                  .getAsStringWithEncodedParameters ());
-              final byte [] aRedirectRequestBytes = DE4AMarshaller.deUsiRedirectRequestMarshaller ()
-                                                                  .setFormattedOutput (true)
-                                                                  .getAsBytes (aRequestRedirect);
+              t.addBodyRow ().addCell (strong ("Redirect URL:")).addCell (code (aState.getDataOwnerRedirectURL ()));
+            }
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
+          }
 
-              LOGGER.info ("Redirect request to be send (in UTF-8): " + new String (aRedirectRequestBytes, StandardCharsets.UTF_8));
+          switch (aState.m_eUseCase.getDRSType ())
+          {
+            case PERSON:
+            {
+              final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+              t.addBodyRow ().addCell (strong ("Person ID:")).addCell (aState.m_aDRSPerson.getID ());
+              t.addBodyRow ().addCell (strong ("First Name:")).addCell (aState.m_aDRSPerson.getFirstName ());
+              t.addBodyRow ().addCell (strong ("Family Name:")).addCell (aState.m_aDRSPerson.getFamilyName ());
+              t.addBodyRow ()
+               .addCell (strong ("Birthday:"))
+               .addCell (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (), aDisplayLocale));
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
+              break;
+            }
+            case COMPANY:
+            {
+              final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+              t.addBodyRow ().addCell (strong ("Company ID:")).addCell (aState.m_aDRSCompany.getID ());
+              t.addBodyRow ().addCell (strong ("Company Name:")).addCell (aState.m_aDRSCompany.getName ());
+              aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
+              break;
+            }
+            default:
+              throw new IllegalStateException ();
+          }
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
+                                                       .setCtrl (aState.m_aRequest == null ? error ("Failed to create Request Object")
+                                                                                           : new HCTextArea (new RequestField (FIELD_REQUEST_XML,
+                                                                                                                               aMP.apply (null)
+                                                                                                                                  .getAsString (aState.m_aRequest))).setRows (10)
+                                                                                                                                                                    .setReadOnly (true)
+                                                                                                                                                                    .addClass (CBootstrapCSS.FORM_CONTROL)
+                                                                                                                                                                    .addClass (CBootstrapCSS.TEXT_MONOSPACE))
+                                                       .setHelpText ("This is the technical request. It is just shown for helping developers")
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
+                                                       .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_TEST_DR)))
+                                                       .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO))
+                                                                                                                  .addChild (" for the mock DO, or ")
+                                                                                                                  .addChild (code (TARGET_URL_TEST_DR))
+                                                                                                                  .addChild (" for the test DE4A Connector"))
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Confirmation to send request")
+                                                       .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM, false)))
+                                                       .setHelpText ("You need to give your explicit consent here to proceed")
+                                                       .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
 
-              final String sPost2URL = aState.getDataOwnerRedirectURL ();
+          break;
+        }
+        case SEND_REQUEST:
+        {
+          aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
 
-              // Important to not follow redirects, because we are investigating
-              // the HTTP header used for redirects
-              final HttpClientSettings aHCS2 = aHCS.getClone ().setFollowRedirects (false);
-              try (final HttpClientManager aHCM2 = HttpClientManager.create (aHCS2))
+          DE4AKafkaClient.send (EErrorLevel.INFO,
+                                "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "' to '" + aState.m_sTargetURL + "'");
+
+          final StopWatch aSW = StopWatch.createdStarted ();
+          final HttpClientSettings aHCS = new HttpClientSettings ();
+          aHCS.setConnectionRequestTimeoutMS (120_000);
+          aHCS.setSocketTimeoutMS (120_000);
+          try
+          {
+            // Required for Spain
+            aHCS.setSSLContextTrustAll ();
+          }
+          catch (final GeneralSecurityException ex)
+          {}
+
+          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+          {
+            final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
+
+            final byte [] aRequestBytes = aMP.apply (null).getAsBytes (aState.m_aRequest);
+            LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
+
+            aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
+
+            // Main POST to DR
+            final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+
+            DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
+            LOGGER.info ("Response received (in UTF-8): " + new String (aResponseBytes, StandardCharsets.UTF_8));
+
+            final ErrorListType aErrorList;
+            if (m_ePattern == EPatternType.IM)
+            {
+              // IM request
+              final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                              .read (aResponseBytes);
+              if (aResponseObj == null)
+                throw new IOException ("Failed to parse IM response XML - see log for details");
+
+              aState.m_aResponseIM = aResponseObj;
+              aErrorList = aResponseObj.getErrorList ();
+              if (aErrorList == null)
               {
-                LOGGER.info ("Sending redirect request to the DO redirect URL '" + sPost2URL + "'");
+                aForm.addChild (h2 ("Preview of the response data"));
+                aForm.addChild (_createPreview (aWPEC, aResponseObj));
 
-                final HttpPost aPost2 = new HttpPost (sPost2URL);
-                aPost2.setEntity (new ByteArrayEntity (aRedirectRequestBytes));
-                aPost2.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
-
-                // Main POST
-                final String sGetLocation = aHCM.execute (aPost2, aHttpResponse -> {
-                  final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
-                  if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY)
-                  {
-                    final Header h = aHttpResponse.getFirstHeader (CHttpHeader.LOCATION);
-                    if (h != null)
-                    {
-                      LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + h.getValue () + "'");
-                      return h.getValue ();
-                    }
-                    final String sMsg = "HTTP Response to '" + sPost2URL + "' has no '" + CHttpHeader.LOCATION + "' header";
-                    LOGGER.error (sMsg);
-                    aForm.addChild (error (sMsg));
-                  }
-                  else
-                  {
-                    final String sMsg = "HTTP Response to '" + sPost2URL + "' has unexpected status code: " + aStatusLine.toString ();
-                    LOGGER.error (sMsg);
-                    aForm.addChild (error (sMsg));
-                  }
-                  return null;
-                });
-
-                if (sGetLocation != null)
+                if (true)
                 {
-                  final URL aURL = URLHelper.getAsURL (sGetLocation);
-                  if (aURL != null && !aURL.getHost ().equals ("localhost") && !aURL.getHost ().equals ("127.0.0.1"))
-                  {
-                    LOGGER.info ("Redirecting user to '" + sGetLocation + "'");
-                    aWPEC.postRedirectGetExternal (new SimpleURL (sGetLocation));
-                  }
-                  else
-                    aForm.addChild (error ("Received an invalid redirection URL ").addChild (code (sGetLocation)));
+                  final BootstrapButtonGroup aDiv = aForm.addAndReturnChild (new BootstrapButtonGroup ());
+                  aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
+                                                                                   .setIcon (EDefaultIcon.YES)
+                                                                                   .setOnClick (JSHtml.windowAlert ("Okay, you accepted")));
+                  aDiv.addChild (new BootstrapButton (EBootstrapButtonType.OUTLINE_DANGER).addChild ("Reject data")
+                                                                                          .setIcon (EDefaultIcon.NO)
+                                                                                          .setOnClick (JSHtml.windowAlert ("Okay, you rejected")));
                 }
               }
             }
-          }
+            else
+            {
+              // USI request
+              final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytes);
+              if (aResponseObj == null)
+                throw new IOException ("Failed to parse USI response XML - see log for details");
 
-          if (aErrorList != null)
+              aState.m_aResponseUSI = aResponseObj;
+              aErrorList = aResponseObj.getErrorList ();
+
+              if (aResponseObj.getAck () == AckType.OK && aErrorList == null)
+              {
+                // Redirect user on AS4 success only
+                final RequestUserRedirectionType aRequestRedirect = new RequestUserRedirectionType ();
+                aRequestRedirect.setRequestId (aState.m_sRequestID);
+                // Our DE URL that we send to the DO, so that he can redirect
+                // back
+                // to us later (this is the API where we take the POST request
+                // and
+                // forward back to this page)
+                aRequestRedirect.setRedirectURL (new SimpleURL (StaticServerInfo.getInstance ().getFullServerPath () +
+                                                                PhotonAPIServlet.SERVLET_DEFAULT_PATH +
+                                                                DemoUIAPI.API_USI_REDIRECT_RESPONSE).add (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID,
+                                                                                                          aState.m_sRequestID)
+                                                                                                    .getAsStringWithEncodedParameters ());
+                final byte [] aRedirectRequestBytes = DE4AMarshaller.deUsiRedirectRequestMarshaller ()
+                                                                    .setFormattedOutput (true)
+                                                                    .getAsBytes (aRequestRedirect);
+
+                LOGGER.info ("Redirect request to be send (in UTF-8): " + new String (aRedirectRequestBytes, StandardCharsets.UTF_8));
+
+                final String sPost2URL = aState.getDataOwnerRedirectURL ();
+
+                // Important to not follow redirects, because we are
+                // investigating
+                // the HTTP header used for redirects
+                final HttpClientSettings aHCS2 = aHCS.getClone ().setFollowRedirects (false);
+                try (final HttpClientManager aHCM2 = HttpClientManager.create (aHCS2))
+                {
+                  LOGGER.info ("Sending redirect request to the DO redirect URL '" + sPost2URL + "'");
+
+                  final HttpPost aPost2 = new HttpPost (sPost2URL);
+                  aPost2.setEntity (new ByteArrayEntity (aRedirectRequestBytes));
+                  aPost2.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
+
+                  // Main POST
+                  final String sGetLocation = aHCM.execute (aPost2, aHttpResponse -> {
+                    final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
+                    if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY)
+                    {
+                      final Header h = aHttpResponse.getFirstHeader (CHttpHeader.LOCATION);
+                      if (h != null)
+                      {
+                        LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + h.getValue () + "'");
+                        return h.getValue ();
+                      }
+                      final String sMsg = "HTTP Response to '" + sPost2URL + "' has no '" + CHttpHeader.LOCATION + "' header";
+                      LOGGER.error (sMsg);
+                      aForm.addChild (error (sMsg));
+                    }
+                    else
+                    {
+                      final String sMsg = "HTTP Response to '" + sPost2URL + "' has unexpected status code: " + aStatusLine.toString ();
+                      LOGGER.error (sMsg);
+                      aForm.addChild (error (sMsg));
+                    }
+                    return null;
+                  });
+
+                  if (sGetLocation != null)
+                  {
+                    final URL aURL = URLHelper.getAsURL (sGetLocation);
+                    if (aURL != null && !aURL.getHost ().equals ("localhost") && !aURL.getHost ().equals ("127.0.0.1"))
+                    {
+                      LOGGER.info ("Redirecting user to '" + sGetLocation + "'");
+                      aWPEC.postRedirectGetExternal (new SimpleURL (sGetLocation));
+                    }
+                    else
+                      aForm.addChild (error ("Received an invalid redirection URL ").addChild (code (sGetLocation)));
+                  }
+                }
+              }
+            }
+
+            if (aErrorList != null)
+            {
+              final HCUL aUL = new HCUL ();
+              aErrorList.getError ().forEach (x -> {
+                final String sMsg = "[" + x.getCode () + "] " + x.getText ();
+                aUL.addItem (sMsg);
+                LOGGER.info ("Response error: " + sMsg);
+              });
+              aForm.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
+            }
+          }
+          catch (final IOException ex)
           {
-            final HCUL aUL = new HCUL ();
-            aErrorList.getError ().forEach (x -> {
-              final String sMsg = "[" + x.getCode () + "] " + x.getText ();
-              aUL.addItem (sMsg);
-              LOGGER.info ("Response error: " + sMsg);
-            });
-            aForm.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
+            aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sTargetURL)))
+                                    .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
           }
-        }
-        catch (final IOException ex)
-        {
-          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sTargetURL)))
-                                  .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
-        }
-        finally
-        {
-          aSW.stop ();
-          aForm.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
-        }
+          finally
+          {
+            aSW.stop ();
+            aForm.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
+          }
 
-        break;
+          break;
+        }
+        default:
+          aForm.addChild (error ("Unsupported step " + aState.step ()));
       }
-      default:
-        aForm.addChild (error ("Unsupported step " + aState.step ()));
-    }
 
     // Buttons
     {
