@@ -32,6 +32,7 @@ package eu.de4a.demoui.pub;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
@@ -1022,8 +1023,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
          * </pre>
          */
 
+        final boolean bUseMockDOByDefault = m_ePattern == EPatternType.IM;
+
         // Mock or IDK?
-        final RequestFieldBoolean aRF = new RequestFieldBoolean ("usemockdo", true);
+        final RequestFieldBoolean aRF = new RequestFieldBoolean ("usemockdo", bUseMockDOByDefault);
         final boolean bUseMockDO = aRF.isChecked (aRequestScope.params ());
         final HCCheckBox aCB = new HCCheckBox (aRF);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Check to use Mock DO, uncheck to use IDK").setCtrl (aCB));
@@ -1326,6 +1329,14 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final HttpClientSettings aHCS = new HttpClientSettings ();
         aHCS.setConnectionRequestTimeoutMS (120_000);
         aHCS.setSocketTimeoutMS (120_000);
+        try
+        {
+          // Required for Spain
+          aHCS.setSSLContextTrustAll ();
+        }
+        catch (final GeneralSecurityException ex)
+        {}
+
         try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
         {
           final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
@@ -1408,7 +1419,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                 aPost2.setEntity (new ByteArrayEntity (aRedirectRequestBytes));
 
                 // Main POST
-                final String sGetLocation = aHCM.execute (aPost, aHttpResponse -> {
+                final String sGetLocation = aHCM.execute (aPost2, aHttpResponse -> {
                   final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
                   if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY)
                   {
