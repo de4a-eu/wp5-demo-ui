@@ -27,6 +27,7 @@ import com.helger.commons.url.SimpleURL;
 import com.helger.photon.api.IAPIDescriptor;
 import com.helger.photon.api.IAPIExecutor;
 import com.helger.photon.core.execcontext.LayoutExecutionContext;
+import com.helger.photon.uicore.css.CPageParam;
 import com.helger.servlet.response.ERedirectMode;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
@@ -79,7 +80,8 @@ public class APIExecutorPostUSIRedirectResponse implements IAPIExecutor
                                                    aLEC.getLinkToMenuItem (MenuPublic.MENU_DE_USI_USER).getAsStringWithEncodedParameters ())
                                                                                                                                             .add (PARAM_REQUEST_ID,
                                                                                                                                                   aResponse.getRequestId ())
-                                                                                                                                            .add (AbstractPageDE_User.PARAM_STOP),
+                                                                                                                                            .add (CPageParam.PARAM_ACTION,
+                                                                                                                                                  AbstractPageDE_User.ACTION_USIBRB),
                                     ERedirectMode.POST_REDIRECT_GET);
     }
   }

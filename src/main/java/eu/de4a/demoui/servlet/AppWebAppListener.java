@@ -142,7 +142,7 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
   @Override
   protected void afterContextInitialized (final ServletContext aSC)
   {
-    DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI started");
+    DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI started with public URL '" + AppConfig.getPublicURL () + "'");
   }
 
   @Override
