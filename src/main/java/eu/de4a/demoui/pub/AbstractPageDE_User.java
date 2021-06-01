@@ -1437,13 +1437,17 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                   // Main POST
                   final String sGetLocation = aHCM.execute (aPost2, aHttpResponse -> {
                     final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
-                    if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY)
+                    // Allow 301, 302, 303 and 307
+                    if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_PERMANENTLY ||
+                        aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY ||
+                        aStatusLine.getStatusCode () == CHttp.HTTP_SEE_OTHER ||
+                        aStatusLine.getStatusCode () == CHttp.HTTP_TEMPORARY_REDIRECT)
                     {
-                      final Header h = aHttpResponse.getFirstHeader (CHttpHeader.LOCATION);
-                      if (h != null)
+                      final Header aLocationHeader = aHttpResponse.getFirstHeader (CHttpHeader.LOCATION);
+                      if (aLocationHeader != null)
                       {
-                        LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + h.getValue () + "'");
-                        return h.getValue ();
+                        LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + aLocationHeader.getValue () + "'");
+                        return aLocationHeader.getValue ();
                       }
                       final String sMsg = "HTTP Response to '" + sPost2URL + "' has no '" + CHttpHeader.LOCATION + "' header";
                       LOGGER.error (sMsg);
