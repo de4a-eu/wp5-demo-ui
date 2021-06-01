@@ -31,6 +31,7 @@ import com.helger.servlet.response.ERedirectMode;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.RedirectResponseMap;
 import eu.de4a.demoui.pub.AbstractPageDE_User;
 import eu.de4a.demoui.pub.MenuPublic;
@@ -74,7 +75,7 @@ public class APIExecutorPostUSIRedirectResponse implements IAPIExecutor
 
       final LayoutExecutionContext aLEC = LayoutExecutionContext.createForAjaxOrAction (aRequestScope);
       aUnifiedResponse.disableCaching ()
-                      .setRedirect (new SimpleURL (aRequestScope.getFullServerPath () +
+                      .setRedirect (new SimpleURL (AppConfig.getPublicURL () +
                                                    aLEC.getLinkToMenuItem (MenuPublic.MENU_DE_USI_USER).getAsStringWithEncodedParameters ())
                                                                                                                                             .add (PARAM_REQUEST_ID,
                                                                                                                                                   aResponse.getRequestId ())

@@ -67,4 +67,10 @@ public final class AppConfig extends AbstractGlobalSingleton
   {
     return getConfig ().getAsBoolean ("webapp.checkfileaccess", true);
   }
+
+  @Nullable
+  public static String getPublicURL ()
+  {
+    return getConfig ().getAsString ("webapp.publicurl");
+  }
 }

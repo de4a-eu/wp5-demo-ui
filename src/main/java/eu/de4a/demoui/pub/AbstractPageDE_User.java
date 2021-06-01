@@ -120,9 +120,9 @@ import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.scope.singleton.AbstractSessionSingleton;
-import com.helger.servlet.StaticServerInfo;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.api.APIExecutorPostUSIRedirectResponse;
 import eu.de4a.demoui.api.DemoUIAPI;
@@ -1332,16 +1332,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         {
           aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
 
-          DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending " +
-                                                  m_ePattern.getDisplayName () +
-                                                  " request '" +
-                                                  aState.m_aRequest.getRequestId () +
-                                                  "' to '" +
-                                                  aState.m_sTargetURL +
-                                                  "'");
-
           final StopWatch aSW = StopWatch.createdStarted ();
+
+          // Basic Http client settings
           final HttpClientSettings aHCS = new HttpClientSettings ();
           aHCS.setConnectionRequestTimeoutMS (120_000);
           aHCS.setSocketTimeoutMS (120_000);
@@ -1354,28 +1347,40 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           catch (final GeneralSecurityException ex)
           {}
 
-          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+          try
           {
-            final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
+            final byte [] aResponseBytesRequest1;
+            try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+            {
+              DE4AKafkaClient.send (EErrorLevel.INFO,
+                                    "DemoUI sending " +
+                                                      m_ePattern.getDisplayName () +
+                                                      " request '" +
+                                                      aState.m_aRequest.getRequestId () +
+                                                      "' to '" +
+                                                      aState.m_sTargetURL +
+                                                      "'");
+              final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
 
-            final byte [] aRequestBytes = aMP.apply (null).getAsBytes (aState.m_aRequest);
-            LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
+              final byte [] aRequestBytes = aMP.apply (null).getAsBytes (aState.m_aRequest);
+              LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
-            aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
+              aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+              aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
-            // Main POST to DR
-            final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+              // Main POST to DR
+              aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
-            DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
-            LOGGER.info ("Response received (in UTF-8): " + new String (aResponseBytes, StandardCharsets.UTF_8));
+              DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received response content (" + aResponseBytesRequest1.length + " bytes)");
+              LOGGER.info ("Response received (in UTF-8): " + new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
+            }
 
             final ErrorListType aErrorList;
             if (m_ePattern == EPatternType.IM)
             {
               // IM request
               final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                              .read (aResponseBytes);
+                                                                              .read (aResponseBytesRequest1);
               if (aResponseObj == null)
                 throw new IOException ("Failed to parse IM response XML - see log for details");
 
@@ -1401,7 +1406,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             else
             {
               // USI request
-              final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytes);
+              final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytesRequest1);
               if (aResponseObj == null)
                 throw new IOException ("Failed to parse USI response XML - see log for details");
 
@@ -1414,15 +1419,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                 final RequestUserRedirectionType aRequestRedirect = new RequestUserRedirectionType ();
                 aRequestRedirect.setRequestId (aState.m_sRequestID);
                 // Our DE URL that we send to the DO, so that he can redirect
-                // back
-                // to us later (this is the API where we take the POST request
-                // and
-                // forward back to this page)
-                aRequestRedirect.setRedirectURL (new SimpleURL (StaticServerInfo.getInstance ().getFullServerPath () +
-                                                                PhotonAPIServlet.SERVLET_DEFAULT_PATH +
-                                                                DemoUIAPI.API_USI_REDIRECT_RESPONSE).add (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID,
-                                                                                                          aState.m_sRequestID)
-                                                                                                    .getAsStringWithEncodedParameters ());
+                // back to us later (this is the API where we take the POST
+                // request and forward back to this page)
+                aRequestRedirect.setRedirectURL (AppConfig.getPublicURL () +
+                                                 PhotonAPIServlet.SERVLET_DEFAULT_PATH +
+                                                 DemoUIAPI.API_USI_REDIRECT_RESPONSE);
                 final byte [] aRedirectRequestBytes = DE4AMarshaller.deUsiRedirectRequestMarshaller ()
                                                                     .setFormattedOutput (true)
                                                                     .getAsBytes (aRequestRedirect);
@@ -1435,16 +1436,18 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                 // investigating
                 // the HTTP header used for redirects
                 final HttpClientSettings aHCS2 = aHCS.getClone ().setFollowRedirects (false);
+                final String sGetLocation;
                 try (final HttpClientManager aHCM2 = HttpClientManager.create (aHCS2))
                 {
                   LOGGER.info ("Sending redirect request to the DO redirect URL '" + sPost2URL + "'");
+                  DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI sending redirect request to '" + sPost2URL + "'");
 
                   final HttpPost aPost2 = new HttpPost (sPost2URL);
                   aPost2.setEntity (new ByteArrayEntity (aRedirectRequestBytes));
                   aPost2.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
                   // Main POST
-                  final String sGetLocation = aHCM2.execute (aPost2, aHttpResponse -> {
+                  sGetLocation = aHCM2.execute (aPost2, aHttpResponse -> {
                     final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
                     String ret = null;
 
@@ -1474,23 +1477,26 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                       aForm.addChild (error (sMsg));
                     }
 
-                    final byte [] aResponsePayload = EntityUtils.toByteArray (aHttpResponse.getEntity ());
-                    LOGGER.info ("Redirect response received (in UTF-8): " + new String (aResponsePayload, StandardCharsets.UTF_8));
+                    final byte [] aResponseBytesRequest2 = EntityUtils.toByteArray (aHttpResponse.getEntity ());
+
+                    DE4AKafkaClient.send (EErrorLevel.INFO,
+                                          "DemoUI received redirect response content (" + aResponseBytesRequest2.length + " bytes)");
+                    LOGGER.info ("Redirect response received (in UTF-8): " + new String (aResponseBytesRequest2, StandardCharsets.UTF_8));
 
                     return ret;
                   });
+                }
 
-                  if (sGetLocation != null)
+                if (sGetLocation != null)
+                {
+                  final URL aURL = URLHelper.getAsURL (sGetLocation);
+                  if (aURL != null && !aURL.getHost ().equals ("localhost") && !aURL.getHost ().equals ("127.0.0.1"))
                   {
-                    final URL aURL = URLHelper.getAsURL (sGetLocation);
-                    if (aURL != null && !aURL.getHost ().equals ("localhost") && !aURL.getHost ().equals ("127.0.0.1"))
-                    {
-                      LOGGER.info ("Redirecting user to '" + sGetLocation + "'");
-                      aWPEC.postRedirectGetExternal (new SimpleURL (sGetLocation));
-                    }
-                    else
-                      aForm.addChild (error ("Received an invalid redirection URL ").addChild (code (sGetLocation)));
+                    DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI redirecting the user to '" + sGetLocation + "'");
+                    aWPEC.postRedirectGetExternal (new SimpleURL (sGetLocation));
                   }
+                  else
+                    aForm.addChild (error ("Received an invalid redirection URL ").addChild (code (sGetLocation)));
                 }
               }
             }
