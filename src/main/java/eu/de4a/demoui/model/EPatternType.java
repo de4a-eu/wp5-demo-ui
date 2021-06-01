@@ -15,8 +15,27 @@
  */
 package eu.de4a.demoui.model;
 
-public enum EPatternType
+import javax.annotation.Nonnull;
+
+import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.name.IHasDisplayName;
+
+public enum EPatternType implements IHasDisplayName
 {
-  IM,
-  USI;
+  IM ("IM"),
+  USI ("USI");
+
+  private String m_sDisplayName;
+
+  EPatternType (@Nonnull @Nonempty final String sDisplayName)
+  {
+    m_sDisplayName = sDisplayName;
+  }
+
+  @Nonnull
+  @Nonempty
+  public String getDisplayName ()
+  {
+    return m_sDisplayName;
+  }
 }

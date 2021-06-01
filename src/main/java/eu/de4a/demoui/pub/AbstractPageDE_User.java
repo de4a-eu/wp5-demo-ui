@@ -47,6 +47,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1331,7 +1332,13 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending IM request '" + aState.m_aRequest.getRequestId () + "' to '" + aState.m_sTargetURL + "'");
+                                "DemoUI sending " +
+                                                  m_ePattern.getDisplayName () +
+                                                  " request '" +
+                                                  aState.m_aRequest.getRequestId () +
+                                                  "' to '" +
+                                                  aState.m_sTargetURL +
+                                                  "'");
 
           final StopWatch aSW = StopWatch.createdStarted ();
           final HttpClientSettings aHCS = new HttpClientSettings ();
@@ -1436,8 +1443,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                   aPost2.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
                   // Main POST
-                  final String sGetLocation = aHCM.execute (aPost2, aHttpResponse -> {
+                  final String sGetLocation = aHCM2.execute (aPost2, aHttpResponse -> {
                     final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
+                    String ret = null;
+
                     // Allow 301, 302, 303 and 307
                     if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_PERMANENTLY ||
                         aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY ||
@@ -1448,11 +1457,14 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                       if (aLocationHeader != null)
                       {
                         LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + aLocationHeader.getValue () + "'");
-                        return aLocationHeader.getValue ();
+                        ret = aLocationHeader.getValue ();
                       }
-                      final String sMsg = "HTTP Response to '" + sPost2URL + "' has no '" + CHttpHeader.LOCATION + "' header";
-                      LOGGER.error (sMsg);
-                      aForm.addChild (error (sMsg));
+                      else
+                      {
+                        final String sMsg = "HTTP Response to '" + sPost2URL + "' has no '" + CHttpHeader.LOCATION + "' header";
+                        LOGGER.error (sMsg);
+                        aForm.addChild (error (sMsg));
+                      }
                     }
                     else
                     {
@@ -1460,7 +1472,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                       LOGGER.error (sMsg);
                       aForm.addChild (error (sMsg));
                     }
-                    return null;
+
+                    final byte [] aResponsePayload = EntityUtils.toByteArray (aHttpResponse.getEntity ());
+                    LOGGER.info ("Redirect response received (in UTF-8): " + new String (aResponsePayload, StandardCharsets.UTF_8));
+
+                    return ret;
                   });
 
                   if (sGetLocation != null)
