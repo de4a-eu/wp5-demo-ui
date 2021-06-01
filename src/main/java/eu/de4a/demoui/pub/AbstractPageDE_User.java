@@ -1337,6 +1337,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           final HttpClientSettings aHCS = new HttpClientSettings ();
           aHCS.setConnectionRequestTimeoutMS (120_000);
           aHCS.setSocketTimeoutMS (120_000);
+          aHCS.setUseKeepAlive (false);
           try
           {
             // Required for Spain
