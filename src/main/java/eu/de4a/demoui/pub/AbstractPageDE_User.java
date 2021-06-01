@@ -74,6 +74,7 @@ import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
+import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCDiv;
 import com.helger.html.hc.html.grouping.HCUL;
@@ -104,6 +105,7 @@ import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.api.servlet.PhotonAPIServlet;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
+import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
 import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
 import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonGroup;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
@@ -157,8 +159,12 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public abstract class AbstractPageDE_User extends AbstractPageDE
 {
+  public static final String ACTION_USIBRB = "usibrb";
   public static final String PARAM_STOP = "stop";
   private static final String PARAM_DIRECTION = "dir";
+  private static final String DIRECTION_BACK = "back";
+  private static final String DIRECTION_NEXT = "next";
+  private static final String DIRECTION_RESET = "reset";
 
   // Select process
   private static final String FIELD_PROCESS = "process";
@@ -181,8 +187,6 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   private static final String FIELD_REQUEST_XML = "requestxml";
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_CONFIRM = "confirm";
-
-  private static final String ACTION_USIBRB = "usibrb";
 
   private static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
 
@@ -594,10 +598,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     final SessionState aState = SessionState.getInstance ();
 
     final String sDir = aWPEC.params ().getAsStringTrimmed (PARAM_DIRECTION);
-    final boolean bGoBack = "back".equals (sDir);
-    final boolean bGoNext = !bGoBack && "next".equals (sDir);
+    final boolean bGoBack = DIRECTION_BACK.equals (sDir);
+    final boolean bGoNext = !bGoBack && DIRECTION_NEXT.equals (sDir);
 
-    if ("reset".equals (sDir))
+    if (DIRECTION_RESET.equals (sDir))
       aState.reset ();
 
     if (m_ePattern == EPatternType.USI)
@@ -629,6 +633,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         {
           aNodeList.addChild (error ("Not expecting any result for request ID '" + sRequestID + "'"));
         }
+
+        final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
+        aForm.addChild (new HCHiddenField (PARAM_DIRECTION, DIRECTION_RESET));
+        aForm.addChild (new BootstrapSubmitButton ().addChild ("New request"));
         return;
       }
     }
@@ -1543,7 +1551,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         else
         {
           final JSPackage aFunc = new JSPackage ();
-          aFunc.add (JQuery.idRef (aForm).append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='back'></input>").submit ());
+          aFunc.add (JQuery.idRef (aForm)
+                           .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='" + DIRECTION_BACK + "'></input>")
+                           .submit ());
           aFunc._return (false);
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setOnClick (aFunc));
         }
@@ -1557,7 +1567,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       else
       {
         final JSPackage aFunc = new JSPackage ();
-        aFunc.add (JQuery.idRef (aForm).append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='next'></input>").submit ());
+        aFunc.add (JQuery.idRef (aForm)
+                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='" + DIRECTION_NEXT + "'></input>")
+                         .submit ());
         aFunc._return (false);
         aRow.addChild (new BootstrapButton ().addChild (aState.step ().isNextSendRequest () ? "Send Request" : "Next")
                                              .setIcon (aState.step ().isNextSendRequest () ? EDefaultIcon.YES : EDefaultIcon.NEXT)
@@ -1568,7 +1580,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       if (aState.step ().wasRequestSent ())
       {
         final JSPackage aFunc = new JSPackage ();
-        aFunc.add (JQuery.idRef (aForm).append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='reset'></input>").submit ());
+        aFunc.add (JQuery.idRef (aForm)
+                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='" + DIRECTION_RESET + "'></input>")
+                         .submit ());
         aFunc._return (false);
         aRow.addChild (new BootstrapButton ().addChild ("Restart").setIcon (EFontAwesome5Icon.UNDO).setOnClick (aFunc));
       }
