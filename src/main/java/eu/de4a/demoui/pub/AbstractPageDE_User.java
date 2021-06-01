@@ -204,6 +204,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     s_aAjaxCallIDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
       final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
+      // No scheme
       aReq.setCanonicalEvidenceTypeId (aState.m_eUseCase.getDocumentTypeID ().getValue ());
       aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
       final String sPayload = DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
