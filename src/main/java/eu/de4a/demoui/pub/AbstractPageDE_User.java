@@ -157,6 +157,7 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public abstract class AbstractPageDE_User extends AbstractPageDE
 {
+  public static final String PARAM_STOP = "stop";
   private static final String PARAM_DIRECTION = "dir";
 
   // Select process
@@ -921,7 +922,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
 
     // Handle current step
-    if (!aWPEC.params ().containsKey ("stop"))
+    if (!aWPEC.params ().containsKey (PARAM_STOP))
       switch (aState.step ())
       {
         case SELECT_PROCESS:
