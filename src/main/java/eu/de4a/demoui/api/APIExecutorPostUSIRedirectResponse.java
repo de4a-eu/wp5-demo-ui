@@ -32,6 +32,7 @@ import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.model.RedirectResponseMap;
+import eu.de4a.demoui.pub.AbstractPageDE_User;
 import eu.de4a.demoui.pub.MenuPublic;
 import eu.de4a.iem.jaxb.common.types.ResponseUserRedirectionType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
@@ -76,7 +77,8 @@ public class APIExecutorPostUSIRedirectResponse implements IAPIExecutor
                       .setRedirect (new SimpleURL (aRequestScope.getFullServerPath () +
                                                    aLEC.getLinkToMenuItem (MenuPublic.MENU_DE_USI_USER).getAsStringWithEncodedParameters ())
                                                                                                                                             .add (PARAM_REQUEST_ID,
-                                                                                                                                                  aResponse.getRequestId ()),
+                                                                                                                                                  aResponse.getRequestId ())
+                                                                                                                                            .add (AbstractPageDE_User.PARAM_STOP),
                                     ERedirectMode.POST_REDIRECT_GET);
     }
   }
