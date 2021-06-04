@@ -750,7 +750,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createPreview (@Nonnull final WebPageExecutionContext aWPEC,
+  protected static IHCNode _createPreviewIM (@Nonnull final WebPageExecutionContext aWPEC,
                                            @Nonnull final ResponseTransferEvidenceType aResponseObj)
   {
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();

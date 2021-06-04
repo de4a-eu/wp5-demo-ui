@@ -188,7 +188,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
             if (aResponseObj.getErrorList () == null)
             {
               aResNL.addChild (h2 ("Preview of the response data"));
-              aResNL.addChild (_createPreview (aWPEC, aResponseObj));
+              aResNL.addChild (_createPreviewIM (aWPEC, aResponseObj));
               final BootstrapButtonGroup aDiv = aResNL.addAndReturnChild (new BootstrapButtonGroup ());
               aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
                                                                                .setIcon (EDefaultIcon.YES)
