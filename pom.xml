@@ -97,7 +97,7 @@
       <dependency>
         <groupId>eu.de4a</groupId>
         <artifactId>de4a-commons-parent-pom</artifactId>
-        <version>0.1.6</version>
+        <version>0.1.8</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -176,14 +176,6 @@
     
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>11</source>
-          <target>11</target>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>com.helger.maven</groupId>
         <artifactId>ph-jscompress-maven-plugin</artifactId>
         <version>2.2.3</version><!--$NO-MVN-MAN-VER$-->
@@ -202,7 +194,7 @@
       <plugin>
         <groupId>com.helger.maven</groupId>
         <artifactId>ph-csscompress-maven-plugin</artifactId>
-        <version>6.3.2</version><!--$NO-MVN-MAN-VER$-->
+        <version>6.3.4</version><!--$NO-MVN-MAN-VER$-->
         <executions>
           <execution>
             <goals>
