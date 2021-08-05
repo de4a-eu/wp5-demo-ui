@@ -20,20 +20,20 @@ import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 
 /**
- * Test class for class {@link EDemoCE}.
+ * Test class for class {@link EDemoCanonicalEvidence}.
  *
  * @author Philip Helger
  */
-public final class EDemoCETest
+public final class EDemoCanonicalEvidenceTest
 {
   @Test
   public void testBasic ()
   {
-    assertNotNull (EDemoCE.createT41_UC1_v2021_02_11 ());
-    assertNotNull (EDemoCE.createT41_UC1_v2021_04_13 ());
-    assertNotNull (EDemoCE.createDBA_v06 ());
-    assertNotNull (EDemoCE.createMA_Birth_v16 ());
-    assertNotNull (EDemoCE.createMA_DomesticRegistration_v16 ());
-    assertNotNull (EDemoCE.createMA_Marriage_v16 ());
+    assertNotNull (EDemoCanonicalEvidence.createT41_UC1_v2021_02_11 ());
+    assertNotNull (EDemoCanonicalEvidence.createT41_UC1_v2021_04_13 ());
+    assertNotNull (EDemoCanonicalEvidence.createDBA_v06 ());
+    assertNotNull (EDemoCanonicalEvidence.createMA_Birth_v16a ());
+    assertNotNull (EDemoCanonicalEvidence.createMA_DomesticRegistration_v16a ());
+    assertNotNull (EDemoCanonicalEvidence.createMA_Marriage_v16a ());
   }
 }
