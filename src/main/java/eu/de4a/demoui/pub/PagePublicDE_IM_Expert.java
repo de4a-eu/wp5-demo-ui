@@ -75,7 +75,7 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 public class PagePublicDE_IM_Expert extends AbstractPageDE
 {
   // We're doing a DR-IM request
-  public static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.DR_IM_REQ;
+  public static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR;
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
@@ -188,7 +188,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
             if (aResponseObj.getErrorList () == null)
             {
               aResNL.addChild (h2 ("Preview of the response data"));
-              aResNL.addChild (_createPreview (aWPEC, aResponseObj));
+              aResNL.addChild (_createPreviewIM (aWPEC, aResponseObj));
               final BootstrapButtonGroup aDiv = aResNL.addAndReturnChild (new BootstrapButtonGroup ());
               aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
                                                                                .setIcon (EDefaultIcon.YES)

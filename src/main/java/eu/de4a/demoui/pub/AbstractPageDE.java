@@ -279,7 +279,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
          "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
          EUseCase.HIGHER_EDUCATION_DIPLOMA,
          "SI"),
-    SI2 ("iso6523-actorid-upis::9999:si000000016", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
+    SI2 ("iso6523-actorid-upis::9999:si000000018", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
         EUseCase.COMPANY_REGISTRATION,
@@ -471,12 +471,12 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     m_ePattern = ePattern;
     if (ePattern == EPatternType.IM)
     {
-      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_IM_REQ.getRelativeURL ();
+      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
       TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
     }
     else
     {
-      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.DR_USI_REQ.getRelativeURL ();
+      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
       TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
     }
   }
@@ -750,8 +750,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createPreview (@Nonnull final WebPageExecutionContext aWPEC,
-                                           @Nonnull final ResponseTransferEvidenceType aResponseObj)
+  protected static IHCNode _createPreviewIM (@Nonnull final WebPageExecutionContext aWPEC,
+                                             @Nonnull final ResponseTransferEvidenceType aResponseObj)
   {
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
 

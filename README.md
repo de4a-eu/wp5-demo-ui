@@ -10,7 +10,7 @@ A live version can be found at https://de4a-dev-mock.egovlab.eu
 ## Building
 
 Prerequisites
-* Java 11 or later
+* Java 1.8 or later
 * Apache Maven 3.6 or later for building
 
 1. Ensure the de4a-commons project is up-to-date and built - see https://github.com/de4a-wp5/de4a-commons
