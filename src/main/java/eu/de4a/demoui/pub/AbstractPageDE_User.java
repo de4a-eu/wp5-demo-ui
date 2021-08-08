@@ -102,6 +102,7 @@ import com.helger.jaxb.GenericJAXBMarshaller;
 import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.json.IJsonObject;
 import com.helger.json.JsonObject;
+import com.helger.json.serialize.JsonWriterSettings;
 import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.api.servlet.PhotonAPIServlet;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
@@ -191,7 +192,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   private static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
 
   private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE_User.class);
-  private static AjaxFunctionDeclaration s_aAjaxCallIDK;
+  private static final AjaxFunctionDeclaration AJAX_CALL_IDK;
 
   @Nonnull
   private static String _fixURL (@Nullable final String s)
@@ -207,7 +208,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
   static
   {
-    s_aAjaxCallIDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
+    AJAX_CALL_IDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
       final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
       aReq.setCanonicalEvidenceTypeId (aState.m_eUseCase.getDocumentTypeID ().getURIEncoded ());
@@ -270,13 +271,29 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       else
       {
-        final SourceType aSource = aResponse.getAvailableSources ().getSourceAtIndex (0);
+        // Use the first one with a redirect URL
+        SourceType aSource = CollectionHelper.findFirst (aResponse.getAvailableSources ().getSource (),
+                                                         x -> x.getProvisionItems ().getProvisionItemAtIndex (0).getProvision () != null &&
+                                                              StringHelper.hasText (x.getProvisionItems ()
+                                                                                     .getProvisionItemAtIndex (0)
+                                                                                     .getProvision ()
+                                                                                     .getRedirectURL ()));
+        if (aSource == null)
+        {
+          // Fallback to index 0
+          aSource = aResponse.getAvailableSources ().getSourceAtIndex (0);
+        }
+
         final ProvisionItemType aPI = aSource.getProvisionItems ().getProvisionItemAtIndex (0);
         aJson.add ("id", aPI.getDataOwnerId ().toLowerCase (Locale.ROOT));
         aJson.add ("name", aPI.getDataOwnerPrefLabel ());
         final ProvisionType aP = aPI.getProvision ();
         aJson.add ("redirecturl", aP != null ? _fixURL (aP.getRedirectURL ()) : "");
       }
+
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("Out: " + aJson.getAsJsonString (JsonWriterSettings.DEFAULT_SETTINGS_FORMATTED));
+
       aAjaxResponse.json (aJson);
     });
   }
@@ -1142,7 +1159,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             if (aEditRedirectURL != null)
               jsSeEmpty.body ().add (JQuery.idRef (aEditRedirectURL).val (""));
           }
-          jIf.add (new JQueryAjaxBuilder ().url (s_aAjaxCallIDK.getInvocationURI (aRequestScope))
+          jIf.add (new JQueryAjaxBuilder ().url (AJAX_CALL_IDK.getInvocationURI (aRequestScope))
                                            .data (new JSAssocArray ().add ("cc", JQuery.idRef (aCountrySelect).val ()))
                                            .success (jsSetValues)
                                            .error (jsSeEmpty)
