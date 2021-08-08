@@ -210,12 +210,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     s_aAjaxCallIDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
       final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
-      // No scheme
-      aReq.setCanonicalEvidenceTypeId (aState.m_eUseCase.getDocumentTypeID ().getValue ());
+      aReq.setCanonicalEvidenceTypeId (aState.m_eUseCase.getDocumentTypeID ().getURIEncoded ());
       aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
       final String sPayload = DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
-      if (LOGGER.isDebugEnabled ())
-        LOGGER.debug ("IDK request:\n" + sPayload);
+
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("IDK request:\n" + sPayload);
 
       ResponseLookupRoutingInformationType aResponse = null;
       String sErrorMsg = null;
@@ -223,13 +223,16 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
       {
         final String sTargetURL = CApp.CONNECTOR_BASE_URL + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
-        LOGGER.info ("Calling IDK '" +
-                     sTargetURL +
-                     "' for country '" +
-                     aReq.getCountryCode () +
-                     "' and CET '" +
-                     aReq.getCanonicalEvidenceTypeId () +
-                     "'");
+
+        if (LOGGER.isInfoEnabled ())
+          LOGGER.info ("Calling IDK '" +
+                       sTargetURL +
+                       "' for country '" +
+                       aReq.getCountryCode () +
+                       "' and CET '" +
+                       aReq.getCanonicalEvidenceTypeId () +
+                       "'");
+
         final HttpPost aPost = new HttpPost (sTargetURL);
         aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
         final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
