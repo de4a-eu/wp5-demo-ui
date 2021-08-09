@@ -91,20 +91,23 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
                           EDataRequestSubjectType.COMPANY,
                           SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
                                                                                          "CompanyRegistration")),
-    /*
-     * BIRTH_EVIDENCE ("t43birth", "Moving Abroad – Birth Evidence",
-     * EPatternType.USI, EDataRequestSubjectType.PERSON,
-     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
-     * ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")), DOMREG_EVIDENCE
-     * ("t43domreg", "Moving Abroad – Domicile Registration Evidence",
-     * EPatternType.USI, EDataRequestSubjectType.PERSON,
-     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
-     * ("urn:de4a-eu:CanonicalEvidenceType", "DomicileRegistrationEvidence")),
-     * MARRIAGE_EVIDENCE ("t43marriage", "Moving Abroad – Marriage Evidence",
-     * EPatternType.USI, EDataRequestSubjectType.PERSON,
-     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
-     * ("urn:de4a-eu:CanonicalEvidenceType", "MarriageEvidence"))
-     */;
+    BIRTH_EVIDENCE ("t43birth",
+                    "Moving Abroad – Birth Evidence",
+                    EPatternType.USI,
+                    EDataRequestSubjectType.PERSON,
+                    SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")),
+    DOMREG_EVIDENCE ("t43domreg",
+                     "Moving Abroad – Domicile Registration Evidence",
+                     EPatternType.USI,
+                     EDataRequestSubjectType.PERSON,
+                     SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                    "DomicileRegistrationEvidence")),
+    MARRIAGE_EVIDENCE ("t43marriage",
+                       "Moving Abroad – Marriage Evidence",
+                       EPatternType.USI,
+                       EDataRequestSubjectType.PERSON,
+                       SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                      "MarriageEvidence"));
 
     private final String m_sID;
     private final String m_sDisplayName;
