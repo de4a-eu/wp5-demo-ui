@@ -67,10 +67,6 @@ public final class AppCommonUI
   public static final ICSSClassProvider CSS_CLASS_LOGO1 = DefaultCSSClassProvider.create ("logo1");
   public static final ICSSClassProvider CSS_CLASS_LOGO2 = DefaultCSSClassProvider.create ("logo2");
 
-  private static final DataTablesLengthMenu LENGTH_MENU = new DataTablesLengthMenu ().addItem (25)
-                                                                                     .addItem (50)
-                                                                                     .addItem (100)
-                                                                                     .addItemAll ();
   private static final Logger LOGGER = LoggerFactory.getLogger (AppCommonUI.class);
 
   private AppCommonUI ()
@@ -83,13 +79,12 @@ public final class AppCommonUI
     BootstrapDataTables.setConfigurator ( (aLEC, aTable, aDataTables) -> {
       final IRequestWebScopeWithoutResponse aRequestScope = aLEC.getRequestScope ();
       aDataTables.setAutoWidth (false)
-                 .setLengthMenu (LENGTH_MENU)
+                 .setLengthMenu (DataTablesLengthMenu.INSTANCE_25_50_100_ALL)
                  .setAjaxBuilder (new JQueryAjaxBuilder ().url (CAjax.DATATABLES.getInvocationURL (aRequestScope))
                                                           .data (new JSAssocArray ().add (AjaxExecutorDataTables.OBJECT_ID,
                                                                                           aTable.getID ())))
                  .setServerFilterType (EDataTablesFilterType.ALL_TERMS_PER_ROW)
-                 .setTextLoadingURL (CAjax.DATATABLES_I18N.getInvocationURL (aRequestScope),
-                                     AjaxExecutorDataTablesI18N.LANGUAGE_ID)
+                 .setTextLoadingURL (CAjax.DATATABLES_I18N.getInvocationURL (aRequestScope), AjaxExecutorDataTablesI18N.LANGUAGE_ID)
                  .addPlugin (new DataTablesPluginSearchHighlight ());
     });
     // By default allow markdown in system message
@@ -120,8 +115,7 @@ public final class AppCommonUI
   }
 
   @Nonnull
-  public static IHCNode createViewLink (@Nonnull final IWebPageExecutionContext aWPEC,
-                                        @Nullable final ITypedObject <String> aObject)
+  public static IHCNode createViewLink (@Nonnull final IWebPageExecutionContext aWPEC, @Nullable final ITypedObject <String> aObject)
   {
     return createViewLink (aWPEC, aObject, null);
   }
@@ -144,25 +138,19 @@ public final class AppCommonUI
       final IMenuObject aObj = aWPEC.getMenuTree ().getItemDataWithID (sMenuItemID);
       if (aObj != null && aObj.matchesDisplayFilter ())
         return new HCA (getViewLink (aWPEC, sMenuItemID, aTypedObj)).addChild (sRealDisplayName)
-                                                                    .setTitle ("Show details of role '" +
-                                                                               sRealDisplayName +
-                                                                               "'");
+                                                                    .setTitle ("Show details of role '" + sRealDisplayName + "'");
       return new HCTextNode (sRealDisplayName);
     }
 
     if (aObject instanceof IUser)
     {
       final IUser aTypedObj = (IUser) aObject;
-      final String sRealDisplayName = sDisplayName != null ? sDisplayName
-                                                           : SecurityHelper.getUserDisplayName (aTypedObj,
-                                                                                                aDisplayLocale);
+      final String sRealDisplayName = sDisplayName != null ? sDisplayName : SecurityHelper.getUserDisplayName (aTypedObj, aDisplayLocale);
       final String sMenuItemID = BootstrapPagesMenuConfigurator.MENU_ADMIN_SECURITY_USER;
       final IMenuObject aObj = aWPEC.getMenuTree ().getItemDataWithID (sMenuItemID);
       if (aObj != null && aObj.matchesDisplayFilter ())
         return new HCA (getViewLink (aWPEC, sMenuItemID, aTypedObj)).addChild (sRealDisplayName)
-                                                                    .setTitle ("Show details of user '" +
-                                                                               sRealDisplayName +
-                                                                               "'");
+                                                                    .setTitle ("Show details of user '" + sRealDisplayName + "'");
       return new HCTextNode (sRealDisplayName);
     }
     if (aObject instanceof IUserGroup)
@@ -173,9 +161,7 @@ public final class AppCommonUI
       final IMenuObject aObj = aWPEC.getMenuTree ().getItemDataWithID (sMenuItemID);
       if (aObj != null && aObj.matchesDisplayFilter ())
         return new HCA (getViewLink (aWPEC, sMenuItemID, aTypedObj)).addChild (sRealDisplayName)
-                                                                    .setTitle ("Show details of user group '" +
-                                                                               sRealDisplayName +
-                                                                               "'");
+                                                                    .setTitle ("Show details of user group '" + sRealDisplayName + "'");
       return new HCTextNode (sRealDisplayName);
     }
 

@@ -125,7 +125,6 @@ import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
 import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonGroup;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
-import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePicker;
 import com.helger.photon.core.form.FormErrorList;
@@ -1048,7 +1047,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
     // UI form
     final BootstrapForm aForm = aNodeList.addAndReturnChild (getUIHandler ().createFormSelf (aWPEC).ensureID ());
-    aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 3, 2, 2), BootstrapGridSpec.create (-1, -1, 9, 10, 10));
+    aForm.setLeft (-1, -1, 3, 2, 2);
 
     // Show "input error" if necessary
     if (aFormErrors.isNotEmpty ())
@@ -1758,6 +1757,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
 
       // Next?
+      aRow.addChild (" ");
       if (aState.step ().isLast ())
       {
         aRow.addChild (new BootstrapButton ().addChild ("Next").setIcon (EDefaultIcon.NEXT).setDisabled (true));
@@ -1777,6 +1777,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       // Restart?
       if (aState.step ().wasRequestSent ())
       {
+        aRow.addChild (" ");
         final JSPackage aFunc = new JSPackage ();
         aFunc.add (JQuery.idRef (aForm)
                          .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='" + DIRECTION_RESET + "'></input>")

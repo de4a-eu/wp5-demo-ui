@@ -73,4 +73,10 @@ public final class AppConfig extends AbstractGlobalSingleton
   {
     return getConfig ().getAsString ("webapp.publicurl");
   }
+
+  @Nullable
+  public static boolean isStatusEnabled ()
+  {
+    return getConfig ().getAsBoolean ("webapp.status.enabled", true);
+  }
 }
