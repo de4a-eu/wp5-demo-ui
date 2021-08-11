@@ -61,5 +61,11 @@ public final class DemoUIAPI
       aDescriptor.setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
+
+    // GET /status
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get ("/status"), new APIExecutorGetStatus ());
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
   }
 }

@@ -35,6 +35,7 @@ import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppSecurity;
 import eu.de4a.demoui.CAjax;
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.api.APIExecutorGetStatus;
 import eu.de4a.demoui.api.DemoUIAPI;
 import eu.de4a.demoui.pub.MenuPublic;
 import eu.de4a.demoui.ui.AppCommonUI;
@@ -76,6 +77,8 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
   @Override
   protected void initGlobalSettings ()
   {
+    APIExecutorGetStatus.setInitDT (getInitializationStartDT ());
+
     // Disable DNS caching
     HttpDebugger.setEnabled (false);
 
