@@ -16,20 +16,32 @@
 package eu.de4a.demoui.model;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.id.IHasID;
+import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
 
-public enum EPatternType implements IHasDisplayName
+public enum EPatternType implements IHasID <String>, IHasDisplayName
 {
-  IM ("IM"),
-  USI ("USI");
+  IM ("im", "IM"),
+  USI ("usi", "USI");
 
-  private String m_sDisplayName;
+  private final String m_sID;
+  private final String m_sDisplayName;
 
-  EPatternType (@Nonnull @Nonempty final String sDisplayName)
+  EPatternType (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
   {
+    m_sID = sID;
     m_sDisplayName = sDisplayName;
+  }
+
+  @Nonnull
+  @Nonempty
+  public String getID ()
+  {
+    return m_sID;
   }
 
   @Nonnull
@@ -37,5 +49,11 @@ public enum EPatternType implements IHasDisplayName
   public String getDisplayName ()
   {
     return m_sDisplayName;
+  }
+
+  @Nullable
+  public static EPatternType getFromIDOrNull (@Nullable final String sID)
+  {
+    return EnumHelper.getFromIDOrNull (EPatternType.class, sID);
   }
 }

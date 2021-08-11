@@ -29,6 +29,7 @@
  */
 package eu.de4a.demoui.pub;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +49,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +67,7 @@ import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
 import com.helger.commons.http.CHttp;
 import com.helger.commons.http.CHttpHeader;
+import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.locale.country.CountryCache;
 import com.helger.commons.mime.CMimeType;
 import com.helger.commons.name.IHasDisplayName;
@@ -103,6 +106,16 @@ import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.json.IJsonObject;
 import com.helger.json.JsonObject;
 import com.helger.json.serialize.JsonWriterSettings;
+import com.helger.pdflayout4.PageLayoutPDF;
+import com.helger.pdflayout4.base.IPLRenderableObject;
+import com.helger.pdflayout4.base.PLPageSet;
+import com.helger.pdflayout4.element.box.PLBox;
+import com.helger.pdflayout4.element.table.PLTable;
+import com.helger.pdflayout4.element.table.PLTableCell;
+import com.helger.pdflayout4.element.text.PLText;
+import com.helger.pdflayout4.spec.FontSpec;
+import com.helger.pdflayout4.spec.PreloadFont;
+import com.helger.pdflayout4.spec.WidthSpec;
 import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.api.servlet.PhotonAPIServlet;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
@@ -193,6 +206,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
   private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE_User.class);
   private static final AjaxFunctionDeclaration AJAX_CALL_IDK;
+  private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_DATA;
 
   @Nonnull
   private static String _fixURL (@Nullable final String s)
@@ -204,6 +218,19 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     if (ret.endsWith ("?requestId={requestId}&backUrl={backUrl}"))
       ret = ret.substring (0, ret.length () - "?requestId={requestId}&backUrl={backUrl}".length ());
     return ret;
+  }
+
+  @Nonnull
+  protected static final GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType> createMarshaller (@Nullable final EPatternType ePattern,
+                                                                                                      @Nullable final ErrorList aEL)
+  {
+    final DE4AMarshaller <RequestTransferEvidenceUSIIMDRType> m;
+    if (ePattern == EPatternType.IM)
+      m = DE4AMarshaller.drImRequestMarshaller ();
+    else
+      m = DE4AMarshaller.drUsiRequestMarshaller ();
+    return m.setFormattedOutput (true)
+            .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
   }
 
   static
@@ -272,17 +299,16 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       else
       {
         // Use the first one with a redirect URL
-        SourceType aSource = CollectionHelper.findFirst (aResponse.getAvailableSources ().getSource (),
-                                                         x -> x.getProvisionItems ().getProvisionItemAtIndex (0).getProvision () != null &&
-                                                              StringHelper.hasText (x.getProvisionItems ()
-                                                                                     .getProvisionItemAtIndex (0)
-                                                                                     .getProvision ()
-                                                                                     .getRedirectURL ()));
-        if (aSource == null)
-        {
-          // Fallback to index 0
-          aSource = aResponse.getAvailableSources ().getSourceAtIndex (0);
-        }
+        // Fallback to index 0
+        final SourceType aSource = CollectionHelper.findFirst (aResponse.getAvailableSources ().getSource (),
+                                                               x -> x.getProvisionItems ()
+                                                                     .getProvisionItemAtIndex (0)
+                                                                     .getProvision () != null &&
+                                                                    StringHelper.hasText (x.getProvisionItems ()
+                                                                                           .getProvisionItemAtIndex (0)
+                                                                                           .getProvision ()
+                                                                                           .getRedirectURL ()),
+                                                               aResponse.getAvailableSources ().getSourceAtIndex (0));
 
         final ProvisionItemType aPI = aSource.getProvisionItems ().getProvisionItemAtIndex (0);
         aJson.add ("id", aPI.getDataOwnerId ().toLowerCase (Locale.ROOT));
@@ -295,6 +321,148 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         LOGGER.info ("Out: " + aJson.getAsJsonString (JsonWriterSettings.DEFAULT_SETTINGS_FORMATTED));
 
       aAjaxResponse.json (aJson);
+    });
+
+    AJAX_CALL_DOWNLOAD_DATA = addAjax ( (aRequestScope, aAjaxResponse) -> {
+      final SessionState aState = SessionState.getInstance ();
+      final Locale aDisplayLocale = CApp.DEFAULT_LOCALE;
+      // Passed via URL param
+      final EPatternType ePattern = EPatternType.getFromIDOrNull (aRequestScope.params ().getAsString ("pattern"));
+      LOGGER.info ("Trying to download request data as PDF for " + ePattern + " pattern");
+
+      final FontSpec c10 = new FontSpec (PreloadFont.MONOSPACE, 10);
+      final FontSpec r10 = new FontSpec (PreloadFont.REGULAR, 10);
+      final FontSpec r10i = new FontSpec (PreloadFont.REGULAR_ITALIC, 10);
+      final FontSpec r12b = new FontSpec (PreloadFont.REGULAR_BOLD, 12);
+
+      final float fMargin = 5f;
+      final WidthSpec aCol1 = WidthSpec.perc (25);
+      final WidthSpec aCol2 = WidthSpec.star ();
+
+      final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
+
+      final Function <String, PLText> _code = s -> StringHelper.hasNoText (s) ? new PLText ("none", r10i).setFillColor (Color.LIGHT_GRAY)
+                                                                              : new PLText (s, c10);
+
+      // Headline
+      final String sTitle = "Preview of DE4A request data before sending";
+      aPS1.addElement (new PLText (sTitle, r12b).setMarginLeft (fMargin).setMarginTop (fMargin));
+      aPS1.addElement (new PLText ("Date and time of creation of this report: " + PDTFactory.getCurrentZonedDateTimeUTC ().toString (),
+                                   r10).setMarginLeft (fMargin));
+
+      // Evidence type
+      final PLTable aTable = new PLTable (aCol1, aCol2).setMargin (fMargin);
+      aTable.addAndReturnRow (new PLTableCell (new PLText ("Canonical Evidence Type:", r10)),
+                              new PLTableCell (new PLText (aState.m_eUseCase.getDisplayName (), r10)))
+            .setMarginTop (fMargin)
+            .setMarginBottom (fMargin);
+
+      // DE
+      {
+        final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+        aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
+                            new PLTableCell (new PLText (aState.getDataEvaluatorName (), r10)));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataEvaluatorID ())));
+        final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
+        aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
+                            new PLTableCell (new PLText (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
+                                                                            : aState.getDataEvaluatorCountryCode (),
+                                                         r10)));
+        aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Evaluator:", r10)), new PLTableCell (aInnerTable))
+              .setMarginTop (fMargin)
+              .setMarginBottom (fMargin);
+      }
+
+      // DO
+      {
+        final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+        aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)), new PLTableCell (new PLText (aState.getDataOwnerName (), r10)));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataOwnerID ())));
+        final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
+        aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
+                            new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
+                                                                            : aState.getDataOwnerCountryCode (),
+                                                         r10)));
+        if (ePattern == EPatternType.USI)
+        {
+          aInnerTable.addRow (new PLTableCell (new PLText ("Redirect URL:", r10)),
+                              new PLTableCell (_code.apply (aState.getDataOwnerRedirectURL ())));
+        }
+
+        aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Owner:", r10)), new PLTableCell (aInnerTable))
+              .setMarginTop (fMargin)
+              .setMarginBottom (fMargin);
+      }
+
+      // DRS
+      switch (aState.m_eUseCase.getDRSType ())
+      {
+        case PERSON:
+        {
+          final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+          aInnerTable.addRow (new PLTableCell (new PLText ("Person ID:", r10)),
+                              new PLTableCell (_code.apply (aState.m_aDRSPerson.getID ())));
+          aInnerTable.addRow (new PLTableCell (new PLText ("First Name:", r10)),
+                              new PLTableCell (new PLText (aState.m_aDRSPerson.getFirstName (), r10)));
+          aInnerTable.addRow (new PLTableCell (new PLText ("Family Name:", r10)),
+                              new PLTableCell (new PLText (aState.m_aDRSPerson.getFamilyName (), r10)));
+          aInnerTable.addRow (new PLTableCell (new PLText ("Birthday:", r10)),
+                              new PLTableCell (new PLText (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (), aDisplayLocale),
+                                                           r10)));
+          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)), new PLTableCell (aInnerTable))
+                .setMarginTop (fMargin)
+                .setMarginBottom (fMargin);
+          break;
+        }
+        case COMPANY:
+        {
+          final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+          aInnerTable.addRow (new PLTableCell (new PLText ("Company ID:", r10)),
+                              new PLTableCell (_code.apply (aState.m_aDRSCompany.getID ())));
+          aInnerTable.addRow (new PLTableCell (new PLText ("Company Name:", r10)),
+                              new PLTableCell (new PLText (aState.m_aDRSCompany.getName (), r10)));
+          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)), new PLTableCell (aInnerTable))
+                .setMarginTop (fMargin)
+                .setMarginBottom (fMargin);
+          break;
+        }
+        default:
+          throw new IllegalStateException ();
+      }
+
+      // Created XML
+      {
+        final IPLRenderableObject <?> aXML;
+        if (aState.m_aRequest == null)
+          aXML = new PLBox (new PLText ("Failed to create Request Object", r10i).setFillColor (new Color (0xf4, 0xd5, 0xce)));
+        else
+          aXML = new PLText (createMarshaller (ePattern, null).getAsString (aState.m_aRequest), c10);
+        aTable.addAndReturnRow (new PLTableCell (new PLText ("Created XML:", r10)), new PLTableCell (aXML))
+              .setMarginTop (fMargin)
+              .setMarginBottom (fMargin);
+      }
+
+      // Target URL
+      aTable.addAndReturnRow (new PLTableCell (new PLText ("Default target URL:", r10)),
+                              new PLTableCell (new PLText (getTargetURLTestDR (ePattern), c10)))
+            .setMarginTop (fMargin)
+            .setMarginBottom (fMargin);
+
+      aPS1.addElement (aTable);
+
+      // Write the PDF
+      try (NonBlockingByteArrayOutputStream aBAOS = new NonBlockingByteArrayOutputStream ())
+      {
+        new PageLayoutPDF ().addPageSet (aPS1)
+                            .setCompressPDF (true)
+                            .setDocumentAuthor ("DE4A Demo UI")
+                            .setDocumentCreationDateTime (PDTFactory.getCurrentLocalDateTime ())
+                            .setDocumentTitle (sTitle)
+                            .renderTo (aBAOS);
+        aAjaxResponse.pdf (aBAOS, "de4a-request-preview.pdf");
+      }
+
+      LOGGER.info ("Finished rendering PDF");
     });
   }
 
@@ -670,17 +838,6 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                                              aCC.getCountry ("RO"),
                                                                              aCC.getCountry ("SI"),
                                                                              aCC.getCountry ("SE"));
-
-    final Function <ErrorList, GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType>> aMP;
-    aMP = aEL -> {
-      final DE4AMarshaller <RequestTransferEvidenceUSIIMDRType> m;
-      if (m_ePattern == EPatternType.IM)
-        m = DE4AMarshaller.drImRequestMarshaller ();
-      else
-        m = DE4AMarshaller.drUsiRequestMarshaller ();
-      return m.setFormattedOutput (true)
-              .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
-    };
 
     // Grab input parameters
     final FormErrorList aFormErrors = new FormErrorList ();
@@ -1118,10 +1275,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           final JSPackage aJSHandler = new JSPackage ();
           final JSVar jChecked = aJSHandler.var ("c", JQuery.idRef (aCB).propChecked ());
           aJSHandler.add (JQuery.idRef (aMockDOSelect).setDisabled (jChecked.not ()));
-          aJSHandler.add (JQuery.idRef (aEditName).jqinvoke ("setReadOnly").arg (jChecked.not ()));
-          aJSHandler.add (JQuery.idRef (aEditID).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+          aJSHandler.add (JQuery.idRef (aEditName).setReadOnly (jChecked.not ()));
+          aJSHandler.add (JQuery.idRef (aEditID).setReadOnly (jChecked.not ()));
           if (aEditRedirectURL != null)
-            aJSHandler.add (JQuery.idRef (aEditRedirectURL).jqinvoke ("setReadOnly").arg (jChecked.not ()));
+            aJSHandler.add (JQuery.idRef (aEditRedirectURL).setReadOnly (jChecked.not ()));
           aCB.setEventHandler (EJSEvent.CHANGE, aJSHandler);
         }
 
@@ -1267,7 +1424,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
         // Check against XSD
         final ErrorList aErrorList = new ErrorList ();
-        final byte [] aRequestBytes = aMP.apply (aErrorList).getAsBytes (aRequest);
+        final byte [] aRequestBytes = createMarshaller (m_ePattern, aErrorList).getAsBytes (aRequest);
         if (aRequestBytes == null)
         {
           aState.m_aRequest = null;
@@ -1338,11 +1495,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
                                                      .setCtrl (aState.m_aRequest == null ? error ("Failed to create Request Object")
                                                                                          : new HCTextArea (new RequestField (FIELD_REQUEST_XML,
-                                                                                                                             aMP.apply (null)
-                                                                                                                                .getAsString (aState.m_aRequest))).setRows (10)
-                                                                                                                                                                  .setReadOnly (true)
-                                                                                                                                                                  .addClass (CBootstrapCSS.FORM_CONTROL)
-                                                                                                                                                                  .addClass (CBootstrapCSS.TEXT_MONOSPACE))
+                                                                                                                             createMarshaller (m_ePattern,
+                                                                                                                                               null).getAsString (aState.m_aRequest))).setRows (10)
+                                                                                                                                                                                      .setReadOnly (true)
+                                                                                                                                                                                      .addClass (CBootstrapCSS.FORM_CONTROL)
+                                                                                                                                                                                      .addClass (CBootstrapCSS.TEXT_MONOSPACE))
                                                      .setHelpText ("This is the technical request. It is just shown for helping developers")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
@@ -1356,6 +1513,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM, false)))
                                                      .setHelpText ("You need to give your explicit consent here to proceed")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
+
+        aForm.addFormGroup (new BootstrapFormGroup ().setCtrl (new BootstrapButton ().addChild ("Download request data as PDF")
+                                                                                     .setOnClick (AJAX_CALL_DOWNLOAD_DATA.getInvocationURL (aRequestScope)
+                                                                                                                         .add ("pattern",
+                                                                                                                               m_ePattern.getID ()))));
 
         break;
       }
@@ -1393,7 +1555,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                     "'");
             final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
 
-            final byte [] aRequestBytes = aMP.apply (null).getAsBytes (aState.m_aRequest);
+            final byte [] aRequestBytes = createMarshaller (m_ePattern, null).getAsBytes (aState.m_aRequest);
             LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
             aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));

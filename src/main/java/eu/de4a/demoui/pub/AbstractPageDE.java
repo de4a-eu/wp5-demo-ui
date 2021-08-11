@@ -535,6 +535,24 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     }
   }
 
+  @Nonnull
+  @Nonempty
+  protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
+  {
+    if (ePattern == EPatternType.IM)
+      return CApp.MOCK_BASE_URL + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+    return CApp.MOCK_BASE_URL + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
+  }
+
+  @Nonnull
+  @Nonempty
+  protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
+  {
+    if (ePattern == EPatternType.IM)
+      return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
+    return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
+  }
+
   protected final EPatternType m_ePattern;
   protected final String TARGET_URL_MOCK_DO;
   protected final String TARGET_URL_TEST_DR;
@@ -545,16 +563,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   {
     super (sID, sDisplayName);
     m_ePattern = ePattern;
-    if (ePattern == EPatternType.IM)
-    {
-      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
-      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
-    }
-    else
-    {
-      TARGET_URL_MOCK_DO = CApp.MOCK_BASE_URL + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
-      TARGET_URL_TEST_DR = CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
-    }
+    TARGET_URL_MOCK_DO = getTargetURLMockDO (ePattern);
+    TARGET_URL_TEST_DR = getTargetURLTestDR (ePattern);
   }
 
   @Nonnull
