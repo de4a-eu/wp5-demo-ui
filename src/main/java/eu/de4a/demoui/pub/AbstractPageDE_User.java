@@ -822,7 +822,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           aNodeList.addChild (error ("Not expecting any result for request ID '" + sRequestID + "'"));
         }
 
-        final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
+        final BootstrapForm aForm = aNodeList.addAndReturnChild (getUIHandler ().createFormSelf (aWPEC));
         aForm.addChild (new HCHiddenField (PARAM_DIRECTION, DIRECTION_RESET));
         aForm.addChild (new BootstrapSubmitButton ().addChild ("New request"));
         return;
@@ -1047,7 +1047,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     aState.validate (m_ePattern);
 
     // UI form
-    final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC).ensureID ());
+    final BootstrapForm aForm = aNodeList.addAndReturnChild (getUIHandler ().createFormSelf (aWPEC).ensureID ());
     aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 3, 2, 2), BootstrapGridSpec.create (-1, -1, 9, 10, 10));
 
     // Show "input error" if necessary
