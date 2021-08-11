@@ -30,7 +30,13 @@ import com.helger.scope.singleton.AbstractGlobalSingleton;
 
 import eu.de4a.iem.jaxb.common.types.ResponseUserRedirectionType;
 
-public class RedirectResponseMap extends AbstractGlobalSingleton
+/**
+ * This class contains all instances of the {@link ResponseUserRedirectionType}.
+ * This stores the Post-Redirect-Get response for the USI-back-redirection.
+ *
+ * @author Philip Helger
+ */
+public final class RedirectResponseMap extends AbstractGlobalSingleton
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (RedirectResponseMap.class);
   private final ICommonsMap <String, ResponseUserRedirectionType> m_aMap = new CommonsHashMap <> ();
