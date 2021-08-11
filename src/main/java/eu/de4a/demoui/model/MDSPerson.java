@@ -122,7 +122,13 @@ public class MDSPerson
     @Nonnull
     public MDSPerson.Builder birthday (final int y, final int m, final int d)
     {
-      return birthday (PDTFactory.createLocalDate (y, Month.of (m), d));
+      return birthday (y, Month.of (m), d);
+    }
+
+    @Nonnull
+    public MDSPerson.Builder birthday (final int y, final Month m, final int d)
+    {
+      return birthday (PDTFactory.createLocalDate (y, m, d));
     }
 
     @Nonnull
