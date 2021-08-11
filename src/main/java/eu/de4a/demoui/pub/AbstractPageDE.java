@@ -15,7 +15,7 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.util.EnumSet;
+import java.time.Month;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
@@ -28,6 +28,8 @@ import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.builder.IBuilder;
 import com.helger.commons.collection.impl.CommonsArrayList;
+import com.helger.commons.collection.impl.CommonsHashSet;
+import com.helger.commons.collection.impl.ICommonsSet;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
@@ -77,52 +79,105 @@ import eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller;
 
 public abstract class AbstractPageDE extends AbstractAppWebPage
 {
+  protected enum EPilot implements IHasID <String>, IHasDisplayName
+  {
+    STUDYING_ABROAD ("t41", "Studying Abroad"),
+    DOING_BUSINESS_ABROAD ("t42", "Doing Business Abroad"),
+    MOVING_ABROAD ("t43", "Moving Abroad");
+
+    private final String m_sID;
+    private final String m_sDisplayName;
+
+    EPilot (@Nonnull @Nonempty final String sID, @Nonnull @Nonempty final String sDisplayName)
+    {
+      m_sID = sID;
+      m_sDisplayName = sDisplayName;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getID ()
+    {
+      return m_sID;
+    }
+
+    @Nonnull
+    @Nonempty
+    public String getDisplayName ()
+    {
+      return m_sDisplayName;
+    }
+
+    @Nullable
+    public static EPilot getFromIDOrNull (@Nullable final String sID)
+    {
+      return EnumHelper.getFromIDOrNull (EPilot.class, sID);
+    }
+  }
+
   protected enum EUseCase implements IHasID <String>, IHasDisplayName
   {
-    HIGHER_EDUCATION_DIPLOMA ("t41uc1",
-                              "Studying Abroad – Application to public higher education",
+    HIGHER_EDUCATION_DIPLOMA (EPilot.STUDYING_ABROAD,
+                              "uc1",
+                              "Application to public higher education",
                               EPatternType.USI,
                               EDataRequestSubjectType.PERSON,
                               SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
                                                                                              "HigherEducationDiploma")),
-    COMPANY_REGISTRATION ("t42cr",
-                          "Doing Business Abroad – Starting a business in another Member State",
+    COMPANY_REGISTRATION (EPilot.DOING_BUSINESS_ABROAD,
+                          "cr",
+                          "Starting a business in another Member State",
                           EPatternType.IM,
                           EDataRequestSubjectType.COMPANY,
                           SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
                                                                                          "CompanyRegistration")),
-    /*
-     * BIRTH_EVIDENCE ("t43birth", "Moving Abroad – Birth Evidence",
-     * EPatternType.USI, EDataRequestSubjectType.PERSON,
-     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
-     * ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")), DOMREG_EVIDENCE
-     * ("t43domreg", "Moving Abroad – Domicile Registration Evidence",
-     * EPatternType.USI, EDataRequestSubjectType.PERSON,
-     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
-     * ("urn:de4a-eu:CanonicalEvidenceType", "DomicileRegistrationEvidence")),
-     * MARRIAGE_EVIDENCE ("t43marriage", "Moving Abroad – Marriage Evidence",
-     * EPatternType.USI, EDataRequestSubjectType.PERSON,
-     * SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier
-     * ("urn:de4a-eu:CanonicalEvidenceType", "MarriageEvidence"))
-     */;
+    BIRTH_EVIDENCE (EPilot.MOVING_ABROAD,
+                    "birth",
+                    "Birth Evidence",
+                    EPatternType.USI,
+                    EDataRequestSubjectType.PERSON,
+                    SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")),
+    DOMREG_EVIDENCE (EPilot.MOVING_ABROAD,
+                     "domreg",
+                     "Domicile Registration Evidence",
+                     EPatternType.USI,
+                     EDataRequestSubjectType.PERSON,
+                     SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                    "DomicileRegistrationEvidence")),
+    MARRIAGE_EVIDENCE (EPilot.MOVING_ABROAD,
+                       "marriage",
+                       "Marriage Evidence",
+                       EPatternType.USI,
+                       EDataRequestSubjectType.PERSON,
+                       SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                      "MarriageEvidence"));
 
+    private final EPilot m_ePilot;
     private final String m_sID;
     private final String m_sDisplayName;
     private final EPatternType m_ePatternType;
     private final EDataRequestSubjectType m_eDRSType;
     private final IDocumentTypeIdentifier m_aDocTypeID;
 
-    EUseCase (@Nonnull @Nonempty final String sID,
-              @Nonnull @Nonempty final String sDisplayName,
+    EUseCase (@Nonnull final EPilot ePilot,
+              @Nonnull @Nonempty final String sIDSuffix,
+              @Nonnull @Nonempty final String sDisplayNameSuffix,
               @Nonnull final EPatternType ePatternType,
               @Nonnull final EDataRequestSubjectType eDRSType,
               @Nonnull final IDocumentTypeIdentifier aDocTypeID)
     {
-      m_sID = sID;
-      m_sDisplayName = sDisplayName;
+      m_ePilot = ePilot;
+      m_sID = ePilot.getID () + "-" + sIDSuffix;
+      m_sDisplayName = ePilot.getDisplayName () + " - " + sDisplayNameSuffix;
       m_ePatternType = ePatternType;
       m_eDRSType = eDRSType;
       m_aDocTypeID = aDocTypeID;
+    }
+
+    @Nonnull
+    public EPilot getPilot ()
+    {
+      return m_ePilot;
     }
 
     @Nonnull
@@ -273,44 +328,48 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
   protected enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   {
-    ES ("iso6523-actorid-upis::9999:esq6250003h", "(UJI) Universitat Jaume I de Castellón", EUseCase.HIGHER_EDUCATION_DIPLOMA, "ES"),
-    PT ("iso6523-actorid-upis::9999:pt990000101", "Portuguese IST, University of Lisbon", EUseCase.HIGHER_EDUCATION_DIPLOMA, "PT"),
+    // T4.1
+    ES ("iso6523-actorid-upis::9999:esq6250003h", "(UJI) Universitat Jaume I de Castellón", "ES", EPilot.STUDYING_ABROAD),
+    PT ("iso6523-actorid-upis::9999:pt990000101", "Portuguese IST, University of Lisbon", "PT", EPilot.STUDYING_ABROAD),
     SI1 ("iso6523-actorid-upis::9999:si000000016",
          "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-         EUseCase.HIGHER_EDUCATION_DIPLOMA,
-         "SI"),
-    SI2 ("iso6523-actorid-upis::9999:si000000018", "(JSI) Institut Jozef Stefan", EUseCase.HIGHER_EDUCATION_DIPLOMA, "SI"),
+         "SI",
+         EPilot.STUDYING_ABROAD),
+    SI2 ("iso6523-actorid-upis::9999:si000000018", "(JSI) Institut Jozef Stefan", "SI", EPilot.STUDYING_ABROAD),
+    // T4.2
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
-        EUseCase.COMPANY_REGISTRATION,
-        "AT"),
-    SE ("iso6523-actorid-upis::9999:se000000013",
-        "(BVE) BOLAGSVERKET (Companies Registration Office)",
-        EUseCase.COMPANY_REGISTRATION,
-        "SE"),
+        "AT",
+        EPilot.DOING_BUSINESS_ABROAD),
+    SE ("iso6523-actorid-upis::9999:se000000013", "(BVE) BOLAGSVERKET (Companies Registration Office)", "SE", EPilot.DOING_BUSINESS_ABROAD),
     RO ("iso6523-actorid-upis::9999:ro000000006",
         "(ORNC) Oficiul National B22 Al Registrului Comertului",
-        EUseCase.COMPANY_REGISTRATION,
-        "RO"),
+        "RO",
+        EPilot.DOING_BUSINESS_ABROAD),
     NL ("iso6523-actorid-upis::9999:nl000000024",
         "(RVO) Rijksdienst voor Ondernemend Nederland (Netherlands Enterprise Agency)",
-        EUseCase.COMPANY_REGISTRATION,
-        "NL");
+        "NL",
+        EPilot.DOING_BUSINESS_ABROAD),
+    // T4.3
+    LU ("iso6523-actorid-upis::9999:lu000000025",
+        "(CTIE) Centre des Technologies de l'Information de l'Etat (State Information Technology Center)",
+        "LU",
+        EPilot.MOVING_ABROAD);
 
     private final String m_sParticipantID;
     private final String m_sDisplayName;
-    private final EnumSet <EUseCase> m_aProcesses = EnumSet.noneOf (EUseCase.class);
     private final String m_sCountryCode;
+    private final EPilot m_ePilot;
 
     EMockDataEvaluator (@Nonnull @Nonempty final String sParticipantID,
                         @Nonnull @Nonempty final String sDisplayName,
-                        @Nonnull final EUseCase eProcess,
-                        @Nonnull @Nonempty final String sCountryCode)
+                        @Nonnull @Nonempty final String sCountryCode,
+                        @Nonnull final EPilot ePilot)
     {
       m_sParticipantID = sParticipantID;
       m_sDisplayName = sDisplayName;
-      m_aProcesses.add (eProcess);
       m_sCountryCode = sCountryCode;
+      m_ePilot = ePilot;
     }
 
     @Nonnull
@@ -327,16 +386,16 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       return m_sDisplayName;
     }
 
-    public boolean supportsProcess (@Nullable final EUseCase eProcType)
-    {
-      return eProcType != null && m_aProcesses.contains (eProcType);
-    }
-
     @Nonnull
     @Nonempty
     public String getCountryCode ()
     {
       return m_sCountryCode;
+    }
+
+    public boolean supportsProcess (@Nullable final EUseCase eUseCase)
+    {
+      return eUseCase != null && eUseCase.getPilot () == m_ePilot;
     }
 
     @Nullable
@@ -348,70 +407,87 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
   protected enum EMockDataOwner implements IHasID <String>, IHasDisplayName
   {
+    // T4.1
     ES ("iso6523-actorid-upis::9999:ess2833002e",
         "(MPTFP-SGAD) Secretaría General de Administración Digital",
-        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "ES",
-        MDSPerson.builder ().id ("53377873W").firstName ("Francisco José").familyName ("Aragó Monzonís").birthday (1984, 7, 24).build (),
-        null),
+        MDSPerson.builder ()
+                 .id ("53377873W")
+                 .firstName ("Francisco José")
+                 .familyName ("Aragó Monzonís")
+                 .birthday (1984, Month.JULY, 24)
+                 .build (),
+        null,
+        EPilot.STUDYING_ABROAD,
+        EPilot.MOVING_ABROAD),
     PT ("iso6523-actorid-upis::9999:pt990000101",
         "Portuguese IST, University of Lisbon",
-        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "PT",
-        MDSPerson.builder ().id ("123456789").firstName ("Alicea").familyName ("Alves").birthday (1997, 1, 1).build (),
-        null),
+        MDSPerson.builder ().id ("123456789").firstName ("Alicea").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
+        null,
+        EPilot.STUDYING_ABROAD),
     SI ("iso6523-actorid-upis::9999:si000000016",
         "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-        EUseCase.HIGHER_EDUCATION_DIPLOMA,
         "SI",
-        MDSPerson.builder ().id ("123456").firstName ("Marjeta").familyName ("Maček").birthday (1999, 9, 16).build (),
-        null),
+        MDSPerson.builder ().id ("123456").firstName ("Marjeta").familyName ("Maček").birthday (1999, Month.SEPTEMBER, 16).build (),
+        null,
+        EPilot.STUDYING_ABROAD),
+    // T4.2
     AT ("iso6523-actorid-upis::9999:at000000271",
         "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
-        EUseCase.COMPANY_REGISTRATION,
         "AT",
         null,
-        MDSCompany.builder ().id ("???").name ("Carl-Markus Piswanger e.U.").build ()),
+        MDSCompany.builder ().id ("???").name ("Carl-Markus Piswanger e.U.").build (),
+        EPilot.DOING_BUSINESS_ABROAD),
     SE ("iso6523-actorid-upis::9999:se000000013",
         "(BVE) BOLAGSVERKET (Companies Registration Office)",
-        EUseCase.COMPANY_REGISTRATION,
         "SE",
         null,
-        MDSCompany.builder ().id ("5591674170").name ("Företag Ett AB").build ()),
+        MDSCompany.builder ().id ("5591674170").name ("Företag Ett AB").build (),
+        EPilot.DOING_BUSINESS_ABROAD),
     RO ("iso6523-actorid-upis::9999:ro000000006",
         "(ORNC) Oficiul National B22 Al Registrului Comertului",
-        EUseCase.COMPANY_REGISTRATION,
         "RO",
         null,
-        MDSCompany.builder ().id ("J40/12487/1998").name ("Regional Tris-ice Coöperatie").build ()),
+        MDSCompany.builder ().id ("J40/12487/1998").name ("Regional Tris-ice Coöperatie").build (),
+        EPilot.DOING_BUSINESS_ABROAD),
     NL ("iso6523-actorid-upis::9999:nl990000106",
         "(KVK) Chamber of Commerce of Netherlands",
-        EUseCase.COMPANY_REGISTRATION,
         "NL",
         null,
-        MDSCompany.builder ().id ("90000471").name ("ELVILA SA").build ());
+        MDSCompany.builder ().id ("90000471").name ("ELVILA SA").build (),
+        EPilot.DOING_BUSINESS_ABROAD),
+    // T4.3
+    PT2 ("iso6523-actorid-upis::9999:pt000000026",
+         "(AMA IP) Agencia para a Modernizacao Administrativa IP (Administration Modernization Agency)",
+         "PT",
+         // TODO no idea what to use here
+         MDSPerson.builder ().id ("123456789").firstName ("Alicea").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
+         null,
+         EPilot.MOVING_ABROAD);
 
     private final String m_sParticipantID;
     private final String m_sDisplayName;
-    private final EnumSet <EUseCase> m_aProcesses = EnumSet.noneOf (EUseCase.class);
     private final String m_sCountryCode;
     private final MDSPerson m_aPerson;
     private final MDSCompany m_aCompany;
+    private final ICommonsSet <EPilot> m_aPilots = new CommonsHashSet <> ();
 
     EMockDataOwner (@Nonnull @Nonempty final String sParticipantID,
                     @Nonnull @Nonempty final String sDisplayName,
-                    @Nonnull final EUseCase eProcess,
                     @Nonnull @Nonempty final String sCountryCode,
                     @Nullable final MDSPerson aPerson,
-                    @Nullable final MDSCompany aCompany)
+                    @Nullable final MDSCompany aCompany,
+                    @Nonnull final EPilot... aPilots)
     {
+      ValueEnforcer.isTrue (aPerson != null || aCompany != null, "Person or company details must be present");
       m_sParticipantID = sParticipantID;
       m_sDisplayName = sDisplayName;
-      m_aProcesses.add (eProcess);
       m_sCountryCode = sCountryCode;
       // Either or must be set
       m_aPerson = aPerson;
       m_aCompany = aCompany;
+      m_aPilots.addAll (aPilots);
     }
 
     @Nonnull
@@ -428,9 +504,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       return m_sDisplayName;
     }
 
-    public boolean supportsProcess (@Nullable final EUseCase eProcType)
+    public boolean supportsProcess (@Nullable final EUseCase eUseCase)
     {
-      return eProcType != null && m_aProcesses.contains (eProcType);
+      return eUseCase != null && m_aPilots.contains (eUseCase.getPilot ());
     }
 
     @Nonnull

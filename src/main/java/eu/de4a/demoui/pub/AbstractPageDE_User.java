@@ -664,9 +664,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     final CountryCache aCC = CountryCache.getInstance ();
     final ICommonsList <Locale> aAllowedCountries = new CommonsArrayList <> (aCC.getCountry ("AT"),
                                                                              aCC.getCountry ("ES"),
+                                                                             aCC.getCountry ("LU"),
+                                                                             aCC.getCountry ("NL"),
                                                                              aCC.getCountry ("PT"),
                                                                              aCC.getCountry ("RO"),
-                                                                             aCC.getCountry ("NL"),
                                                                              aCC.getCountry ("SI"),
                                                                              aCC.getCountry ("SE"));
 
