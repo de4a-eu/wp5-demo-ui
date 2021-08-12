@@ -205,7 +205,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
   private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE_User.class);
   private static final AjaxFunctionDeclaration AJAX_CALL_IDK;
-  private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_DATA;
+  private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_REQUEST_DATA;
 
   @Nonnull
   private static String _fixURL (@Nullable final String s)
@@ -322,7 +322,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       aAjaxResponse.json (aJson);
     });
 
-    AJAX_CALL_DOWNLOAD_DATA = addAjax ( (aRequestScope, aAjaxResponse) -> {
+    AJAX_CALL_DOWNLOAD_REQUEST_DATA = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
       final Locale aDisplayLocale = CApp.DEFAULT_LOCALE;
       // Passed via URL param
@@ -1514,9 +1514,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
 
         aForm.addFormGroup (new BootstrapFormGroup ().setCtrl (new BootstrapButton ().addChild ("Download request data as PDF")
-                                                                                     .setOnClick (AJAX_CALL_DOWNLOAD_DATA.getInvocationURL (aRequestScope)
-                                                                                                                         .add ("pattern",
-                                                                                                                               m_ePattern.getID ()))));
+                                                                                     .setOnClick (AJAX_CALL_DOWNLOAD_REQUEST_DATA.getInvocationURL (aRequestScope)
+                                                                                                                                 .add ("pattern",
+                                                                                                                                       m_ePattern.getID ()))));
 
         break;
       }
