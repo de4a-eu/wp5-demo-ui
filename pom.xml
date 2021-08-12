@@ -24,7 +24,7 @@
   </parent>
   <groupId>eu.de4a</groupId>
   <artifactId>de4a-wp5-demoui</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1.0-SNAPSHOT</version>
   <packaging>war</packaging>
   <name>de4a-wp5-demoui</name>
   <description>DE4A WP5 DemoUI to access the Mock Connector</description>
@@ -43,7 +43,7 @@
     <connection>scm:git:git@github.com:de4a-wp5/wp5-demo-ui.git</connection>
     <developerConnection>scm:git:git@github.com:de4a-wp5/wp5-demo-ui.git</developerConnection>
     <url>http://github.com/de4a-wp5/wp5-demo-ui</url>
-    <tag>HEAD</tag>
+    <tag>development</tag>
   </scm>
 
   <organization>
