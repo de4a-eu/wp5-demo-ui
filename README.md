@@ -22,3 +22,9 @@ Prerequisites
 5. Open your browser and locate `http://localhost:8888`
 6. Select the parameters and press `Send Mock request`
 7. Inspect the message and the results
+
+## Releases
+
+This application is work in progress so it doesn't contain too many releases.
+They are only created for specific circumstances.
+* v0.1.0 - marks the version indicates as "working" for "Iteration 1"
