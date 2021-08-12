@@ -76,6 +76,7 @@ import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
+import com.helger.datetime.util.PDTIOHelper;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
@@ -135,6 +136,7 @@ import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
+import com.helger.photon.uictrls.famfam.EFamFamIcon;
 import com.helger.scope.singleton.AbstractSessionSingleton;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
@@ -205,7 +207,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
   private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE_User.class);
   private static final AjaxFunctionDeclaration AJAX_CALL_IDK;
-  private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_DATA;
+  private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_REQUEST_DATA;
 
   @Nonnull
   private static String _fixURL (@Nullable final String s)
@@ -322,7 +324,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       aAjaxResponse.json (aJson);
     });
 
-    AJAX_CALL_DOWNLOAD_DATA = addAjax ( (aRequestScope, aAjaxResponse) -> {
+    AJAX_CALL_DOWNLOAD_REQUEST_DATA = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
       final Locale aDisplayLocale = CApp.DEFAULT_LOCALE;
       // Passed via URL param
@@ -458,7 +460,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                             .setDocumentCreationDateTime (PDTFactory.getCurrentLocalDateTime ())
                             .setDocumentTitle (sTitle)
                             .renderTo (aBAOS);
-        aAjaxResponse.pdf (aBAOS, "de4a-request-preview.pdf");
+        aAjaxResponse.pdf (aBAOS, "de4a-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
       }
 
       LOGGER.info ("Finished rendering PDF");
@@ -1513,10 +1515,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setHelpText ("You need to give your explicit consent here to proceed")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
 
+        EFamFamIcon.registerResourcesForThisRequest ();
         aForm.addFormGroup (new BootstrapFormGroup ().setCtrl (new BootstrapButton ().addChild ("Download request data as PDF")
-                                                                                     .setOnClick (AJAX_CALL_DOWNLOAD_DATA.getInvocationURL (aRequestScope)
-                                                                                                                         .add ("pattern",
-                                                                                                                               m_ePattern.getID ()))));
+                                                                                     .setIcon (EFamFamIcon.PAGE_WHITE_ACROBAT)
+                                                                                     .setOnClick (AJAX_CALL_DOWNLOAD_REQUEST_DATA.getInvocationURL (aRequestScope)
+                                                                                                                                 .add ("pattern",
+                                                                                                                                       m_ePattern.getID ()))));
 
         break;
       }
