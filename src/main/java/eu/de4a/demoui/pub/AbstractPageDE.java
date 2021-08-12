@@ -423,7 +423,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     PT ("iso6523-actorid-upis::9999:pt990000101",
         "Portuguese IST, University of Lisbon",
         "PT",
-        MDSPerson.builder ().id ("123456789").firstName ("Alicea").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
+        MDSPerson.builder ().id ("123456789").firstName ("Alice").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
         null,
         EPilot.STUDYING_ABROAD),
     SI ("iso6523-actorid-upis::9999:si000000016",
@@ -462,7 +462,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
          "(AMA IP) Agencia para a Modernizacao Administrativa IP (Administration Modernization Agency)",
          "PT",
          // TODO no idea what to use here
-         MDSPerson.builder ().id ("123456789").firstName ("Alicea").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
+         MDSPerson.builder ().id ("123456789").firstName ("Alice").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
          null,
          EPilot.MOVING_ABROAD);
 
