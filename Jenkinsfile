@@ -20,8 +20,9 @@ pipeline {
 
         stage('Build'){
             when{
-                branch 'main'
-                branch pattern: 'iteration\\d+', comparator: 'REGEXP'
+		anyOf {
+		    branch 'main'; branch pattern: 'iteration\\d+', comparator: 'REGEXP'
+		}
             }
             agent {
                 docker {
