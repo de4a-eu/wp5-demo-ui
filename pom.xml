@@ -65,6 +65,20 @@
     <m2e.jpa.activation>false</m2e.jpa.activation>
     <m2e.jsf.activation>false</m2e.jsf.activation>
   </properties>
+
+  <!-- New staging repository -->
+  <distributionManagement>
+    <snapshotRepository>
+      <!-- Username/password must be in settings.xml -->
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+    </snapshotRepository>
+    <repository>
+      <!-- Username/password must be in settings.xml -->
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
   
   <dependencyManagement>
     <dependencies>
