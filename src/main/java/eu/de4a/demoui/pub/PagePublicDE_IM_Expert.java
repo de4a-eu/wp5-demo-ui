@@ -65,6 +65,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
@@ -94,7 +95,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.PT.getID ());
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_PT.getParticipantID ());
       aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
       aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
     }
@@ -106,7 +107,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         if (aDemoRequest.getDataRequestSubject ().getDataSubjectCompany () != null)
           break;
       }
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.AT.getID ());
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
       aDemoRequest.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("AT/NL/???");
       aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
     }

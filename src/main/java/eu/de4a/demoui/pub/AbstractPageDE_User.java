@@ -146,6 +146,7 @@ import eu.de4a.demoui.api.APIExecutorPostUSIRedirectResponse;
 import eu.de4a.demoui.api.DemoUIAPI;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
 import eu.de4a.demoui.model.RedirectResponseMap;
@@ -184,11 +185,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   // Select process
   private static final String FIELD_PROCESS = "process";
   // Select DE
-  private static final String FIELD_DE_ID = "de_id";
+  private static final String FIELD_DE_PID = "de_id";
   private static final String FIELD_DE_NAME = "de_name";
   private static final String FIELD_DE_COUNTRY_CODE = "de_cc";
   // Select DO
-  private static final String FIELD_DO_ID = "do_id";
+  private static final String FIELD_DO_PID = "do_id";
   private static final String FIELD_DO_NAME = "do_name";
   private static final String FIELD_DO_COUNTRY_CODE = "do_cc";
   private static final String FIELD_DO_REDIRECT_URL = "do_rurl";
@@ -363,7 +364,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final PLTable aInnerTable = new PLTable (aCol1, aCol2);
         aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
                             new PLTableCell (new PLText (aState.getDataEvaluatorName (), r10)));
-        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataEvaluatorID ())));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataEvaluatorPID ())));
         final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
@@ -378,7 +379,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       {
         final PLTable aInnerTable = new PLTable (aCol1, aCol2);
         aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)), new PLTableCell (new PLText (aState.getDataOwnerName (), r10)));
-        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataOwnerID ())));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataOwnerPID ())));
         final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
@@ -651,9 +652,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
 
     @Nullable
-    public String getDataEvaluatorID ()
+    public String getDataEvaluatorPID ()
     {
-      return m_aDE == null ? null : m_aDE.getID ();
+      return m_aDE == null ? null : m_aDE.getPID ();
     }
 
     @Nullable
@@ -669,9 +670,9 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
 
     @Nullable
-    public String getDataOwnerID ()
+    public String getDataOwnerPID ()
     {
-      return m_aDO == null ? null : m_aDO.getID ();
+      return m_aDO == null ? null : m_aDO.getPID ();
     }
 
     @Nullable
@@ -721,13 +722,13 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       aRequest.setProcedureId ("ProcedureId");
       {
         final AgentType aDE = new AgentType ();
-        aDE.setAgentUrn (m_aDE.getID ());
+        aDE.setAgentUrn (m_aDE.getPID ());
         aDE.setAgentName (m_aDE.getName ());
         aRequest.setDataEvaluator (aDE);
       }
       {
         final AgentType aDO = new AgentType ();
-        aDO.setAgentUrn (m_aDO.getID ());
+        aDO.setAgentUrn (m_aDO.getPID ());
         aDO.setAgentName (m_aDO.getName ());
         aRequest.setDataOwner (aDO);
       }
@@ -865,12 +866,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         }
         case SELECT_DATA_EVALUATOR:
         {
-          final String sDEID = aWPEC.params ().getAsStringTrimmed (FIELD_DE_ID, aState.getDataEvaluatorID ());
+          final String sDEPID = aWPEC.params ().getAsStringTrimmed (FIELD_DE_PID, aState.getDataEvaluatorPID ());
           final String sDEName = aWPEC.params ().getAsStringTrimmed (FIELD_DE_NAME, aState.getDataEvaluatorName ());
           final String sDECC = aWPEC.params ().getAsStringTrimmed (FIELD_DE_COUNTRY_CODE, aState.getDataEvaluatorCountryCode ());
 
-          if (StringHelper.hasNoText (sDEID))
-            aFormErrors.addFieldError (FIELD_DE_ID, "A Data Evaluator ID is needed");
+          if (StringHelper.hasNoText (sDEPID))
+            aFormErrors.addFieldError (FIELD_DE_PID, "A Data Evaluator ID is needed");
 
           if (StringHelper.hasNoText (sDEName))
             aFormErrors.addFieldError (FIELD_DE_NAME, "A Data Evaluator name is needed");
@@ -883,19 +884,19 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
           if (aFormErrors.isEmpty ())
           {
-            aState.m_aDE = Agent.builder ().id (sDEID).name (sDEName).countryCode (sDECC).build ();
+            aState.m_aDE = Agent.builder ().pid (sDEPID).name (sDEName).countryCode (sDECC).build ();
           }
           break;
         }
         case SELECT_DATA_OWNER:
         {
-          final String sDOID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_ID, aState.getDataOwnerID ());
+          final String sDOPID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_PID, aState.getDataOwnerPID ());
           final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
           final String sDOCC = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
           final String sDORedirectURL = aWPEC.params ().getAsStringTrimmed (FIELD_DO_REDIRECT_URL, aState.getDataOwnerRedirectURL ());
 
-          if (StringHelper.hasNoText (sDOID))
-            aFormErrors.addFieldError (FIELD_DO_ID, "A Data Owner ID is needed");
+          if (StringHelper.hasNoText (sDOPID))
+            aFormErrors.addFieldError (FIELD_DO_PID, "A Data Owner ID is needed");
 
           if (StringHelper.hasNoText (sDOName))
             aFormErrors.addFieldError (FIELD_DO_NAME, "A Data Owner name is needed");
@@ -917,7 +918,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
           if (aFormErrors.isEmpty ())
           {
-            aState.m_aDO = Agent.builder ().id (sDOID).name (sDOName).countryCode (sDOCC).redirectURL (sDORedirectURL).build ();
+            aState.m_aDO = Agent.builder ().pid (sDOPID).name (sDOName).countryCode (sDOCC).redirectURL (sDORedirectURL).build ();
           }
           break;
         }
@@ -1073,7 +1074,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final JSVar jElementCC = jFuncSetDE.param ("ecc");
         final JSArray jMDE = new JSArray ();
         for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
-          jMDE.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+          jMDE.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
         final JSVar jArray = jFuncSetDE.body ().var ("array", jMDE);
         final JSVar jCallbackParam = new JSVar ("x");
         final JSVar jFound = jFuncSetDE.body ()
@@ -1094,7 +1095,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final JSVar jElementCC = jFuncSetDO.param ("ecc");
         final JSArray jMDO = new JSArray ();
         for (final EMockDataOwner e : EMockDataOwner.values ())
-          jMDO.add (new JSAssocArray ().add ("id", e.getID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+          jMDO.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
         final JSVar jArray = jFuncSetDO.body ().var ("array", jMDO);
         final JSVar jCallbackParam = new JSVar ("x");
         final JSVar jFound = jFuncSetDO.body ()
@@ -1130,10 +1131,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       case SELECT_DATA_EVALUATOR:
       {
-        final HCExtSelect aMockDESelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorID ()));
+        final HCExtSelect aMockDESelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorPID ()));
         for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
                                                                       IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsProcess (aState.m_eUseCase))
+          if (e.supportsUseCase (aState.m_eUseCase))
             aMockDESelect.addOption (e.getID (), e.getDisplayName ());
         aMockDESelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aMockDESelect));
@@ -1155,10 +1156,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE_NAME)));
 
         // ID
-        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DE_ID, aState.getDataEvaluatorID ())).ensureID ();
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DE_PID, aState.getDataEvaluatorPID ())).ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator ID")
                                                      .setCtrl (aEditID)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_ID)));
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DE_PID)));
 
         // JS
         final JSPackage aJSOnChange = new JSPackage ();
@@ -1227,10 +1228,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Check to use Mock DO, uncheck to use IDK").setCtrl (aCB));
 
         // Mock DO
-        final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerID ()));
+        final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerPID ()));
         for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
                                                                   IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsProcess (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorID ()))
+          if (e.supportsUseCase (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorPID ()))
             aMockDOSelect.addOption (e.getID (), e.getDisplayName ());
         aMockDOSelect.addOptionPleaseSelect (aDisplayLocale);
         aMockDOSelect.setDisabled (!bUseMockDO);
@@ -1254,10 +1255,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
 
         // ID
-        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_ID, aState.getDataOwnerID ())).ensureID ().setReadOnly (!bUseMockDO);
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_PID, aState.getDataOwnerPID ())).ensureID ().setReadOnly (!bUseMockDO);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
                                                      .setCtrl (aEditID)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_ID)));
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_PID)));
 
         // Redirect URL (USI only)
         HCEdit aEditRedirectURL = null;
@@ -1272,7 +1273,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
         // JS
         {
-          // Checkbox
+          // Checkbox - input fields writable or read-only
           final JSPackage aJSHandler = new JSPackage ();
           final JSVar jChecked = aJSHandler.var ("c", JQuery.idRef (aCB).propChecked ());
           aJSHandler.add (JQuery.idRef (aMockDOSelect).setDisabled (jChecked.not ()));
@@ -1284,7 +1285,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         }
 
         {
-          // Mock DO
+          // Mock DO - set values from enum
           final JSPackage aJSOnChange = new JSPackage ();
           final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
           final JSConditional jIf = aJSOnChange._if (jChecked);
@@ -1298,11 +1299,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         }
 
         {
-          // Country select
+          // Country select - call IDK
           final JSPackage aJSOnChange = new JSPackage ();
           final JSVar jChecked = aJSOnChange.var ("c", JQuery.idRef (aCB).propChecked ());
           final JSBlock jIf = aJSOnChange._if (jChecked.not ())._then ();
 
+          // Fill with values
           final JSAnonymousFunction jsSetValues = new JSAnonymousFunction ();
           {
             final JSVar aJSAppendData = jsSetValues.param ("data");
@@ -1311,17 +1313,19 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             if (aEditRedirectURL != null)
               jsSetValues.body ().add (JQuery.idRef (aEditRedirectURL).val (aJSAppendData.ref ("redirecturl")));
           }
-          final JSAnonymousFunction jsSeEmpty = new JSAnonymousFunction ();
+
+          // Set empty values
+          final JSAnonymousFunction jsSetEmpty = new JSAnonymousFunction ();
           {
-            jsSeEmpty.body ().add (JQuery.idRef (aEditName).val (""));
-            jsSeEmpty.body ().add (JQuery.idRef (aEditID).val (""));
+            jsSetEmpty.body ().add (JQuery.idRef (aEditName).val (""));
+            jsSetEmpty.body ().add (JQuery.idRef (aEditID).val (""));
             if (aEditRedirectURL != null)
-              jsSeEmpty.body ().add (JQuery.idRef (aEditRedirectURL).val (""));
+              jsSetEmpty.body ().add (JQuery.idRef (aEditRedirectURL).val (""));
           }
           jIf.add (new JQueryAjaxBuilder ().url (AJAX_CALL_IDK.getInvocationURI (aRequestScope))
                                            .data (new JSAssocArray ().add ("cc", JQuery.idRef (aCountrySelect).val ()))
                                            .success (jsSetValues)
-                                           .error (jsSeEmpty)
+                                           .error (jsSetEmpty)
                                            .build ());
           aCountrySelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
         }
@@ -1338,7 +1342,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                   aState.m_eUseCase.getDisplayName () +
                                   " requires a person as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerPID ());
 
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
@@ -1387,7 +1391,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                   aState.m_eUseCase.getDisplayName () +
                                   " requires a company as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerPID ());
 
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
@@ -1446,7 +1450,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
           final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
           t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataEvaluatorName ());
-          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorID ()));
+          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorPID ()));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
            .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale) : aState.getDataEvaluatorCountryCode ());
@@ -1457,7 +1461,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
           final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
           t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataOwnerName ());
-          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerID ()));
+          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerPID ()));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
            .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
