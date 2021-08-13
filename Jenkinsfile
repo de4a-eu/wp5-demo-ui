@@ -68,7 +68,7 @@ pipeline {
                     def img
                     img = docker.build('de4a/demo-ui','--build-arg VERSION=$VERSION .')
                     docker.withRegistry('','docker-hub-token') {
-                        img.push('${env.BRANCH_NAME}')
+                        img.push("${env.BRANCH_NAME}")
                         img.push('$VERSION')
                     }
                 }
