@@ -20,9 +20,9 @@ pipeline {
 
         stage('Build'){
             when{
-		anyOf {
-		    branch 'main'; branch pattern: 'iteration\\d+', comparator: 'REGEXP'
-		}
+                anyOf {
+                    branch 'main'; branch pattern: 'iteration\\d+', comparator: 'REGEXP'
+                }
             }
             agent {
                 docker {
@@ -51,6 +51,25 @@ pipeline {
                             img.push('latest')
                             img.push('$VERSION')
                         }
+                    }
+                }
+            }
+        }
+        stage('Docker iteration') {
+            when{
+                branch pattern: 'iteration\\d+', comparator: 'REGEXP'
+            }
+            agent { label 'master' }
+            environment {
+                VERSION=readMavenPom().getVersion()
+            }
+            steps {
+                script{
+                    def img
+                    img = docker.build('de4a/demo-ui','--build-arg VERSION=$VERSION .')
+                    docker.withRegistry('','docker-hub-token') {
+                        img.push('${env.BRANCH_NAME}')
+                        img.push('$VERSION')
                     }
                 }
             }
