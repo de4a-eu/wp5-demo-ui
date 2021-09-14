@@ -1129,6 +1129,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       case SELECT_DATA_EVALUATOR:
       {
+        // Mock DE
         final HCExtSelect aMockDESelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorPID ()));
         for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
                                                                       IHasDisplayName.getComparatorCollating (aDisplayLocale)))
@@ -1252,7 +1253,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerPID ()));
         for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
                                                                   IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsUseCase (aState.getUseCase ()) && !e.getParticipantID ().equals (aState.getDataEvaluatorPID ()))
+          if (e.supportsPilot (aState.getPilot ()) && !e.getParticipantID ().equals (aState.getDataEvaluatorPID ()))
             aMockDOSelect.addOption (e.getID (), e.getDisplayName ());
         aMockDOSelect.addOptionPleaseSelect (aDisplayLocale);
         aMockDOSelect.setDisabled (!bUseMockDO);
@@ -1283,7 +1284,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DO_PID)));
 
         // Redirect URL (USI only)
-        HCEdit aEditRedirectURL = null;
+        final HCEdit aEditRedirectURL;
         if (m_ePattern == EPatternType.USI)
         {
           aEditRedirectURL = new HCEdit (new RequestField (FIELD_DO_REDIRECT_URL,
@@ -1292,6 +1293,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                        .setCtrl (aEditRedirectURL)
                                                        .setErrorList (aFormErrors.getListOfField (FIELD_DO_REDIRECT_URL)));
         }
+        else
+          aEditRedirectURL = null;
 
         // JS
         {
@@ -1312,9 +1315,15 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           final JSVar jElementID = jFuncSetDO.param ("eid");
           final JSVar jElementName = jFuncSetDO.param ("en");
           final JSVar jElementCC = jFuncSetDO.param ("ecc");
+          final JSVar jElementRedirectUrl = jFuncSetDO.param ("eru");
           final JSArray jMDO = new JSArray ();
           for (final EMockDataOwner e : EMockDataOwner.values ())
-            jMDO.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+          {
+            jMDO.add (new JSAssocArray ().add ("id", e.getParticipantID ())
+                                         .add ("n", e.getDisplayName ())
+                                         .add ("cc", e.getCountryCode ())
+                                         .add ("ru", e.getUSIRedirectURL ()));
+          }
           final JSVar jArray = jFuncSetDO.body ().var ("array", jMDO);
           final JSVar jCallbackParam = new JSVar ("x");
           final JSVar jFound = jFuncSetDO.body ()
@@ -1327,6 +1336,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
           jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
           jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
+          jIfFound._if (jElementRedirectUrl)._then ().add (JQuery.idRef (jElementRedirectUrl).val (jFound.component ("ru")));
         }
 
         {
@@ -1339,7 +1349,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                              .arg (JSHtml.getSelectSelectedValue ())
                              .arg (aEditID.getID ())
                              .arg (aEditName.getID ())
-                             .arg (aCountrySelect.getID ()));
+                             .arg (aCountrySelect.getID ())
+                             .arg (aEditRedirectURL != null ? aEditRedirectURL.getID () : null));
           aMockDOSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
         }
 
@@ -1387,7 +1398,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                   aState.getUseCase ().getDisplayName () +
                                   " requires a person as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
             if (eMockDO == null)
               LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
 
@@ -1438,7 +1449,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                   aState.getUseCase ().getDisplayName () +
                                   " requires a company as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
             if (eMockDO == null)
               LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
 
