@@ -38,6 +38,7 @@ import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -256,9 +257,13 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   {
     AJAX_CALL_IDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
+
+      // Build the request
       final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
       aReq.setCanonicalEvidenceTypeId (aState.getUseCase ().getDocumentTypeID ().getURIEncoded ());
       aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
+
+      // Serialize to XML
       final String sPayload = DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
 
       if (LOGGER.isInfoEnabled ())
@@ -266,6 +271,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
       ResponseLookupRoutingInformationType aResponse = null;
       String sErrorMsg = null;
+
+      // Prepare the HTTP POST call
       final HttpClientSettings aHCS = new HttpClientSettings ();
       try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
       {
@@ -282,11 +289,14 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
         final HttpPost aPost = new HttpPost (sTargetURL);
         aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+
+        // Main execute
         final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
         if (LOGGER.isInfoEnabled ())
           LOGGER.info ("IDK response:\n" + new String (aResponseBytes, StandardCharsets.UTF_8));
 
+        // Evaluate the response XML and parse it
         aResponse = DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ().read (aResponseBytes);
         if (aResponse == null)
           sErrorMsg = "Failed to parse " + aResponseBytes.length + " response bytes as ResponseLookupRoutingInformationType";
@@ -296,6 +306,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         LOGGER.error ("Failed to query IDK", ex);
         sErrorMsg = ex.getClass ().getName () + " - " + ex.getMessage ();
       }
+
+      // Build the AJAX request response
       final IJsonObject aJson = new JsonObject ();
       if (aResponse == null || aResponse.getErrorList () != null)
       {
@@ -339,6 +351,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       if (LOGGER.isInfoEnabled ())
         LOGGER.info ("Out: " + aJson.getAsJsonString (JsonWriterSettings.DEFAULT_SETTINGS_FORMATTED));
 
+      // Put the response to the AJAX response
       aAjaxResponse.json (aJson);
     });
 
@@ -349,6 +362,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       final EPatternType ePattern = EPatternType.getFromIDOrNull (aRequestScope.params ().getAsString ("pattern"));
       LOGGER.info ("Trying to download request data as PDF for " + ePattern + " pattern");
 
+      // Create the PDF on the fly
       final FontSpec c10 = new FontSpec (PreloadFont.MONOSPACE, 10);
       final FontSpec r10 = new FontSpec (PreloadFont.REGULAR, 10);
       final FontSpec r10i = new FontSpec (PreloadFont.REGULAR_ITALIC, 10);
@@ -485,6 +499,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     });
   }
 
+  /**
+   * Defines the different steps of the wizard
+   *
+   * @author Philip Helger
+   */
   private enum EStep
   {
     // Order matters
@@ -554,11 +573,18 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
   }
 
+  /**
+   * Defines the per-session state of this page
+   *
+   * @author Philip Helger
+   */
   public static final class SessionState extends AbstractSessionSingleton
   {
+    private static final Supplier <String> NEW_REQUEST_ID_PROVIDER = () -> UUID.randomUUID ().toString ();
+
     private EPatternType m_ePattern;
     private EStep m_eStep = EStep.first ();
-    private String m_sRequestID = UUID.randomUUID ().toString ();
+    private String m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
 
     // use case
     private EUseCase m_eUseCase;
@@ -658,7 +684,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     public void reset ()
     {
       m_eStep = EStep.first ();
-      m_sRequestID = UUID.randomUUID ().toString ();
+      m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
       _onBack ();
     }
 
