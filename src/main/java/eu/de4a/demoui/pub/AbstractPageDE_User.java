@@ -166,7 +166,6 @@ import eu.de4a.iem.jaxb.common.types.ErrorListType;
 import eu.de4a.iem.jaxb.common.types.ErrorType;
 import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
 import eu.de4a.iem.jaxb.common.types.ProvisionItemType;
-import eu.de4a.iem.jaxb.common.types.ProvisionType;
 import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
@@ -331,23 +330,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       else
       {
-        // Use the first one with a redirect URL
-        // Fallback to index 0
-        final SourceType aSource = CollectionHelper.findFirst (aResponse.getAvailableSources ().getSource (),
-                                                               x -> x.getProvisionItems ()
-                                                                     .getProvisionItemAtIndex (0)
-                                                                     .getProvision () != null &&
-                                                                    StringHelper.hasText (x.getProvisionItems ()
-                                                                                           .getProvisionItemAtIndex (0)
-                                                                                           .getProvision ()
-                                                                                           .getRedirectURL ()),
-                                                               aResponse.getAvailableSources ().getSourceAtIndex (0));
+        // Use the first one
+        final SourceType aSource = aResponse.getAvailableSources ().getSourceAtIndex (0);
 
         final ProvisionItemType aPI = aSource.getProvisionItems ().getProvisionItemAtIndex (0);
         aJson.add ("id", aPI.getDataOwnerId ().toLowerCase (Locale.ROOT));
         aJson.add ("name", aPI.getDataOwnerPrefLabel ());
-        final ProvisionType aP = aPI.getProvision ();
-        aJson.add ("redirecturl", aP != null ? _fixURL (aP.getRedirectURL ()) : "");
       }
 
       if (LOGGER.isInfoEnabled ())
