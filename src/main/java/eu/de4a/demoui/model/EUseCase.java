@@ -84,6 +84,9 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
     m_aDocTypeID = aDocTypeID;
   }
 
+  /**
+   * @return The underlying pilot area. Never <code>null</code>.
+   */
   @Nonnull
   public EPilot getPilot ()
   {
@@ -104,18 +107,28 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
     return m_sDisplayName;
   }
 
+  /**
+   * @return The exchange pattern type. Never <code>null</code>.
+   */
   @Nonnull
   public EPatternType getPatternType ()
   {
     return m_ePatternType;
   }
 
+  /**
+   * @return The date request subject type. Never <code>null</code>.
+   */
   @Nonnull
   public EDataRequestSubjectType getDRSType ()
   {
     return m_eDRSType;
   }
 
+  /**
+   * @return The document type identifier used for the exchange. Never
+   *         <code>null</code>.
+   */
   @Nonnull
   public IDocumentTypeIdentifier getDocumentTypeID ()
   {

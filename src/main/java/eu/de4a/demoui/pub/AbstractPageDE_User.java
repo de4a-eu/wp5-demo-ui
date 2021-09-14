@@ -58,7 +58,9 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
 import com.helger.commons.collection.impl.CommonsArrayList;
+import com.helger.commons.collection.impl.CommonsTreeSet;
 import com.helger.commons.collection.impl.ICommonsList;
+import com.helger.commons.collection.impl.ICommonsSortedSet;
 import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.error.IError;
@@ -146,6 +148,7 @@ import eu.de4a.demoui.api.APIExecutorPostUSIRedirectResponse;
 import eu.de4a.demoui.api.DemoUIAPI;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
@@ -182,8 +185,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   private static final String DIRECTION_NEXT = "next";
   private static final String DIRECTION_RESET = "reset";
 
-  // Select process
-  private static final String FIELD_PROCESS = "process";
+  // Select use case
+  private static final String FIELD_USE_CASE = "usecase";
   // Select DE
   private static final String FIELD_DE_PID = "de_id";
   private static final String FIELD_DE_NAME = "de_name";
@@ -210,16 +213,30 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   private static final AjaxFunctionDeclaration AJAX_CALL_IDK;
   private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_REQUEST_DATA;
 
+  // All country codes for which mock data is available
+  private static final ICommonsList <Locale> ALLOWED_COUNTRIES;
+  static
+  {
+    // Get from all Mock DE and DO
+    final ICommonsSortedSet <String> aAllCCs = new CommonsTreeSet <> ();
+    for (final EMockDataEvaluator aDE : EMockDataEvaluator.values ())
+      aAllCCs.add (aDE.getCountryCode ());
+    for (final EMockDataOwner aDO : EMockDataOwner.values ())
+      aAllCCs.add (aDO.getCountryCode ());
+
+    final CountryCache aCC = CountryCache.getInstance ();
+    ALLOWED_COUNTRIES = new CommonsArrayList <> (aAllCCs.size ());
+    for (final String s : aAllCCs)
+      ALLOWED_COUNTRIES.add (aCC.getCountry (s));
+  }
+
   @Nonnull
   private static String _fixURL (@Nullable final String s)
   {
     if (s == null)
       return "";
-    // TODO typo in example URLs
-    String ret = s;
-    if (ret.endsWith ("?requestId={requestId}&backUrl={backUrl}"))
-      ret = ret.substring (0, ret.length () - "?requestId={requestId}&backUrl={backUrl}".length ());
-    return ret;
+    // No change needed atm
+    return s;
   }
 
   @Nonnull
@@ -240,7 +257,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     AJAX_CALL_IDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
       final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
-      aReq.setCanonicalEvidenceTypeId (aState.m_eUseCase.getDocumentTypeID ().getURIEncoded ());
+      aReq.setCanonicalEvidenceTypeId (aState.getUseCase ().getDocumentTypeID ().getURIEncoded ());
       aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
       final String sPayload = DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
 
@@ -355,7 +372,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       // Evidence type
       final PLTable aTable = new PLTable (aCol1, aCol2).setMargin (fMargin);
       aTable.addAndReturnRow (new PLTableCell (new PLText ("Canonical Evidence Type:", r10)),
-                              new PLTableCell (new PLText (aState.m_eUseCase.getDisplayName (), r10)))
+                              new PLTableCell (new PLText (aState.getUseCase ().getDisplayName (), r10)))
             .setMarginTop (fMargin)
             .setMarginBottom (fMargin);
 
@@ -397,7 +414,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
 
       // DRS
-      switch (aState.m_eUseCase.getDRSType ())
+      switch (aState.getUseCase ().getDRSType ())
       {
         case PERSON:
         {
@@ -471,7 +488,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   private enum EStep
   {
     // Order matters
-    SELECT_PROCESS,
+    SELECT_USE_CASE,
     SELECT_DATA_EVALUATOR,
     SELECT_DATA_OWNER,
     SELECT_DATA_REQUEST_SUBJECT,
@@ -543,21 +560,21 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     private EStep m_eStep = EStep.first ();
     private String m_sRequestID = UUID.randomUUID ().toString ();
 
-    // Process
-    EUseCase m_eUseCase;
+    // use case
+    private EUseCase m_eUseCase;
     // DE
-    Agent m_aDE;
+    private Agent m_aDE;
     // DO
-    Agent m_aDO;
+    private Agent m_aDO;
     // DRS
-    MDSCompany m_aDRSCompany;
-    MDSPerson m_aDRSPerson;
+    private MDSCompany m_aDRSCompany;
+    private MDSPerson m_aDRSPerson;
     // Consent to send this
-    RequestTransferEvidenceUSIIMDRType m_aRequest;
-    String m_sTargetURL;
-    boolean m_bConfirmedToSend;
+    private RequestTransferEvidenceUSIIMDRType m_aRequest;
+    private String m_sTargetURL;
+    private boolean m_bConfirmedToSend;
     // Response received
-    ResponseTransferEvidenceType m_aResponseIM;
+    public ResponseTransferEvidenceType m_aResponseIM;
     public ResponseErrorType m_aResponseUSI;
 
     @Deprecated
@@ -589,7 +606,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         }
 
       if (m_eUseCase == null)
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_PROCESS);
+        m_eStep = EStep.min (m_eStep, EStep.SELECT_USE_CASE);
       if (m_aDE == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_EVALUATOR);
       if (m_aDO == null)
@@ -602,7 +619,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
     private void _onBack ()
     {
-      if (m_eStep.isLT (EStep.SELECT_PROCESS))
+      if (m_eStep.isLT (EStep.SELECT_USE_CASE))
         m_eUseCase = null;
       if (m_eStep.isLT (EStep.SELECT_DATA_EVALUATOR))
         m_aDE = null;
@@ -646,7 +663,19 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
 
     @Nullable
-    public String getProcessID ()
+    public EPilot getPilot ()
+    {
+      return m_eUseCase == null ? null : m_eUseCase.getPilot ();
+    }
+
+    @Nullable
+    public EUseCase getUseCase ()
+    {
+      return m_eUseCase;
+    }
+
+    @Nullable
+    public String getUseCaseID ()
     {
       return m_eUseCase == null ? null : m_eUseCase.getID ();
     }
@@ -831,36 +860,26 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
     }
 
-    final CountryCache aCC = CountryCache.getInstance ();
-    final ICommonsList <Locale> aAllowedCountries = new CommonsArrayList <> (aCC.getCountry ("AT"),
-                                                                             aCC.getCountry ("ES"),
-                                                                             aCC.getCountry ("LU"),
-                                                                             aCC.getCountry ("NL"),
-                                                                             aCC.getCountry ("PT"),
-                                                                             aCC.getCountry ("RO"),
-                                                                             aCC.getCountry ("SI"),
-                                                                             aCC.getCountry ("SE"));
-
     // Grab input parameters
     final FormErrorList aFormErrors = new FormErrorList ();
     final boolean bIsSubmitted = bGoBack || bGoNext;
     if (bGoNext)
       switch (aState.step ())
       {
-        case SELECT_PROCESS:
+        case SELECT_USE_CASE:
         {
-          final String sProcessID = aWPEC.params ().getAsStringTrimmed (FIELD_PROCESS, aState.getProcessID ());
-          final EUseCase eProcess = EUseCase.getFromIDOrNull (sProcessID);
+          final String sUseCaseID = aWPEC.params ().getAsStringTrimmed (FIELD_USE_CASE, aState.getUseCaseID ());
+          final EUseCase eUseCase = EUseCase.getFromIDOrNull (sUseCaseID);
 
-          if (StringHelper.hasNoText (sProcessID))
-            aFormErrors.addFieldError (FIELD_PROCESS, "Select a process");
+          if (StringHelper.hasNoText (sUseCaseID))
+            aFormErrors.addFieldError (FIELD_USE_CASE, "Select a use case");
           else
-            if (eProcess == null)
-              aFormErrors.addFieldError (FIELD_PROCESS, "Select valid a process");
+            if (eUseCase == null)
+              aFormErrors.addFieldError (FIELD_USE_CASE, "Select valid a use case");
 
           if (aFormErrors.isEmpty ())
           {
-            aState.m_eUseCase = eProcess;
+            aState.m_eUseCase = eUseCase;
           }
           break;
         }
@@ -924,7 +943,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         }
         case SELECT_DATA_REQUEST_SUBJECT:
         {
-          switch (aState.m_eUseCase.getDRSType ())
+          switch (aState.getUseCase ().getDRSType ())
           {
             case PERSON:
             {
@@ -1056,69 +1075,20 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     if (aFormErrors.isNotEmpty ())
       aForm.addChild (getUIHandler ().createIncorrectInputBox (aWPEC));
 
-    // Show the current process as H2
-    if (aState.step ().isGT (EStep.SELECT_PROCESS))
-      aForm.addChild (h2 ("Running use case " + aState.m_eUseCase.getDisplayName ()));
+    // Show the current use case as H2
+    if (aState.step ().isGT (EStep.SELECT_USE_CASE))
+      aForm.addChild (h2 ("Running use case " + aState.getUseCase ().getDisplayName ()));
 
-    // Add some global JS
-    final JSFunction jFuncSetDE;
-    final JSFunction jFuncSetDO;
-    {
-      final HCScriptInline aScript = new HCScriptInline ();
-      final JSPackage aJS = new JSPackage ();
-      jFuncSetDE = aJS.function ("_setMDE");
-      {
-        final JSVar jID = jFuncSetDE.param ("id");
-        final JSVar jElementID = jFuncSetDE.param ("eid");
-        final JSVar jElementName = jFuncSetDE.param ("en");
-        final JSVar jElementCC = jFuncSetDE.param ("ecc");
-        final JSArray jMDE = new JSArray ();
-        for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
-          jMDE.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
-        final JSVar jArray = jFuncSetDE.body ().var ("array", jMDE);
-        final JSVar jCallbackParam = new JSVar ("x");
-        final JSVar jFound = jFuncSetDE.body ()
-                                       .var ("f",
-                                             jArray.invoke ("find")
-                                                   .arg (new JSAnonymousFunction (jCallbackParam,
-                                                                                  new JSReturn (jID.eq (jCallbackParam.ref ("id"))))));
-        final JSBlock jIfFound = jFuncSetDE.body ()._if (jFound)._then ();
-        jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
-        jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
-        jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
-      }
-      jFuncSetDO = aJS.function ("_setMDO");
-      {
-        final JSVar jID = jFuncSetDO.param ("id");
-        final JSVar jElementID = jFuncSetDO.param ("eid");
-        final JSVar jElementName = jFuncSetDO.param ("en");
-        final JSVar jElementCC = jFuncSetDO.param ("ecc");
-        final JSArray jMDO = new JSArray ();
-        for (final EMockDataOwner e : EMockDataOwner.values ())
-          jMDO.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
-        final JSVar jArray = jFuncSetDO.body ().var ("array", jMDO);
-        final JSVar jCallbackParam = new JSVar ("x");
-        final JSVar jFound = jFuncSetDO.body ()
-                                       .var ("f",
-                                             jArray.invoke ("find")
-                                                   .arg (new JSAnonymousFunction (jCallbackParam,
-                                                                                  new JSReturn (jID.eq (jCallbackParam.ref ("id"))))));
-        final JSBlock jIfFound = jFuncSetDO.body ()._if (jFound)._then ();
-        jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
-        jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
-        jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
-      }
-      aScript.setJSCodeProvider (aJS);
-
-      aForm.addChild (aScript);
-    }
+    // Add some global JS placeholder
+    final JSPackage aGlobalJS = new JSPackage ();
+    aForm.addChild (new HCScriptInline (aGlobalJS));
 
     // Handle current step
     switch (aState.step ())
     {
-      case SELECT_PROCESS:
+      case SELECT_USE_CASE:
       {
-        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_PROCESS, aState.getProcessID ()));
+        final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_USE_CASE, aState.getUseCaseID ()));
         for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (), IHasDisplayName.getComparatorCollating (aDisplayLocale)))
           if (e.getPatternType () == m_ePattern)
             aSelect.addOption (e.getID (), e.getDisplayName ());
@@ -1126,7 +1096,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Use Case")
                                                      .setCtrl (aSelect)
-                                                     .setErrorList (aFormErrors.getListOfField (FIELD_PROCESS)));
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_USE_CASE)));
         break;
       }
       case SELECT_DATA_EVALUATOR:
@@ -1134,7 +1104,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final HCExtSelect aMockDESelect = new HCExtSelect (new RequestField ("mockde", aState.getDataEvaluatorPID ()));
         for (final EMockDataEvaluator e : CollectionHelper.getSorted (EMockDataEvaluator.values (),
                                                                       IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsUseCase (aState.m_eUseCase))
+          if (e.supportsPilot (aState.getPilot ()))
             aMockDESelect.addOption (e.getID (), e.getDisplayName ());
         aMockDESelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aMockDESelect));
@@ -1143,7 +1113,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
                                                                                       aState.getDataEvaluatorCountryCode ()),
                                                                     aDisplayLocale,
-                                                                    aAllowedCountries);
+                                                                    ALLOWED_COUNTRIES);
         aCountrySelect.ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
                                                      .setCtrl (aCountrySelect)
@@ -1160,6 +1130,29 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator ID")
                                                      .setCtrl (aEditID)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE_PID)));
+
+        final JSFunction jFuncSetDE = aGlobalJS.function ("_setMDE");
+        {
+          final JSVar jID = jFuncSetDE.param ("id");
+          final JSVar jElementID = jFuncSetDE.param ("eid");
+          final JSVar jElementName = jFuncSetDE.param ("en");
+          final JSVar jElementCC = jFuncSetDE.param ("ecc");
+          final JSArray jMDE = new JSArray ();
+          for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
+            jMDE.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+          final JSVar jArray = jFuncSetDE.body ().var ("array", jMDE);
+          final JSVar jCallbackParam = new JSVar ("x");
+          final JSVar jFound = jFuncSetDE.body ()
+                                         .var ("f",
+                                               jArray.invoke ("find")
+                                                     .arg (new JSAnonymousFunction (jCallbackParam,
+                                                                                    new JSReturn (jID.invoke ("endsWith")
+                                                                                                     .arg (jCallbackParam.ref ("id"))))));
+          final JSBlock jIfFound = jFuncSetDE.body ()._if (jFound)._then ();
+          jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
+          jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
+          jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
+        }
 
         // JS
         final JSPackage aJSOnChange = new JSPackage ();
@@ -1231,7 +1224,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerPID ()));
         for (final EMockDataOwner e : CollectionHelper.getSorted (EMockDataOwner.values (),
                                                                   IHasDisplayName.getComparatorCollating (aDisplayLocale)))
-          if (e.supportsUseCase (aState.m_eUseCase) && !e.getID ().equals (aState.getDataEvaluatorPID ()))
+          if (e.supportsUseCase (aState.getUseCase ()) && !e.getParticipantID ().equals (aState.getDataEvaluatorPID ()))
             aMockDOSelect.addOption (e.getID (), e.getDisplayName ());
         aMockDOSelect.addOptionPleaseSelect (aDisplayLocale);
         aMockDOSelect.setDisabled (!bUseMockDO);
@@ -1241,7 +1234,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
                                                                                       aState.getDataOwnerCountryCode ()),
                                                                     aDisplayLocale,
-                                                                    aAllowedCountries);
+                                                                    ALLOWED_COUNTRIES);
         aCountrySelect.ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
                                                      .setCtrl (aCountrySelect)
@@ -1255,7 +1248,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
 
         // ID
-        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_PID, aState.getDataOwnerPID ())).ensureID ().setReadOnly (!bUseMockDO);
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_PID, aState.getDataOwnerPID ())).ensureID ()
+                                                                                                      .setReadOnly (!bUseMockDO);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
                                                      .setCtrl (aEditID)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DO_PID)));
@@ -1282,6 +1276,29 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           if (aEditRedirectURL != null)
             aJSHandler.add (JQuery.idRef (aEditRedirectURL).setReadOnly (jChecked.not ()));
           aCB.setEventHandler (EJSEvent.CHANGE, aJSHandler);
+        }
+
+        final JSFunction jFuncSetDO = aGlobalJS.function ("_setMDO");
+        {
+          final JSVar jID = jFuncSetDO.param ("id");
+          final JSVar jElementID = jFuncSetDO.param ("eid");
+          final JSVar jElementName = jFuncSetDO.param ("en");
+          final JSVar jElementCC = jFuncSetDO.param ("ecc");
+          final JSArray jMDO = new JSArray ();
+          for (final EMockDataOwner e : EMockDataOwner.values ())
+            jMDO.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+          final JSVar jArray = jFuncSetDO.body ().var ("array", jMDO);
+          final JSVar jCallbackParam = new JSVar ("x");
+          final JSVar jFound = jFuncSetDO.body ()
+                                         .var ("f",
+                                               jArray.invoke ("find")
+                                                     .arg (new JSAnonymousFunction (jCallbackParam,
+                                                                                    new JSReturn (jID.invoke ("endsWith")
+                                                                                                     .arg (jCallbackParam.ref ("id"))))));
+          final JSBlock jIfFound = jFuncSetDO.body ()._if (jFound)._then ();
+          jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
+          jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
+          jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
         }
 
         {
@@ -1334,15 +1351,17 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       case SELECT_DATA_REQUEST_SUBJECT:
       {
-        switch (aState.m_eUseCase.getDRSType ())
+        switch (aState.getUseCase ().getDRSType ())
         {
           case PERSON:
           {
             aForm.addChild (info ("The selected use case " +
-                                  aState.m_eUseCase.getDisplayName () +
+                                  aState.getUseCase ().getDisplayName () +
                                   " requires a person as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerPID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            if (eMockDO == null)
+              LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
 
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
@@ -1388,10 +1407,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           case COMPANY:
           {
             aForm.addChild (info ("The selected use case " +
-                                  aState.m_eUseCase.getDisplayName () +
+                                  aState.getUseCase ().getDisplayName () +
                                   " requires a company as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromIDOrNull (aState.getDataOwnerPID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            if (eMockDO == null)
+              LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
 
             aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
                                                          .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
@@ -1444,7 +1465,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         // First column for all nested tables
         final HCCol aCol1 = new HCCol (150);
 
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type").setCtrl (aState.m_eUseCase.getDisplayName ()));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
+                                                     .setCtrl (aState.getUseCase ().getDisplayName ()));
 
         {
           final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
@@ -1472,7 +1494,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
         }
 
-        switch (aState.m_eUseCase.getDRSType ())
+        switch (aState.getUseCase ().getDRSType ())
         {
           case PERSON:
           {

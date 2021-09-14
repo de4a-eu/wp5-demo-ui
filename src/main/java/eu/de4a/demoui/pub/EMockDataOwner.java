@@ -25,6 +25,7 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
+import com.helger.commons.string.StringHelper;
 
 import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
@@ -94,7 +95,6 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
                    .birthday (1984, Month.JULY, 24)
                    .build (),
           null),
-
   T43_PT (EPilot.MOVING_ABROAD,
           "iso6523-actorid-upis::9999:pt000000026",
           "PT",
@@ -182,5 +182,15 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
   public static EMockDataOwner getFromIDOrNull (@Nullable final String sID)
   {
     return EnumHelper.getFromIDOrNull (EMockDataOwner.class, sID);
+  }
+
+  @Nullable
+  public static EMockDataOwner getFromPIDOrNull (@Nullable final EPilot ePilot, @Nullable final String sParticipantID)
+  {
+    if (ePilot != null && StringHelper.hasText (sParticipantID))
+      for (final EMockDataOwner e : values ())
+        if (e.m_ePilot.equals (ePilot) && e.m_sParticipantID.equals (sParticipantID))
+          return e;
+    return null;
   }
 }

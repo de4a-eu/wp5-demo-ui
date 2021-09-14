@@ -23,7 +23,6 @@ import com.helger.commons.id.IHasID;
 import com.helger.commons.name.IHasDisplayName;
 
 import eu.de4a.demoui.model.EPilot;
-import eu.de4a.demoui.model.EUseCase;
 
 public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
 {
@@ -112,8 +111,8 @@ public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
     return m_sDisplayName;
   }
 
-  public boolean supportsUseCase (@Nullable final EUseCase eUseCase)
+  public boolean supportsPilot (@Nullable final EPilot ePilot)
   {
-    return eUseCase != null && eUseCase.getPilot () == m_ePilot;
+    return ePilot != null && m_ePilot.equals (ePilot);
   }
 }

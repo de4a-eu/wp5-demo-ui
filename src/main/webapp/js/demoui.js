@@ -13,18 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Extend jQuery
-(function($)
-{
-  // Enable or disable an element
-  $.fn.setReadOnly = function(bReadOnly)
-  {
-    return $(this).each(function()
-    {
-      if (bReadOnly)
-        $(this).attr("readonly", "readonly");
-      else
-        $(this).removeAttr("readonly");
-    });
-  };
-})(jQuery);
