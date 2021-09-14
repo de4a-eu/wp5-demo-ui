@@ -27,4 +27,5 @@ Prerequisites
 
 This application is work in progress so it doesn't contain too many releases.
 They are only created for specific circumstances.
+* v0.1.1 - is a bug fix release for Iteration 1 that provides mocked DO USI redirect URLs as well
 * v0.1.0 - marks the version indicates as "working" for "Iteration 1"

@@ -43,7 +43,7 @@
     <connection>scm:git:git@github.com:de4a-wp5/wp5-demo-ui.git</connection>
     <developerConnection>scm:git:git@github.com:de4a-wp5/wp5-demo-ui.git</developerConnection>
     <url>http://github.com/de4a-wp5/wp5-demo-ui</url>
-    <tag>development</tag>
+    <tag>iteration1</tag>
   </scm>
 
   <organization>
