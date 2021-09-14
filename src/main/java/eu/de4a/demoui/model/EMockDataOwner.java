@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.model;
 
 import java.time.Month;
 
@@ -26,11 +26,6 @@ import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.string.StringHelper;
-
-import eu.de4a.demoui.model.EPilot;
-import eu.de4a.demoui.model.EUseCase;
-import eu.de4a.demoui.model.MDSCompany;
-import eu.de4a.demoui.model.MDSPerson;
 
 public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
 {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.model;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,8 +21,6 @@ import javax.annotation.Nullable;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.name.IHasDisplayName;
-
-import eu.de4a.demoui.model.EPilot;
 
 public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
 {

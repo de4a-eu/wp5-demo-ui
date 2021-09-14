@@ -148,6 +148,8 @@ import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.api.APIExecutorPostUSIRedirectResponse;
 import eu.de4a.demoui.api.DemoUIAPI;
 import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EMockDataEvaluator;
+import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
