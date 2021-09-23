@@ -92,9 +92,9 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "(MPTFP-SGAD) Secretaría General de Administración Digital",
           "https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/preview/index",
           MDSPerson.builder ()
-                   .id ("53377873W")
-                   .firstName ("Francisco José")
-                   .familyName ("Aragó Monzonís")
+                   .id ("99999142H")
+                   .firstName ("Nombre")
+                   .familyName ("ApellidoPrimero ApellidoSegundo")
                    .birthday (1984, Month.JULY, 24)
                    .build (),
           null),
@@ -103,8 +103,7 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "PT",
           "(AMA IP) Agencia para a Modernizacao Administrativa IP (Administration Modernization Agency)",
           "https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/preview/index",
-          // TODO no idea what to use here
-          MDSPerson.builder ().id ("123456789").firstName ("Alice").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
+          MDSPerson.builder ().id ("12345678").firstName ("Stavros").familyName ("Karakolis").birthday (1987, Month.DECEMBER, 17).build (),
           null);
 
   private final EPilot m_ePilot;

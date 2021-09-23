@@ -27,10 +27,6 @@ public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   // T4.1
   T41_ES (EPilot.STUDYING_ABROAD, "iso6523-actorid-upis::9999:esq6250003h", "ES", "(UJI) Universitat Jaume I de Castellón"),
   T41_PT (EPilot.STUDYING_ABROAD, "iso6523-actorid-upis::9999:pt990000101", "PT", "Portuguese IST, University of Lisbon"),
-  T41_SI1 (EPilot.STUDYING_ABROAD,
-           "iso6523-actorid-upis::9999:si000000016",
-           "SI",
-           "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)"),
   T41_SI2 (EPilot.STUDYING_ABROAD, "iso6523-actorid-upis::9999:si000000018", "SI", "(JSI) Institut Jozef Stefan"),
   // T4.2
   T42_AT (EPilot.DOING_BUSINESS_ABROAD,
@@ -53,11 +49,7 @@ public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   T43_LU (EPilot.MOVING_ABROAD,
           "iso6523-actorid-upis::9999:lu000000025",
           "LU",
-          "(CTIE) Centre des Technologies de l'Information de l'Etat (State Information Technology Center)"),
-  T43_PT (EPilot.MOVING_ABROAD,
-          "iso6523-actorid-upis::9999:pt000000026",
-          "PT",
-          "(AMA IP) Agencia para a Modernizacao Administrativa IP (Administration Modernization Agency)");
+          "(CTIE) Centre des Technologies de l'Information de l'Etat (State Information Technology Center)");
 
   private final EPilot m_ePilot;
   private final String m_sParticipantID;
