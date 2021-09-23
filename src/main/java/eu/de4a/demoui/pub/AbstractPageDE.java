@@ -79,7 +79,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     private final String m_sPID;
     private final String m_sName;
     private final String m_sCountryCode;
-    // Only for USI DO
+    // Only for USI
     private final String m_sRedirectURL;
 
     public Agent (@Nonnull @Nonempty final String sPID,

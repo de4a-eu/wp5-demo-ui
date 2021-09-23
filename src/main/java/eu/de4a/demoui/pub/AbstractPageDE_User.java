@@ -157,6 +157,7 @@ import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
 import eu.de4a.demoui.model.RedirectResponseMap;
 import eu.de4a.demoui.ui.AppCommonUI;
+import eu.de4a.iem.CIEM;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.AckType;
@@ -166,9 +167,9 @@ import eu.de4a.iem.jaxb.common.types.ErrorListType;
 import eu.de4a.iem.jaxb.common.types.ErrorType;
 import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
 import eu.de4a.iem.jaxb.common.types.ProvisionItemType;
+import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceType;
 import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
-import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.RequestUserRedirectionType;
 import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.jaxb.common.types.ResponseLookupRoutingInformationType;
@@ -242,10 +243,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   }
 
   @Nonnull
-  protected static final GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType> createMarshaller (@Nullable final EPatternType ePattern,
-                                                                                                      @Nullable final ErrorList aEL)
+  protected static final GenericJAXBMarshaller <RequestExtractEvidenceType> createMarshaller (@Nullable final EPatternType ePattern,
+                                                                                              @Nullable final ErrorList aEL)
   {
-    final DE4AMarshaller <RequestTransferEvidenceUSIIMDRType> m;
+    final DE4AMarshaller <RequestExtractEvidenceType> m;
     if (ePattern == EPatternType.IM)
       m = DE4AMarshaller.drImRequestMarshaller ();
     else
@@ -586,7 +587,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     private MDSCompany m_aDRSCompany;
     private MDSPerson m_aDRSPerson;
     // Consent to send this
-    private RequestTransferEvidenceUSIIMDRType m_aRequest;
+    private RequestExtractEvidenceType m_aRequest;
     private String m_sTargetURL;
     private boolean m_bConfirmedToSend;
     // Response received
@@ -756,12 +757,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
 
     @Nonnull
-    public RequestTransferEvidenceUSIIMDRType buildRequest ()
+    public RequestExtractEvidenceType buildRequest ()
     {
-      final RequestTransferEvidenceUSIIMDRType aRequest = new RequestTransferEvidenceUSIIMDRType ();
+      final RequestExtractEvidenceType aRequest = new RequestExtractEvidenceType ();
       aRequest.setRequestId (m_sRequestID);
-      // TODO
-      aRequest.setSpecificationId ("SpecificationId");
+      aRequest.setSpecificationId (CIEM.SPECIFICATION_ID);
       aRequest.setTimeStamp (PDTFactory.getCurrentXMLOffsetDateTimeMillisOnly ());
       // TODO
       aRequest.setProcedureId ("ProcedureId");
@@ -1473,7 +1473,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       case EXPLICIT_CONSENT:
       {
         // Create request
-        final RequestTransferEvidenceUSIIMDRType aRequest = aState.buildRequest ();
+        final RequestExtractEvidenceType aRequest = aState.buildRequest ();
 
         // Check against XSD
         final ErrorList aErrorList = new ErrorList ();

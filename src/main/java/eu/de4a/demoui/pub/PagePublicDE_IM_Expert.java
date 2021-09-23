@@ -68,7 +68,7 @@ import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
+import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
@@ -85,14 +85,14 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
   @Nonnull
-  private static RequestTransferEvidenceUSIIMDRType _createDemoRequest ()
+  private static RequestExtractEvidenceType _createDemoRequest ()
   {
-    RequestTransferEvidenceUSIIMDRType aDemoRequest;
+    RequestExtractEvidenceType aDemoRequest;
     if (ThreadLocalRandom.current ().nextBoolean ())
     {
       while (true)
       {
-        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
+        aDemoRequest = (RequestExtractEvidenceType) DEMO_DOC_TYPE.createDemoRequest ();
         if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
@@ -104,7 +104,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
     {
       while (true)
       {
-        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
+        aDemoRequest = (RequestExtractEvidenceType) DEMO_DOC_TYPE.createDemoRequest ();
         if (aDemoRequest.getDataRequestSubject ().getDataSubjectCompany () != null)
           break;
       }
@@ -168,7 +168,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         else
         {
           // Send only valid documents
-          final RequestTransferEvidenceUSIIMDRType aParsedRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.parseMessage (sPayload);
+          final RequestExtractEvidenceType aParsedRequest = (RequestExtractEvidenceType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
                                 "DemoUI sending IM request '" + aParsedRequest.getRequestId () + "' to '" + sTargetURL + "'");
