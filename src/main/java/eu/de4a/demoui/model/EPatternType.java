@@ -56,6 +56,11 @@ public enum EPatternType implements IHasID <String>, IHasDisplayName
     return m_sDisplayName;
   }
 
+  public boolean isUSI ()
+  {
+    return this == USI;
+  }
+
   @Nullable
   public static EPatternType getFromIDOrNull (@Nullable final String sID)
   {
