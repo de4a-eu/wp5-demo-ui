@@ -34,7 +34,7 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "iso6523-actorid-upis::9999:ess2833002e",
           "ES",
           "(MPTFP-SGAD) Secretaría General de Administración Digital",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/preview/index",
+          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
           MDSPerson.builder ()
                    .id ("53377873W")
                    .firstName ("Francisco José")
@@ -46,14 +46,14 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "iso6523-actorid-upis::9999:pt990000101",
           "PT",
           "Portuguese IST, University of Lisbon",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/preview/index",
+          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
           MDSPerson.builder ().id ("123456789").firstName ("Alice").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
           null),
   T41_SI (EPilot.STUDYING_ABROAD,
           "iso6523-actorid-upis::9999:si000000016",
           "SI",
           "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/preview/index",
+          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
           MDSPerson.builder ().id ("123456").firstName ("Marjeta").familyName ("Maček").birthday (1999, Month.SEPTEMBER, 16).build (),
           null),
   // T4.2
@@ -90,7 +90,7 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "iso6523-actorid-upis::9999:ess2833002e",
           "ES",
           "(MPTFP-SGAD) Secretaría General de Administración Digital",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/preview/index",
+          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
           MDSPerson.builder ()
                    .id ("99999142H")
                    .firstName ("Nombre")
@@ -102,7 +102,7 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "iso6523-actorid-upis::9999:pt000000026",
           "PT",
           "(AMA IP) Agencia para a Modernizacao Administrativa IP (Administration Modernization Agency)",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/preview/index",
+          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
           MDSPerson.builder ().id ("12345678").firstName ("Stavros").familyName ("Karakolis").birthday (1987, Month.DECEMBER, 17).build (),
           null);
 

@@ -54,14 +54,6 @@ public final class DemoUIAPI
       aAPIRegistry.registerAPI (aDescriptor);
     }
 
-    // POST /usi-redirect-response
-    {
-      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post (API_USI_REDIRECT_RESPONSE),
-                                                           new APIExecutorPostUSIRedirectResponse ());
-      aDescriptor.setExceptionMapper (aExceptionMapper);
-      aAPIRegistry.registerAPI (aDescriptor);
-    }
-
     // GET /status
     {
       final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get ("/status"), new APIExecutorGetStatus ());

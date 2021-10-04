@@ -23,6 +23,11 @@ import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
 
+/**
+ * IM or USI exchange?
+ *
+ * @author Philip Helger
+ */
 public enum EPatternType implements IHasID <String>, IHasDisplayName
 {
   IM ("im", "IM"),
