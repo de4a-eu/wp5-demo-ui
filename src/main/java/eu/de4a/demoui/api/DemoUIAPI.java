@@ -32,7 +32,6 @@ import com.helger.photon.api.IAPIRegistry;
 public final class DemoUIAPI
 {
   public static final String API_USI_RESPONSE = "/usi-response";
-  public static final String API_USI_REDIRECT_RESPONSE = "/usi-redirect-response";
 
   private DemoUIAPI ()
   {}
@@ -51,14 +50,6 @@ public final class DemoUIAPI
     // GET /usi-response
     {
       final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get (API_USI_RESPONSE), new APIExecutorGetUSIResponse ());
-      aAPIRegistry.registerAPI (aDescriptor);
-    }
-
-    // POST /usi-redirect-response
-    {
-      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post (API_USI_REDIRECT_RESPONSE),
-                                                           new APIExecutorPostUSIRedirectResponse ());
-      aDescriptor.setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
 

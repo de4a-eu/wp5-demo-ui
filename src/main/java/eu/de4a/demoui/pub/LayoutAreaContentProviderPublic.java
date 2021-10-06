@@ -59,6 +59,7 @@ import com.helger.photon.security.util.SecurityHelper;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppHelper;
+import eu.de4a.demoui.CAppVersion;
 import eu.de4a.demoui.ui.AppCommonUI;
 
 /**
@@ -80,8 +81,7 @@ public final class LayoutAreaContentProviderPublic
     final IUser aUser = LoggedInUserManager.getInstance ().getCurrentUser ();
 
     final BootstrapNavbar aNavbar = new BootstrapNavbar ();
-    aNavbar.addBrand (new HCSpan ().addClass (AppCommonUI.CSS_CLASS_LOGO1).addChild (AppHelper.getApplicationTitle ()),
-                      aLinkToStartPage);
+    aNavbar.addBrand (new HCSpan ().addClass (AppCommonUI.CSS_CLASS_LOGO1).addChild (AppHelper.getApplicationTitle ()), aLinkToStartPage);
 
     final BootstrapNavbarToggleable aToggleable = aNavbar.addAndReturnToggleable ();
 
@@ -109,8 +109,7 @@ public final class LayoutAreaContentProviderPublic
   {
     // Main menu
     final IMenuTree aMenuTree = aLEC.getMenuTree ();
-    final MenuItemDeterminatorCallback aCallback = new MenuItemDeterminatorCallback (aMenuTree,
-                                                                                     aLEC.getSelectedMenuItemID ());
+    final MenuItemDeterminatorCallback aCallback = new MenuItemDeterminatorCallback (aMenuTree, aLEC.getSelectedMenuItemID ());
     return BootstrapMenuItemRenderer.createSideBarMenu (aLEC, aCallback);
   }
 
@@ -155,8 +154,7 @@ public final class LayoutAreaContentProviderPublic
     {
       final HCDiv aRow = aOuterContainer.addAndReturnChild (new HCDiv ().addClass (CBootstrapCSS.D_MD_FLEX));
       final HCDiv aCol1 = aRow.addAndReturnChild (new HCDiv ().addClass (CBootstrapCSS.D_MD_FLEX));
-      final HCDiv aCol2 = aRow.addAndReturnChild (new HCDiv ().addClass (CBootstrapCSS.ML_3)
-                                                              .addClass (CBootstrapCSS.FLEX_FILL));
+      final HCDiv aCol2 = aRow.addAndReturnChild (new HCDiv ().addClass (CBootstrapCSS.ML_3).addClass (CBootstrapCSS.FLEX_FILL));
 
       // left
       // We need a wrapper span for easy AJAX content replacement
@@ -178,10 +176,9 @@ public final class LayoutAreaContentProviderPublic
       aFooter.addClass (CBootstrapCSS.PB_1);
       aFooter.addClass (CBootstrapCSS.MT_3);
 
-      aFooter.addChild (new HCP ().addChild ("This is a Demo page for DE4A internal develoment." +
-                                             " The official DE4A website is ")
-                                  .addChild (new HCA (new SimpleURL ("https://www.de4a.eu")).addChild ("www.de4a.eu")
-                                                                                            .setTargetBlank ()));
+      aFooter.addChild (new HCP ().addChild ("This is a Demo page for DE4A internal develoment." + " The official DE4A website is ")
+                                  .addChild (new HCA (new SimpleURL ("https://www.de4a.eu")).addChild ("www.de4a.eu").setTargetBlank ()))
+             .addChild (new HCP ().addChild ("Build time: " + CAppVersion.BUILD_TIMESTAMP));
 
       ret.addChild (aFooter);
     }

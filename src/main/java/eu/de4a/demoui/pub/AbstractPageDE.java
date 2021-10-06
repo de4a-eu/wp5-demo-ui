@@ -79,7 +79,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     private final String m_sPID;
     private final String m_sName;
     private final String m_sCountryCode;
-    // Only for USI DO
+    // Only for USI
     private final String m_sRedirectURL;
 
     public Agent (@Nonnull @Nonempty final String sPID,
@@ -179,18 +179,18 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   @Nonempty
   protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
   {
-    if (ePattern == EPatternType.IM)
-      return CApp.MOCK_BASE_URL + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
-    return CApp.MOCK_BASE_URL + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
+    if (ePattern.isUSI ())
+      return CApp.MOCK_BASE_URL + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
+    return CApp.MOCK_BASE_URL + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
   }
 
   @Nonnull
   @Nonempty
   protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
   {
-    if (ePattern == EPatternType.IM)
-      return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
-    return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
+    if (ePattern.isUSI ())
+      return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
+    return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
   }
 
   protected final EPatternType m_ePattern;

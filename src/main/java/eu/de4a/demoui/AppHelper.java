@@ -35,6 +35,6 @@ public final class AppHelper
   @Nonempty
   public static String getApplicationTitle ()
   {
-    return "DE4A WP5 DemoUI";
+    return "DE4A WP5 DemoUI (Iteration 2)";
   }
 }

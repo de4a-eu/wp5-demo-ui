@@ -52,6 +52,7 @@ import com.helger.pdflayout4.spec.FontSpec;
 import com.helger.pdflayout4.spec.PreloadFont;
 import com.helger.xml.XMLFactory;
 
+import eu.de4a.iem.CIEM;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.*;
@@ -75,14 +76,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                 "IM Request DE to DR (C1 -> C2)",
                 "/requestTransferEvidenceIM",
                 EDemoDocumentType.REQUEST,
-                EDemoDocument::createDemoRequestTransferEvidence,
+                EDemoDocument::createDemoRequestExtractEvidence,
                 DE4AMarshaller.drImRequestMarshaller ()),
   // DT-DO request (C3 -> C4)
   IM_REQ_DT_DO ("im-req-dt-do",
                 "IM Request DT to DO (C3 -> C4)",
                 "/requestExtractEvidenceIM",
                 EDemoDocumentType.REQUEST,
-                EDemoDocument::createDemoRequestExtractEvidenceIM,
+                EDemoDocument::createDemoRequestExtractEvidence,
                 DE4AMarshaller.doImRequestMarshaller ()),
 
   // DO-DT response (C4 -> C3)
@@ -112,7 +113,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                   "USI step 1 Request from DE to DR (C1 -> C2)",
                   "/dr1/usi/transferevidence",
                   EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoRequestTransferEvidence,
+                  EDemoDocument::createDemoRequestExtractEvidence,
                   DE4AMarshaller.drUsiRequestMarshaller ()),
 
   // DT-DO request (C3 -> C4)
@@ -120,7 +121,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                   "USI step 1 Request from DT to DO (C3 -> C4)",
                   "/do1/usi/extractevidence",
                   EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoRequestExtractEvidenceUSI,
+                  EDemoDocument::createDemoRequestExtractEvidence,
                   DE4AMarshaller.doUsiRequestMarshaller ()),
 
   // DO-DT response (C4 -> C3)
@@ -429,46 +430,12 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static RequestExtractEvidenceIMType createDemoRequestExtractEvidenceIM ()
+  public static RequestExtractEvidenceType createDemoRequestExtractEvidence ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestExtractEvidenceIMType ret = new RequestExtractEvidenceIMType ();
+    final RequestExtractEvidenceType ret = new RequestExtractEvidenceType ();
     ret.setRequestId (UUID.randomUUID ().toString ());
-    ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
-    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataEvaluator (_createAgent ());
-    ret.setDataOwner (_createAgent ());
-    ret.setDataRequestSubject (_createDRS ());
-    ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    return ret;
-  }
-
-  @Nonnull
-  public static RequestExtractEvidenceUSIType createDemoRequestExtractEvidenceUSI ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestExtractEvidenceUSIType ret = new RequestExtractEvidenceUSIType ();
-    ret.setRequestId (UUID.randomUUID ().toString ());
-    ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
-    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataEvaluator (_createAgent ());
-    ret.setDataOwner (_createAgent ());
-    ret.setDataRequestSubject (_createDRS ());
-    ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    return ret;
-  }
-
-  @Nonnull
-  public static RequestTransferEvidenceUSIIMDRType createDemoRequestTransferEvidence ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestTransferEvidenceUSIIMDRType ret = new RequestTransferEvidenceUSIIMDRType ();
-    ret.setRequestId (UUID.randomUUID ().toString ());
-    ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setSpecificationId (CIEM.SPECIFICATION_ID);
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDataEvaluator (_createAgent ());

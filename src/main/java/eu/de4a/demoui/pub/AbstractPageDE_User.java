@@ -43,13 +43,10 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.http.Header;
-import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,6 +132,7 @@ import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.core.form.RequestFieldBoolean;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
+import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
@@ -145,7 +143,6 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.CApp;
-import eu.de4a.demoui.api.APIExecutorPostUSIRedirectResponse;
 import eu.de4a.demoui.api.DemoUIAPI;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
@@ -155,8 +152,8 @@ import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
-import eu.de4a.demoui.model.RedirectResponseMap;
 import eu.de4a.demoui.ui.AppCommonUI;
+import eu.de4a.iem.CIEM;
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
 import eu.de4a.iem.jaxb.common.types.AckType;
@@ -166,15 +163,12 @@ import eu.de4a.iem.jaxb.common.types.ErrorListType;
 import eu.de4a.iem.jaxb.common.types.ErrorType;
 import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
 import eu.de4a.iem.jaxb.common.types.ProvisionItemType;
-import eu.de4a.iem.jaxb.common.types.ProvisionType;
+import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceType;
 import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
-import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
-import eu.de4a.iem.jaxb.common.types.RequestUserRedirectionType;
 import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.jaxb.common.types.ResponseLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
-import eu.de4a.iem.jaxb.common.types.ResponseUserRedirectionType;
 import eu.de4a.iem.jaxb.common.types.SourceType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
@@ -187,6 +181,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   private static final String DIRECTION_BACK = "back";
   private static final String DIRECTION_NEXT = "next";
   private static final String DIRECTION_RESET = "reset";
+  public static final String PARAM_REQUEST_ID = "requestid";
 
   // Select use case
   private static final String FIELD_USE_CASE = "usecase";
@@ -243,14 +238,14 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   }
 
   @Nonnull
-  protected static final GenericJAXBMarshaller <RequestTransferEvidenceUSIIMDRType> createMarshaller (@Nullable final EPatternType ePattern,
-                                                                                                      @Nullable final ErrorList aEL)
+  protected static final GenericJAXBMarshaller <RequestExtractEvidenceType> createDRMarshaller (@Nullable final EPatternType ePattern,
+                                                                                                @Nullable final ErrorList aEL)
   {
-    final DE4AMarshaller <RequestTransferEvidenceUSIIMDRType> m;
-    if (ePattern == EPatternType.IM)
-      m = DE4AMarshaller.drImRequestMarshaller ();
-    else
+    final DE4AMarshaller <RequestExtractEvidenceType> m;
+    if (ePattern.isUSI ())
       m = DE4AMarshaller.drUsiRequestMarshaller ();
+    else
+      m = DE4AMarshaller.drImRequestMarshaller ();
     return m.setFormattedOutput (true)
             .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
   }
@@ -331,23 +326,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       else
       {
-        // Use the first one with a redirect URL
-        // Fallback to index 0
-        final SourceType aSource = CollectionHelper.findFirst (aResponse.getAvailableSources ().getSource (),
-                                                               x -> x.getProvisionItems ()
-                                                                     .getProvisionItemAtIndex (0)
-                                                                     .getProvision () != null &&
-                                                                    StringHelper.hasText (x.getProvisionItems ()
-                                                                                           .getProvisionItemAtIndex (0)
-                                                                                           .getProvision ()
-                                                                                           .getRedirectURL ()),
-                                                               aResponse.getAvailableSources ().getSourceAtIndex (0));
+        // Use the first one
+        final SourceType aSource = aResponse.getAvailableSources ().getSourceAtIndex (0);
 
         final ProvisionItemType aPI = aSource.getProvisionItems ().getProvisionItemAtIndex (0);
         aJson.add ("id", aPI.getDataOwnerId ().toLowerCase (Locale.ROOT));
         aJson.add ("name", aPI.getDataOwnerPrefLabel ());
-        final ProvisionType aP = aPI.getProvision ();
-        aJson.add ("redirecturl", aP != null ? _fixURL (aP.getRedirectURL ()) : "");
       }
 
       if (LOGGER.isInfoEnabled ())
@@ -418,7 +402,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                             new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
                                                                             : aState.getDataOwnerCountryCode (),
                                                          r10)));
-        if (ePattern == EPatternType.USI)
+        if (ePattern.isUSI ())
         {
           aInnerTable.addRow (new PLTableCell (new PLText ("Redirect URL:", r10)),
                               new PLTableCell (_code.apply (aState.getDataOwnerRedirectURL ())));
@@ -471,7 +455,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         if (aState.m_aRequest == null)
           aXML = new PLBox (new PLText ("Failed to create Request Object", r10i).setFillColor (new Color (0xf4, 0xd5, 0xce)));
         else
-          aXML = new PLText (createMarshaller (ePattern, null).getAsString (aState.m_aRequest), c10);
+          aXML = new PLText (createDRMarshaller (ePattern, null).getAsString (aState.m_aRequest), c10);
         aTable.addAndReturnRow (new PLTableCell (new PLText ("Created XML:", r10)), new PLTableCell (aXML))
               .setMarginTop (fMargin)
               .setMarginBottom (fMargin);
@@ -598,12 +582,13 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     private MDSCompany m_aDRSCompany;
     private MDSPerson m_aDRSPerson;
     // Consent to send this
-    private RequestTransferEvidenceUSIIMDRType m_aRequest;
-    private String m_sTargetURL;
-    private boolean m_bConfirmedToSend;
+    private RequestExtractEvidenceType m_aRequest;
+    private String m_sRequestTargetURL;
+    private boolean m_bConfirmedToSendRequest;
     // Response received
     public ResponseTransferEvidenceType m_aResponseIM;
     public ResponseErrorType m_aResponseUSI;
+    private final boolean m_bUserRedirected = false;
 
     @Deprecated
     @UsedViaReflection
@@ -641,7 +626,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_OWNER);
       if (_allDRSNull ())
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_REQUEST_SUBJECT);
-      if (m_aRequest == null || !m_bConfirmedToSend)
+      if (m_aRequest == null || !m_bConfirmedToSendRequest)
         m_eStep = EStep.min (m_eStep, EStep.EXPLICIT_CONSENT);
     }
 
@@ -658,8 +643,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
       {
         m_aRequest = null;
-        m_sTargetURL = null;
-        m_bConfirmedToSend = false;
+        m_sRequestTargetURL = null;
+        m_bConfirmedToSendRequest = false;
       }
     }
 
@@ -688,6 +673,12 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       m_eStep = EStep.first ();
       m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
       _onBack ();
+    }
+
+    @Nonnull
+    public String getRequestID ()
+    {
+      return m_sRequestID;
     }
 
     @Nullable
@@ -768,19 +759,21 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     }
 
     @Nonnull
-    public RequestTransferEvidenceUSIIMDRType buildRequest ()
+    public RequestExtractEvidenceType buildRequest ()
     {
-      final RequestTransferEvidenceUSIIMDRType aRequest = new RequestTransferEvidenceUSIIMDRType ();
+      final RequestExtractEvidenceType aRequest = new RequestExtractEvidenceType ();
       aRequest.setRequestId (m_sRequestID);
-      // TODO
-      aRequest.setSpecificationId ("SpecificationId");
+      aRequest.setSpecificationId (CIEM.SPECIFICATION_ID);
       aRequest.setTimeStamp (PDTFactory.getCurrentXMLOffsetDateTimeMillisOnly ());
-      // TODO
+      // TODO what to use instead of ProcedureId ?
       aRequest.setProcedureId ("ProcedureId");
       {
         final AgentType aDE = new AgentType ();
         aDE.setAgentUrn (m_aDE.getPID ());
         aDE.setAgentName (m_aDE.getName ());
+        // New in iteration 2
+        if (StringHelper.hasText (m_aDE.getRedirectURL ()))
+          aDE.setRedirectURL (m_aDE.getRedirectURL ());
         aRequest.setDataEvaluator (aDE);
       }
       {
@@ -851,35 +844,41 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     if (DIRECTION_RESET.equals (sDir))
       aState.reset ();
 
-    if (m_ePattern == EPatternType.USI)
+    if (m_ePattern.isUSI ())
     {
-      if (aWPEC.hasAction (ACTION_USIBRB) && aWPEC.params ().containsKey (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID))
+      if (aWPEC.hasAction (ACTION_USIBRB) && aWPEC.params ().containsKey (PARAM_REQUEST_ID))
       {
         // We came back from the DE
-        final String sRequestID = aWPEC.params ().getAsString (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID);
-        final ResponseUserRedirectionType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
+        // TODO
+        aNodeList.addChild (div ("TODO"));
 
-        if (aResponse != null)
-        {
-          String sText = "";
-          switch (aResponse.getEvidenceStatus ())
-          {
-            case AGREE:
-              sText = "The user approved to use the data";
-              break;
-            case DISAGREE:
-              sText = "The user denied to use the data";
-              break;
-            case ERROR:
-              sText = "An error occurred and the user could not make a decision";
-              break;
-          }
-          aNodeList.addChild (info ("The USI based status for request ID '" + sRequestID + "' is: " + sText));
-        }
-        else
-        {
-          aNodeList.addChild (error ("Not expecting any result for request ID '" + sRequestID + "'"));
-        }
+        final String sRequestID = aWPEC.params ().getAsString (PARAM_REQUEST_ID);
+        // final ResponseUserRedirectionType aResponse =
+        // RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
+        //
+        // if (aResponse != null)
+        // {
+        // String sText = "";
+        // switch (aResponse.getEvidenceStatus ())
+        // {
+        // case AGREE:
+        // sText = "The user approved to use the data";
+        // break;
+        // case DISAGREE:
+        // sText = "The user denied to use the data";
+        // break;
+        // case ERROR:
+        // sText = "An error occurred and the user could not make a decision";
+        // break;
+        // }
+        // aNodeList.addChild (info ("The USI based status for request ID '" +
+        // sRequestID + "' is: " + sText));
+        // }
+        // else
+        // {
+        // aNodeList.addChild (error ("Not expecting any result for request ID
+        // '" + sRequestID + "'"));
+        // }
 
         final BootstrapForm aForm = aNodeList.addAndReturnChild (getUIHandler ().createFormSelf (aWPEC));
         aForm.addChild (new HCHiddenField (PARAM_DIRECTION, DIRECTION_RESET));
@@ -931,7 +930,20 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
           if (aFormErrors.isEmpty ())
           {
-            aState.m_aDE = Agent.builder ().pid (sDEPID).name (sDEName).countryCode (sDECC).build ();
+            // Our DE URL that we send to the DO, so that he can redirect
+            // back to us later (this is the API where we take the POST
+            // request and forward back to this page)
+            String sOurURL = AppConfig.getPublicURL () + PhotonAPIServlet.SERVLET_DEFAULT_PATH + DemoUIAPI.API_USI_RESPONSE;
+            // Link to this page (with an absolute URL)
+            sOurURL = new SimpleURL (AppConfig.getPublicURL () +
+                                     aWPEC.getLinkToMenuItem (MenuPublic.MENU_DE_USI_USER).getAsStringWithoutEncodedParameters ())
+                                                                                                                                  .add (PARAM_REQUEST_ID,
+                                                                                                                                        aState.getRequestID ())
+                                                                                                                                  .add (CPageParam.PARAM_ACTION,
+                                                                                                                                        ACTION_USIBRB)
+                                                                                                                                  .getAsStringWithEncodedParameters ();
+
+            aState.m_aDE = Agent.builder ().pid (sDEPID).name (sDEName).countryCode (sDECC).redirectURL (sOurURL).build ();
           }
           break;
         }
@@ -954,7 +966,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             if (!RegExHelper.stringMatchesPattern (REGEX_COUNTRY_CODE, sDOCC))
               aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "The Data Owner country code is invalid");
 
-          if (m_ePattern == EPatternType.USI)
+          if (m_ePattern.isUSI ())
           {
             if (StringHelper.hasNoText (sDORedirectURL))
               aFormErrors.addFieldError (FIELD_DO_REDIRECT_URL, "A Data Owner redirect URL is needed");
@@ -1051,11 +1063,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           if (!bConfirm)
             aFormErrors.addFieldError (FIELD_CONFIRM, "Confirmation is required");
 
-          aState.m_sTargetURL = null;
-          aState.m_bConfirmedToSend = bConfirm;
+          aState.m_sRequestTargetURL = null;
+          aState.m_bConfirmedToSendRequest = bConfirm;
           if (aFormErrors.isEmpty ())
           {
-            aState.m_sTargetURL = sTargetURL;
+            aState.m_sRequestTargetURL = sTargetURL;
           }
 
           break;
@@ -1241,7 +1253,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
          * </pre>
          */
 
-        final boolean bUseMockDOByDefault = m_ePattern == EPatternType.IM;
+        final boolean bUseMockDOByDefault = !m_ePattern.isUSI ();
 
         // Mock or IDK?
         final RequestFieldBoolean aRF = new RequestFieldBoolean ("usemockdo", bUseMockDOByDefault);
@@ -1285,7 +1297,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
 
         // Redirect URL (USI only)
         final HCEdit aEditRedirectURL;
-        if (m_ePattern == EPatternType.USI)
+        if (m_ePattern.isUSI ())
         {
           aEditRedirectURL = new HCEdit (new RequestField (FIELD_DO_REDIRECT_URL,
                                                            aState.getDataOwnerRedirectURL ())).ensureID ().setReadOnly (!bUseMockDO);
@@ -1485,11 +1497,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       case EXPLICIT_CONSENT:
       {
         // Create request
-        final RequestTransferEvidenceUSIIMDRType aRequest = aState.buildRequest ();
+        final RequestExtractEvidenceType aRequest = aState.buildRequest ();
 
         // Check against XSD
         final ErrorList aErrorList = new ErrorList ();
-        final byte [] aRequestBytes = createMarshaller (m_ePattern, aErrorList).getAsBytes (aRequest);
+        final byte [] aRequestBytes = createDRMarshaller (m_ePattern, aErrorList).getAsBytes (aRequest);
         if (aRequestBytes == null)
         {
           aState.m_aRequest = null;
@@ -1526,7 +1538,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           t.addBodyRow ()
            .addCell (strong ("Country:"))
            .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
-          if (m_ePattern == EPatternType.USI)
+          if (m_ePattern.isUSI ())
           {
             t.addBodyRow ().addCell (strong ("Redirect URL:")).addCell (code (aState.getDataOwnerRedirectURL ()));
           }
@@ -1561,11 +1573,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
                                                      .setCtrl (aState.m_aRequest == null ? error ("Failed to create Request Object")
                                                                                          : new HCTextArea (new RequestField (FIELD_REQUEST_XML,
-                                                                                                                             createMarshaller (m_ePattern,
-                                                                                                                                               null).getAsString (aState.m_aRequest))).setRows (10)
-                                                                                                                                                                                      .setReadOnly (true)
-                                                                                                                                                                                      .addClass (CBootstrapCSS.FORM_CONTROL)
-                                                                                                                                                                                      .addClass (CBootstrapCSS.TEXT_MONOSPACE))
+                                                                                                                             createDRMarshaller (m_ePattern,
+                                                                                                                                                 null).getAsString (aState.m_aRequest))).setRows (10)
+                                                                                                                                                                                        .setReadOnly (true)
+                                                                                                                                                                                        .addClass (CBootstrapCSS.FORM_CONTROL)
+                                                                                                                                                                                        .addClass (CBootstrapCSS.TEXT_MONOSPACE))
                                                      .setHelpText ("This is the technical request. It is just shown for helping developers")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
@@ -1591,7 +1603,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       }
       case SEND_REQUEST:
       {
-        aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sTargetURL)));
+        aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sRequestTargetURL)));
 
         final StopWatch aSW = StopWatch.createdStarted ();
 
@@ -1600,9 +1612,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         // Here we need a 2 minute timeout (required for USI)
         aHCS.setConnectionRequestTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
         aHCS.setSocketTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
+
         try
         {
-          // Required for Spain
+          // TODO Required for Spain - should be disabled
           aHCS.setSSLContextTrustAll ();
         }
         catch (final GeneralSecurityException ex)
@@ -1619,11 +1632,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                     " request '" +
                                                     aState.m_aRequest.getRequestId () +
                                                     "' to '" +
-                                                    aState.m_sTargetURL +
+                                                    aState.m_sRequestTargetURL +
                                                     "'");
-            final HttpPost aPost = new HttpPost (aState.m_sTargetURL);
+            final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
 
-            final byte [] aRequestBytes = createMarshaller (m_ePattern, null).getAsBytes (aState.m_aRequest);
+            final byte [] aRequestBytes = createDRMarshaller (m_ePattern, null).getAsBytes (aState.m_aRequest);
             LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
             aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
@@ -1638,12 +1651,40 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             else
             {
               DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received response content (" + aResponseBytesRequest1.length + " bytes)");
-              LOGGER.info ("Response received (in UTF-8): " + new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
+              LOGGER.info ("Response received (in UTF-8):\n" + new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
             }
           }
 
           final ErrorListType aErrorList;
-          if (m_ePattern == EPatternType.IM)
+          if (m_ePattern.isUSI ())
+          {
+            // USI request
+            // -> preview happens on DO side
+
+            final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytesRequest1);
+            if (aResponseObj == null)
+              throw new IOException ("Failed to parse USI response XML - see log for details");
+
+            // Remember response
+            aState.m_aResponseUSI = aResponseObj;
+            aErrorList = aResponseObj.getErrorList ();
+
+            if (aResponseObj.getAck () == AckType.OK && aErrorList == null)
+            {
+              // Redirect user on AS4 success only
+              final String sGetLocation = aState.getDataOwnerRedirectURL ();
+              final URL aURL = URLHelper.getAsURL (sGetLocation);
+              if (aURL != null && !aURL.getHost ().equals ("localhost") && !aURL.getHost ().equals ("127.0.0.1"))
+              {
+                DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI redirecting the user to '" + sGetLocation + "'");
+                // aState.setRedirectedUser (true);
+                aWPEC.postRedirectGetExternal (new SimpleURL (sGetLocation));
+              }
+              else
+                aForm.addChild (error ("Received an invalid redirection URL ").addChild (code (sGetLocation)));
+            }
+          }
+          else
           {
             // IM request
             // -> preview on our (DE) side
@@ -1674,106 +1715,6 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                                                                                       .setOnClick (JSHtml.windowAlert ("Okay, you rejected")));
             }
           }
-          else
-          {
-            // USI request
-            // -> preview happens on DO side
-
-            final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytesRequest1);
-            if (aResponseObj == null)
-              throw new IOException ("Failed to parse USI response XML - see log for details");
-
-            // Remember response
-            aState.m_aResponseUSI = aResponseObj;
-            aErrorList = aResponseObj.getErrorList ();
-
-            if (aResponseObj.getAck () == AckType.OK && aErrorList == null)
-            {
-              // Redirect user on AS4 success only
-              final RequestUserRedirectionType aRequestRedirect = new RequestUserRedirectionType ();
-              aRequestRedirect.setRequestId (aState.m_sRequestID);
-              // Our DE URL that we send to the DO, so that he can redirect
-              // back to us later (this is the API where we take the POST
-              // request and forward back to this page)
-              aRequestRedirect.setRedirectURL (AppConfig.getPublicURL () +
-                                               PhotonAPIServlet.SERVLET_DEFAULT_PATH +
-                                               DemoUIAPI.API_USI_REDIRECT_RESPONSE);
-              final byte [] aRedirectRequestBytes = DE4AMarshaller.deUsiRedirectRequestMarshaller ()
-                                                                  .setFormattedOutput (true)
-                                                                  .getAsBytes (aRequestRedirect);
-
-              LOGGER.info ("Redirect request to be send (in UTF-8): " + new String (aRedirectRequestBytes, StandardCharsets.UTF_8));
-
-              final String sPost2URL = aState.getDataOwnerRedirectURL ();
-
-              // Important to not follow redirects, because we are
-              // investigating the HTTP header used for redirects
-              final HttpClientSettings aHCS2 = aHCS.getClone ().setFollowRedirects (false).setUseKeepAlive (false);
-
-              final String sGetLocation;
-              try (final HttpClientManager aHCM2 = HttpClientManager.create (aHCS2))
-              {
-                LOGGER.info ("Sending redirect request to the DO redirect URL '" + sPost2URL + "'");
-                DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI sending redirect request to '" + sPost2URL + "'");
-
-                final HttpPost aPost2 = new HttpPost (sPost2URL);
-                aPost2.setEntity (new ByteArrayEntity (aRedirectRequestBytes));
-                aPost2.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
-
-                // Main POST
-                sGetLocation = aHCM2.execute (aPost2, aHttpResponse -> {
-                  final StatusLine aStatusLine = aHttpResponse.getStatusLine ();
-                  String ret = null;
-
-                  // Allow 301, 302, 303 and 307
-                  if (aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_PERMANENTLY ||
-                      aStatusLine.getStatusCode () == CHttp.HTTP_MOVED_TEMPORARY ||
-                      aStatusLine.getStatusCode () == CHttp.HTTP_SEE_OTHER ||
-                      aStatusLine.getStatusCode () == CHttp.HTTP_TEMPORARY_REDIRECT)
-                  {
-                    final Header aLocationHeader = aHttpResponse.getFirstHeader (CHttpHeader.LOCATION);
-                    if (aLocationHeader != null)
-                    {
-                      LOGGER.info ("Found the header '" + CHttpHeader.LOCATION + "' with value '" + aLocationHeader.getValue () + "'");
-                      ret = aLocationHeader.getValue ();
-                    }
-                    else
-                    {
-                      final String sMsg = "HTTP Response to '" + sPost2URL + "' has no '" + CHttpHeader.LOCATION + "' header";
-                      LOGGER.error (sMsg);
-                      aForm.addChild (error (sMsg));
-                    }
-                  }
-                  else
-                  {
-                    final String sMsg = "HTTP Response to '" + sPost2URL + "' has unexpected status code: " + aStatusLine.toString ();
-                    LOGGER.error (sMsg);
-                    aForm.addChild (error (sMsg));
-                  }
-
-                  final byte [] aResponseBytesRequest2 = EntityUtils.toByteArray (aHttpResponse.getEntity ());
-
-                  DE4AKafkaClient.send (EErrorLevel.INFO,
-                                        "DemoUI received redirect response content (" + aResponseBytesRequest2.length + " bytes)");
-                  LOGGER.info ("Redirect response received (in UTF-8): " + new String (aResponseBytesRequest2, StandardCharsets.UTF_8));
-
-                  return ret;
-                });
-              }
-
-              if (sGetLocation != null)
-              {
-                final URL aURL = URLHelper.getAsURL (sGetLocation);
-                if (aURL != null && !aURL.getHost ().equals ("localhost") && !aURL.getHost ().equals ("127.0.0.1"))
-                {
-                  DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI redirecting the user to '" + sGetLocation + "'");
-                  aWPEC.postRedirectGetExternal (new SimpleURL (sGetLocation));
-                }
-                else
-                  aForm.addChild (error ("Received an invalid redirection URL ").addChild (code (sGetLocation)));
-              }
-            }
-          }
 
           if (aErrorList != null)
           {
@@ -1788,7 +1729,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         }
         catch (final IOException ex)
         {
-          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sTargetURL)))
+          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sRequestTargetURL)))
                                   .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
         }
         finally
