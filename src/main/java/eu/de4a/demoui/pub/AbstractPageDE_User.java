@@ -852,8 +852,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         // TODO
         aNodeList.addChild (div ("TODO"));
 
-        // final String sRequestID = aWPEC.params ().getAsString
-        // (APIExecutorPostUSIRedirectResponse.PARAM_REQUEST_ID);
+        final String sRequestID = aWPEC.params ().getAsString (PARAM_REQUEST_ID);
         // final ResponseUserRedirectionType aResponse =
         // RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
         //
@@ -934,7 +933,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             // Our DE URL that we send to the DO, so that he can redirect
             // back to us later (this is the API where we take the POST
             // request and forward back to this page)
-            String sOurURL = AppConfig.getPublicURL () + PhotonAPIServlet.SERVLET_DEFAULT_PATH + DemoUIAPI.API_USI_REDIRECT_RESPONSE;
+            String sOurURL = AppConfig.getPublicURL () + PhotonAPIServlet.SERVLET_DEFAULT_PATH + DemoUIAPI.API_USI_RESPONSE;
             // Link to this page (with an absolute URL)
             sOurURL = new SimpleURL (AppConfig.getPublicURL () +
                                      aWPEC.getLinkToMenuItem (MenuPublic.MENU_DE_USI_USER).getAsStringWithoutEncodedParameters ())

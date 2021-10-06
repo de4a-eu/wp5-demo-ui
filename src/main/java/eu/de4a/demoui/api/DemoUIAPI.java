@@ -32,7 +32,6 @@ import com.helger.photon.api.IAPIRegistry;
 public final class DemoUIAPI
 {
   public static final String API_USI_RESPONSE = "/usi-response";
-  public static final String API_USI_REDIRECT_RESPONSE = "/usi-redirect-response";
 
   private DemoUIAPI ()
   {}
