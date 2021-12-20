@@ -80,8 +80,7 @@ public final class AppConfig extends AbstractGlobalSingleton
     return getConfig ().getAsString ("webapp.baseurl");
   }
 
-  @Nullable
-  public static Boolean isStatusEnabled ()
+  public static boolean isStatusEnabled ()
   {
     return getConfig ().getAsBoolean ("webapp.status.enabled", true);
   }
