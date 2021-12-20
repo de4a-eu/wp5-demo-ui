@@ -76,7 +76,7 @@ public class APIExecutorPostUSIRedirectResponse implements IAPIExecutor
 
       final LayoutExecutionContext aLEC = LayoutExecutionContext.createForAjaxOrAction (aRequestScope);
       aUnifiedResponse.disableCaching ()
-                      .setRedirect (new SimpleURL (AppConfig.getPublicURL () +
+                      .setRedirect (new SimpleURL (AppConfig.getBaseURL () +
                                                    aLEC.getLinkToMenuItem (MenuPublic.MENU_DE_USI_USER).getAsStringWithEncodedParameters ())
                                                                                                                                             .add (PARAM_REQUEST_ID,
                                                                                                                                                   aResponse.getRequestId ())
