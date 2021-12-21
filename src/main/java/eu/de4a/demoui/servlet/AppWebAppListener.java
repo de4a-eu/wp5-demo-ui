@@ -94,7 +94,7 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
 
     DE4AKafkaSettings.setKafkaEnabled (true);
     DE4AKafkaSettings.setKafkaTopic ("wp5-demoui");
-    DE4AKafkaSettings.defaultProperties ().put ("bootstrap.servers", "de4a-dev-kafka.egovlab.eu:9092");
+    DE4AKafkaSettings.defaultProperties ().put ("bootstrap.servers", AppConfig.getKafkaEndpoint());
   }
 
   @Override

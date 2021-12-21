@@ -278,7 +278,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       final HttpClientSettings aHCS = new HttpClientSettings ();
       try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
       {
-        final String sTargetURL = CApp.CONNECTOR_BASE_URL + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
+        final String sTargetURL = AppConfig.getConnectorEndpoint() + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
 
         if (LOGGER.isInfoEnabled ())
           LOGGER.info ("Calling IDK '" +
