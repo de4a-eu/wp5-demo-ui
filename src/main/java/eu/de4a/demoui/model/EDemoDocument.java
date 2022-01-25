@@ -44,12 +44,12 @@ import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.string.StringHelper;
 import com.helger.jaxb.validation.IValidationEventHandlerFactory;
 import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
-import com.helger.pdflayout4.PDFCreationException;
-import com.helger.pdflayout4.PageLayoutPDF;
-import com.helger.pdflayout4.base.PLPageSet;
-import com.helger.pdflayout4.element.text.PLText;
-import com.helger.pdflayout4.spec.FontSpec;
-import com.helger.pdflayout4.spec.PreloadFont;
+import com.helger.pdflayout.PDFCreationException;
+import com.helger.pdflayout.PageLayoutPDF;
+import com.helger.pdflayout.base.PLPageSet;
+import com.helger.pdflayout.element.text.PLText;
+import com.helger.pdflayout.spec.FontSpec;
+import com.helger.pdflayout.spec.PreloadFont;
 import com.helger.xml.XMLFactory;
 
 import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
