@@ -188,6 +188,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.helger.peppol</groupId>
+      <artifactId>peppol-smp-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.helger.photon</groupId>
       <artifactId>ph-oton-jetty</artifactId>
       <scope>test</scope>

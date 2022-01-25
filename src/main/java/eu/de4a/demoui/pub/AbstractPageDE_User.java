@@ -1228,7 +1228,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         <de4a:ProvisionItem>
         <de4a:AtuCode>AT</de4a:AtuCode>
                 <de4a:AtuLatinName>ÖSTERREICH</de4a:AtuLatinName>
-                <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271</de4a:DataOwnerId>
+                <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271-it1</de4a:DataOwnerId>
                 <de4a:DataOwnerPrefLabel>BUNDESMINISTERIUM FUER DIGITALISIERUNG UND WIRTSCHAFTSSTANDORT (BMDW)</de4a:DataOwnerPrefLabel>
                 <de4a:Provision>
           <de4a:ProvisionType>ip</de4a:ProvisionType>
