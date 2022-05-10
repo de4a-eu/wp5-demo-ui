@@ -51,7 +51,7 @@ import com.helger.xml.serialize.write.EXMLSerializeIndent;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
-import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
@@ -179,18 +179,18 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   @Nonempty
   protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
   {
-    if (ePattern.isUSI ())
-      return CApp.MOCK_BASE_URL + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
-    return CApp.MOCK_BASE_URL + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+    if (ePattern == EPatternType.IM)
+      return AppConfig.getPublicURL () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+    return AppConfig.getPublicURL () + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
   }
 
   @Nonnull
   @Nonempty
   protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
   {
-    if (ePattern.isUSI ())
-      return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
-    return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
+    if (ePattern == EPatternType.IM)
+      return AppConfig.getConnectorEndpoint () + "/requestTransferEvidenceIM";
+    return AppConfig.getConnectorEndpoint () + "/requestTransferEvidenceUSI";
   }
 
   protected final EPatternType m_ePattern;

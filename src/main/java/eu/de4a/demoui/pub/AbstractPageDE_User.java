@@ -107,16 +107,16 @@ import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.json.IJsonObject;
 import com.helger.json.JsonObject;
 import com.helger.json.serialize.JsonWriterSettings;
-import com.helger.pdflayout4.PageLayoutPDF;
-import com.helger.pdflayout4.base.IPLRenderableObject;
-import com.helger.pdflayout4.base.PLPageSet;
-import com.helger.pdflayout4.element.box.PLBox;
-import com.helger.pdflayout4.element.table.PLTable;
-import com.helger.pdflayout4.element.table.PLTableCell;
-import com.helger.pdflayout4.element.text.PLText;
-import com.helger.pdflayout4.spec.FontSpec;
-import com.helger.pdflayout4.spec.PreloadFont;
-import com.helger.pdflayout4.spec.WidthSpec;
+import com.helger.pdflayout.PageLayoutPDF;
+import com.helger.pdflayout.base.IPLRenderableObject;
+import com.helger.pdflayout.base.PLPageSet;
+import com.helger.pdflayout.element.box.PLBox;
+import com.helger.pdflayout.element.table.PLTable;
+import com.helger.pdflayout.element.table.PLTableCell;
+import com.helger.pdflayout.element.text.PLText;
+import com.helger.pdflayout.spec.FontSpec;
+import com.helger.pdflayout.spec.PreloadFont;
+import com.helger.pdflayout.spec.WidthSpec;
 import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.api.servlet.PhotonAPIServlet;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
@@ -273,7 +273,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       final HttpClientSettings aHCS = new HttpClientSettings ();
       try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
       {
-        final String sTargetURL = CApp.CONNECTOR_BASE_URL + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
+        final String sTargetURL = AppConfig.getConnectorEndpoint () + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
 
         if (LOGGER.isInfoEnabled ())
           LOGGER.info ("Calling IDK '" +
@@ -1240,7 +1240,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         <de4a:ProvisionItem>
         <de4a:AtuCode>AT</de4a:AtuCode>
                 <de4a:AtuLatinName>ÖSTERREICH</de4a:AtuLatinName>
-                <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271</de4a:DataOwnerId>
+                <de4a:DataOwnerId>iso6523-actorid-upis::9999:AT000000271-it1</de4a:DataOwnerId>
                 <de4a:DataOwnerPrefLabel>BUNDESMINISTERIUM FUER DIGITALISIERUNG UND WIRTSCHAFTSSTANDORT (BMDW)</de4a:DataOwnerPrefLabel>
                 <de4a:Provision>
           <de4a:ProvisionType>ip</de4a:ProvisionType>

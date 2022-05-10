@@ -66,7 +66,7 @@ import com.helger.xml.serialize.read.DOMReaderSettings;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
-import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EDemoDocumentType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
@@ -241,11 +241,11 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
       }
 
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, CApp.MOCK_BASE_URL)))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, AppConfig.getPublicURL ())))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
                                                    .setHelpText (span ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
                                                                        " The suffix of the Interface to test is added to this path." +
-                                                                       " The endpoint must be able to handle HTTP POST calls. Use ").addChild (code (CApp.CONNECTOR_BASE_URL))
+                                                                       " The endpoint must be able to handle HTTP POST calls. Use ").addChild (code (AppConfig.getPublicURL ()))
                                                                                                                                     .addChild (" for the connector IDK request.")));
 
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("XML message to send")
