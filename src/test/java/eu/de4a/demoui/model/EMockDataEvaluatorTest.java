@@ -2,6 +2,7 @@ package eu.de4a.demoui.model;
 
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,20 +29,24 @@ import com.helger.xsds.bdxr.smp1.EndpointType;
  */
 public final class EMockDataEvaluatorTest
 {
-  static final ISMLInfo SMK_DE4A = new SMLInfo ("de4a-smk",
-                                                "DE4A SMK",
-                                                "de4a.acc.edelivery.tech.ec.europa.eu.",
-                                                "https://acc.edelivery.tech.ec.europa.eu/edelivery-sml",
+  static final ISMLInfo SML_DE4A = new SMLInfo ("de4a-sml",
+                                                "DE4A SML",
+                                                "de4a.edelivery.tech.ec.europa.eu.",
+                                                "https://edelivery.tech.ec.europa.eu/edelivery-sml",
                                                 true);
+  static final LoadedKeyStore SMP_TRUST_STORE = KeyStoreHelper.loadKeyStore (EKeyStoreType.JKS,
+                                                                             "truststore/de4a-truststore-smp-v3-pw-de4a2.jks",
+                                                                             "de4a");
+
   private static final Logger LOGGER = LoggerFactory.getLogger (EMockDataEvaluatorTest.class);
 
   @Test
+  @Ignore ("Participants not yet registered")
   public void testLookups () throws SMPDNSResolutionException, SMPClientException
   {
     final IProcessIdentifier aResponseProcessID = SimpleIdentifierFactory.INSTANCE.createProcessIdentifier ("urn:de4a-eu:MessageType",
                                                                                                             "response");
-    final LoadedKeyStore aLTS = KeyStoreHelper.loadKeyStore (EKeyStoreType.JKS, "truststore/de4a-truststore-test-smp-pw-de4a.jks", "de4a");
-    assertTrue (aLTS.isSuccess ());
+    assertTrue (SMP_TRUST_STORE.isSuccess ());
 
     for (final EUseCase eUC : EUseCase.values ())
       for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
@@ -51,7 +56,7 @@ public final class EMockDataEvaluatorTest
           final IParticipantIdentifier aRecipient = SimpleIdentifierFactory.INSTANCE.parseParticipantIdentifier (e.getParticipantID ());
           final EndpointType aEndpoint = new BDXRClientReadOnly (BDXLURLProvider.INSTANCE,
                                                                  aRecipient,
-                                                                 SMK_DE4A).setTrustStore (aLTS.getKeyStore ())
+                                                                 SML_DE4A).setTrustStore (SMP_TRUST_STORE.getKeyStore ())
                                                                           .getEndpoint (aRecipient,
                                                                                         eUC.getDocumentTypeID (),
                                                                                         aResponseProcessID,

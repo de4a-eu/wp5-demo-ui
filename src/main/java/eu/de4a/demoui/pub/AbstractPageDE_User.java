@@ -153,25 +153,23 @@ import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.CIEM;
-import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.CIEM;
+import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
+import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
+import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
+import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
+import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.iem.jaxb.common.types.AckType;
-import eu.de4a.iem.jaxb.common.types.AgentType;
-import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
 import eu.de4a.iem.jaxb.common.types.ErrorListType;
-import eu.de4a.iem.jaxb.common.types.ErrorType;
-import eu.de4a.iem.jaxb.common.types.ExplicitRequestType;
 import eu.de4a.iem.jaxb.common.types.ProvisionItemType;
 import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceType;
-import eu.de4a.iem.jaxb.common.types.RequestGroundsType;
 import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
-import eu.de4a.iem.jaxb.common.types.ResponseErrorType;
 import eu.de4a.iem.jaxb.common.types.ResponseLookupRoutingInformationType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 import eu.de4a.iem.jaxb.common.types.SourceType;
-import eu.de4a.iem.xml.de4a.DE4AMarshaller;
-import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public abstract class AbstractPageDE_User extends AbstractPageDE
@@ -241,11 +239,11 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   protected static final GenericJAXBMarshaller <RequestExtractEvidenceType> createDRMarshaller (@Nullable final EPatternType ePattern,
                                                                                                 @Nullable final ErrorList aEL)
   {
-    final DE4AMarshaller <RequestExtractEvidenceType> m;
+    final DE4ACoreMarshaller <RequestExtractEvidenceType> m;
     if (ePattern.isUSI ())
-      m = DE4AMarshaller.drUsiRequestMarshaller ();
+      m = DE4ACoreMarshaller.drUsiRequestMarshaller ();
     else
-      m = DE4AMarshaller.drImRequestMarshaller ();
+      m = DE4ACoreMarshaller.drImRequestMarshaller ();
     return m.setFormattedOutput (true)
             .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
   }
@@ -261,7 +259,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
 
       // Serialize to XML
-      final String sPayload = DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
+      final String sPayload = DE4ACoreMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
 
       if (LOGGER.isInfoEnabled ())
         LOGGER.info ("IDK request:\n" + sPayload);
@@ -294,7 +292,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
           LOGGER.info ("IDK response:\n" + new String (aResponseBytes, StandardCharsets.UTF_8));
 
         // Evaluate the response XML and parse it
-        aResponse = DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ().read (aResponseBytes);
+        aResponse = DE4ACoreMarshaller.idkResponseLookupRoutingInformationMarshaller ().read (aResponseBytes);
         if (aResponse == null)
           sErrorMsg = "Failed to parse " + aResponseBytes.length + " response bytes as ResponseLookupRoutingInformationType";
       }
@@ -1661,7 +1659,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             // USI request
             // -> preview happens on DO side
 
-            final ResponseErrorType aResponseObj = DE4AMarshaller.drUsiResponseMarshaller ().read (aResponseBytesRequest1);
+            final ResponseErrorType aResponseObj = DE4ACoreMarshaller.drUsiResponseMarshaller ().read (aResponseBytesRequest1);
             if (aResponseObj == null)
               throw new IOException ("Failed to parse USI response XML - see log for details");
 
@@ -1690,8 +1688,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
             // -> preview on our (DE) side
             // -> we already have the response and can preview it
 
-            final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                            .read (aResponseBytesRequest1);
+            final ResponseTransferEvidenceType aResponseObj = DE4ACoreMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                                .read (aResponseBytesRequest1);
             if (aResponseObj == null)
               throw new IOException ("Failed to parse IM response XML - see log for details");
 

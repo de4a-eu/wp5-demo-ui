@@ -71,7 +71,7 @@ import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EDemoDocumentType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
+import eu.de4a.iem.core.DE4ACoreNamespaceContext;
 
 /**
  * Take a user provided message and send it
@@ -201,7 +201,7 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
               // Reformat if necessary
               final String sFormatted = isFormatted ? sResponse
                                                     : XMLWriter.getNodeAsString (aDoc,
-                                                                                 new XMLWriterSettings ().setNamespaceContext (DE4ANamespaceContext.getInstance ()));
+                                                                                 new XMLWriterSettings ().setNamespaceContext (DE4ACoreNamespaceContext.getInstance ()));
               final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sFormatted);
               for (final IPrismPlugin p : PRISM_PLUGINS)
                 aPrism.addPlugin (p);

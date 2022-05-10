@@ -16,7 +16,6 @@
 package eu.de4a.demoui.model;
 
 import java.awt.Color;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -31,6 +30,8 @@ import org.w3c.dom.Element;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.base64.Base64;
+import com.helger.commons.collection.impl.CommonsArrayList;
+import com.helger.commons.collection.impl.ICommonsList;
 import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.error.list.ErrorList;
 import com.helger.commons.error.list.IErrorList;
@@ -38,7 +39,6 @@ import com.helger.commons.id.IHasID;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.lang.GenericReflection;
-import com.helger.commons.locale.country.ECountry;
 import com.helger.commons.math.MathHelper;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.string.StringHelper;
@@ -52,15 +52,29 @@ import com.helger.pdflayout.spec.FontSpec;
 import com.helger.pdflayout.spec.PreloadFont;
 import com.helger.xml.XMLFactory;
 
-import eu.de4a.iem.CIEM;
-import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.types.*;
-import eu.de4a.iem.jaxb.eidas.np.GenderType;
-import eu.de4a.iem.xml.de4a.DE4AMarshaller;
-import eu.de4a.iem.xml.de4a.DE4AResponseDocumentHelper;
-import eu.de4a.iem.xml.de4a.EDE4ACanonicalEvidenceType;
-import un.unece.uncefact.codelist.specification.ianamimemediatype._2003.BinaryObjectMimeCodeContentType;
+import eu.de4a.iem.cev.EDE4ACanonicalEvidenceType;
+import eu.de4a.iem.core.CIEM;
+import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.core.DE4AResponseDocumentHelper;
+import eu.de4a.iem.core.jaxb.common.AgentType;
+import eu.de4a.iem.core.jaxb.common.CanonicalEvidenceType;
+import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
+import eu.de4a.iem.core.jaxb.common.DomesticEvidenceType;
+import eu.de4a.iem.core.jaxb.common.ErrorType;
+import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
+import eu.de4a.iem.core.jaxb.common.IssuingTypeType;
+import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.RedirectUserType;
+import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
+import eu.de4a.iem.core.jaxb.common.RequestEvidenceUSIItemType;
+import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
+import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
+import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
+import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractEvidenceItemType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
+import eu.de4a.iem.core.jaxb.eidas.np.GenderType;
 
 /**
  * Available mock demo documents
@@ -76,15 +90,15 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                 "IM Request DE to DR (C1 -> C2)",
                 "/requestTransferEvidenceIM",
                 EDemoDocumentType.REQUEST,
-                EDemoDocument::createDemoRequestExtractEvidence,
-                DE4AMarshaller.drImRequestMarshaller ()),
+                EDemoDocument::createDemoRequestExtractMultiEvidenceIM,
+                DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ()),
   // DT-DO request (C3 -> C4)
   IM_REQ_DT_DO ("im-req-dt-do",
                 "IM Request DT to DO (C3 -> C4)",
                 "/requestExtractEvidenceIM",
                 EDemoDocumentType.REQUEST,
-                EDemoDocument::createDemoRequestExtractEvidence,
-                DE4AMarshaller.doImRequestMarshaller ()),
+                EDemoDocument::createDemoRequestExtractMultiEvidenceIM,
+                DE4ACoreMarshaller.doRequestExtractMultiEvidenceIMMarshaller ()),
 
   // DO-DT response (C4 -> C3)
   IM_RESP_DO_DT_T42_V06 ("im-resp-do-dt",
@@ -92,8 +106,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                          null,
                          EDemoDocumentType.RESPONSE,
                          EDemoCanonicalEvidence.T42_COMPANY_INFO_V06,
-                         EDemoDocument::createResponseExtractEvidence,
-                         DE4AMarshaller::doImResponseMarshaller),
+                         EDemoDocument::createDemoResponseExtractMultiEvidence,
+                         DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
 
   // DR-DE response (C2 -> C1)
   IM_RESP_DR_DE_T42_V06 ("im-resp-dr-de",
@@ -101,83 +115,83 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                          null,
                          EDemoDocumentType.RESPONSE,
                          EDemoCanonicalEvidence.T42_COMPANY_INFO_V06,
-                         EDemoDocument::createResponseTransferEvidence,
-                         DE4AMarshaller::drImResponseMarshaller),
+                         EDemoDocument::createDemoResponseExtractMultiEvidence,
+                         DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
 
   /* USI pattern */
 
-  /* phase1 - request */
+  /* phase1 - request + redirect URL */
 
   // DE-DR request (C1 -> C2)
   USI1_REQ_DE_DR ("usi1-req-de-dr",
                   "USI step 1 Request from DE to DR (C1 -> C2)",
                   "/dr1/usi/transferevidence",
                   EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoRequestExtractEvidence,
-                  DE4AMarshaller.drUsiRequestMarshaller ()),
+                  EDemoDocument::createDemoRequestExtractMultiEvidenceUSI,
+                  DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ()),
 
   // DT-DO request (C3 -> C4)
   USI1_REQ_DT_DO ("usi1-req-dt-do",
                   "USI step 1 Request from DT to DO (C3 -> C4)",
                   "/do1/usi/extractevidence",
                   EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoRequestExtractEvidence,
-                  DE4AMarshaller.doUsiRequestMarshaller ()),
+                  EDemoDocument::createDemoRequestExtractMultiEvidenceUSI,
+                  DE4ACoreMarshaller.doRequestExtractMultiEvidenceUSIMarshaller ()),
 
   // DO-DT response (C4 -> C3)
   USI1_RESP_DO_DT ("usi1-resp-do-dt",
                    "USI step 1 Response from DO to DT (C4 -> C3)",
                    null,
                    EDemoDocumentType.RESPONSE,
-                   EDemoDocument::createResponseError,
-                   DE4AMarshaller.doUsiResponseMarshaller ()),
+                   EDemoDocument::createUSIRedirectUser,
+                   DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ()),
 
   // DR-DE response (C2 -> C1)
   USI1_RESP_DE_DE ("usi1-resp-dr-de",
                    "USI step 1 Response from DR to DE (C2 -> C1)",
                    null,
                    EDemoDocumentType.RESPONSE,
-                   EDemoDocument::createResponseError,
-                   DE4AMarshaller.deUsiResponseMarshaller ()),
+                   EDemoDocument::createUSIRedirectUser,
+                   DE4ACoreMarshaller.deUSIRedirectUserMarshaller ()),
 
   /* phase2 data */
 
   // DO-DT (C4 ->C3)
   USI2_REQ_DO_DT_T41_UC1_V2021_02_11 ("usi2-req-do-dt",
-                                      "USI step 2 Request DO to DT (C4 -> C3)",
+                                      "USI step 2 Response DO to DT (C4 -> C3)",
                                       "/dt1/usi/transferevidence",
                                       EDemoDocumentType.REQUEST,
                                       EDemoCanonicalEvidence.T41_UC1_2021_02_11,
-                                      EDemoDocument::createDemoDT_USI,
-                                      DE4AMarshaller::dtUsiRequestMarshaller),
+                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                      DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DO_DT_T41_UC1_V2021_04_13 ("usi2-req-do-dt",
-                                      "USI step 2 Request DO to DT (C4 -> C3)",
+                                      "USI step 2 Response DO to DT (C4 -> C3)",
                                       "/dt1/usi/transferevidence",
                                       EDemoDocumentType.REQUEST,
                                       EDemoCanonicalEvidence.T41_UC1_2021_04_13,
-                                      EDemoDocument::createDemoDT_USI,
-                                      DE4AMarshaller::dtUsiRequestMarshaller),
+                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                      DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DO_DT_T43_BIRTH_EVIDENCE_V16A ("usi2-req-do-dt",
-                                          "USI step 2 Request DO to DT (C4 -> C3)",
+                                          "USI step 2 Response DO to DT (C4 -> C3)",
                                           "/dt1/usi/transferevidence",
                                           EDemoDocumentType.REQUEST,
                                           EDemoCanonicalEvidence.T43_BIRTH_EVIDENCE_V16B,
-                                          EDemoDocument::createDemoDT_USI,
-                                          DE4AMarshaller::dtUsiRequestMarshaller),
+                                          EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                          DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DO_DT_T43_DOMREG_EVIDENCE_V16A ("usi2-req-do-dt",
-                                           "USI step 2 Request DO to DT (C4 -> C3)",
+                                           "USI step 2 Response DO to DT (C4 -> C3)",
                                            "/dt1/usi/transferevidence",
                                            EDemoDocumentType.REQUEST,
                                            EDemoCanonicalEvidence.T43_DOMREG_EVIDENCE_V16B,
-                                           EDemoDocument::createDemoDT_USI,
-                                           DE4AMarshaller::dtUsiRequestMarshaller),
+                                           EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                           DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DO_DT_T43_MARRIAGE_EVIDENCE_V16A ("usi2-req-do-dt",
-                                             "USI step 2 Request DO to DT (C4 -> C3)",
+                                             "USI step 2 Response DO to DT (C4 -> C3)",
                                              "/dt1/usi/transferevidence",
                                              EDemoDocumentType.REQUEST,
                                              EDemoCanonicalEvidence.T43_MARRIAGE_EVIDENCE_V16B,
-                                             EDemoDocument::createDemoDT_USI,
-                                             DE4AMarshaller::dtUsiRequestMarshaller),
+                                             EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                             DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
 
   // DT-DO (C3 -> C4)
   USI2_RESP_DT_DO ("usi2-resp-dt-do",
@@ -185,7 +199,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                    null,
                    EDemoDocumentType.RESPONSE,
                    EDemoDocument::createResponseError,
-                   DE4AMarshaller.dtUsiResponseMarshaller ()),
+                   DE4ACoreMarshaller.defResponseErrorMarshaller ()),
 
   // DR-DE (C2 -> C1)
   USI2_REQ_DR_DE_T41_UC1_V2021_02_11 ("usi2-req-dr-de",
@@ -193,57 +207,43 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                                       "/de1/usi/forwardevidence",
                                       EDemoDocumentType.REQUEST,
                                       EDemoCanonicalEvidence.T41_UC1_2021_02_11,
-                                      EDemoDocument::createDemoDE_USI,
-                                      DE4AMarshaller::deUsiRequestMarshaller),
+                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                      DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DR_DE_T41_UC1_V2021_04_13 ("usi2-req-dr-de",
                                       "USI step 2 Request DR to DE (C2 -> C1)",
                                       "/de1/usi/forwardevidence",
                                       EDemoDocumentType.REQUEST,
                                       EDemoCanonicalEvidence.T41_UC1_2021_04_13,
-                                      EDemoDocument::createDemoDE_USI,
-                                      DE4AMarshaller::deUsiRequestMarshaller),
+                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                      DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DR_DE_T43_BIRTH_EVIDENCE_V16A ("usi2-req-dr-de",
                                           "USI step 2 Request DR to DE (C2 -> C1)",
                                           "/de1/usi/forwardevidence",
                                           EDemoDocumentType.REQUEST,
                                           EDemoCanonicalEvidence.T43_BIRTH_EVIDENCE_V16B,
-                                          EDemoDocument::createDemoDE_USI,
-                                          DE4AMarshaller::deUsiRequestMarshaller),
+                                          EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                          DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DR_DE_T43_DOMREG_EVIDENCE_V16A ("usi2-req-dr-de",
                                            "USI step 2 Request DR to DE (C2 -> C1)",
                                            "/de1/usi/forwardevidence",
                                            EDemoDocumentType.REQUEST,
                                            EDemoCanonicalEvidence.T43_DOMREG_EVIDENCE_V16B,
-                                           EDemoDocument::createDemoDE_USI,
-                                           DE4AMarshaller::deUsiRequestMarshaller),
+                                           EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                           DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
   USI2_REQ_DR_DE_T43_MARRIAGE_EVIDENCE_V16A ("usi2-req-dr-de",
                                              "USI step 2 Request DR to DE (C2 -> C1)",
                                              "/de1/usi/forwardevidence",
                                              EDemoDocumentType.REQUEST,
                                              EDemoCanonicalEvidence.T43_MARRIAGE_EVIDENCE_V16B,
-                                             EDemoDocument::createDemoDE_USI,
-                                             DE4AMarshaller::deUsiRequestMarshaller),
+                                             EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                             DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
   // DE-DR Response (C1->C2)
   USI2_RESP_DE_DR ("usi2-resp-de-dr",
                    "USI step 2 Response from DE to DR (C1 -> C2)",
                    null,
                    EDemoDocumentType.RESPONSE,
                    EDemoDocument::createResponseError,
-                   DE4AMarshaller.drUsiResponseMarshaller ()),
-
-  // IDK
-  IDK_LOOKUP_ROUTING_INFO_REQUEST ("idk-lri-req",
-                                   "IDK routing information lookup request",
-                                   "/lookupRoutingInformation",
-                                   EDemoDocumentType.IDK_REQUEST,
-                                   EDemoDocument::createIDKRequestLookupRoutingInformation,
-                                   DE4AMarshaller.idkRequestLookupRoutingInformationMarshaller ()),
-  IDK_LOOKUP_ROUTING_INFO_RESPONSE ("idk-lri-resp",
-                                    "IDK routing information lookup response",
-                                    null,
-                                    EDemoDocumentType.IDK_RESPONSE,
-                                    EDemoDocument::createIDKResponseLookupRoutingInformation,
-                                    DE4AMarshaller.idkResponseLookupRoutingInformationMarshaller ());
+                   DE4ACoreMarshaller.defResponseErrorMarshaller ());
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -251,7 +251,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   private final EDemoDocumentType m_eDocType;
   private final Supplier <Object> m_aDemoRequestCreator;
   private final Function <Object, String> m_aToString;
-  private final DE4AMarshaller <Object> m_aMarshaller;
+  private final DE4ACoreMarshaller <Object> m_aMarshaller;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sIDPrefix,
                      @Nonnull @Nonempty final String sDisplayNamePrefix,
@@ -259,7 +259,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                      @Nonnull final EDemoDocumentType eDocType,
                      @Nonnull final EDemoCanonicalEvidence eCE,
                      @Nonnull final Function <Element, T> aDemoRequestCreator,
-                     @Nonnull final Function <EDE4ACanonicalEvidenceType, DE4AMarshaller <T>> aMarshallerProvider)
+                     @Nonnull final Function <EDE4ACanonicalEvidenceType, DE4ACoreMarshaller <T>> aMarshallerProvider)
   {
     this (sIDPrefix + "-" + eCE.getCEType ().getID (),
           sDisplayNamePrefix + " - " + eCE.getCEType ().getDisplayName (),
@@ -274,7 +274,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
                      @Nonnull @Nonempty final String sRelativeURL,
                      @Nonnull final EDemoDocumentType eDocType,
                      @Nonnull final Supplier <T> aDemoRequestCreator,
-                     @Nonnull final DE4AMarshaller <T> aMarshaller)
+                     @Nonnull final DE4ACoreMarshaller <T> aMarshaller)
   {
     m_sID = sID;
     m_sDisplayName = sDisplayName;
@@ -430,19 +430,63 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static RequestExtractEvidenceType createDemoRequestExtractEvidence ()
+  private static RequestEvidenceItemType _createRequestEvidenceIMItemType ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestExtractEvidenceType ret = new RequestExtractEvidenceType ();
+    final RequestEvidenceItemType ret = new RequestEvidenceItemType ();
+    ret.setRequestItemId (UUID.randomUUID ().toString ());
+    ret.setDataRequestSubject (_createDRS ());
+    ret.setRequestGrounds (_createRequestGrounds ());
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    // No additional parameter
+    return ret;
+  }
+
+  @Nonnull
+  public static RequestExtractMultiEvidenceIMType createDemoRequestExtractMultiEvidenceIM ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestExtractMultiEvidenceIMType ret = new RequestExtractMultiEvidenceIMType ();
     ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId (CIEM.SPECIFICATION_ID);
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
+    ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
+    if (aTLR.nextBoolean ())
+      ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
+    return ret;
+  }
+
+  @Nonnull
+  private static RequestEvidenceUSIItemType _createRequestEvidenceUSIItemType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestEvidenceUSIItemType ret = new RequestEvidenceUSIItemType ();
+    ret.setRequestItemId (UUID.randomUUID ().toString ());
     ret.setDataRequestSubject (_createDRS ());
     ret.setRequestGrounds (_createRequestGrounds ());
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
+    // No additional parameter
+    ret.setDataEvaluatorURL ("https://de.example.org/de4a-" + MathHelper.abs (aTLR.nextLong ()));
+    return ret;
+  }
+
+  @Nonnull
+  public static RequestExtractMultiEvidenceUSIType createDemoRequestExtractMultiEvidenceUSI ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestExtractMultiEvidenceUSIType ret = new RequestExtractMultiEvidenceUSIType ();
+    ret.setRequestId (UUID.randomUUID ().toString ());
+    ret.setSpecificationId (CIEM.SPECIFICATION_ID);
+    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
+    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setDataEvaluator (_createAgent ());
+    ret.setDataOwner (_createAgent ());
+    ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
+    if (aTLR.nextBoolean ())
+      ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
     return ret;
   }
 
@@ -492,60 +536,32 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   {
     final DomesticEvidenceType ret = new DomesticEvidenceType ();
     ret.setIssuingType (random (IssuingTypeType.values ()));
-    ret.setMimeType (random (BinaryObjectMimeCodeContentType.values ()));
+    ret.setMimeType ("application/xml");
     ret.setDataLanguage ("en");
     ret.setEvidenceData (_createPDF ("DomesticEvidence"));
     return ret;
   }
 
   @Nonnull
-  private static DomesticsEvidencesType _createDomesticEvidenceList ()
+  private static ICommonsList <DomesticEvidenceType> _createDomesticEvidenceList ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final DomesticsEvidencesType ret = new DomesticsEvidencesType ();
-    ret.addDomesticEvidence (_createDomesticEvidence ());
+    final ICommonsList <DomesticEvidenceType> ret = new CommonsArrayList <> ();
+    ret.add (_createDomesticEvidence ());
     if (aTLR.nextBoolean ())
-      ret.addDomesticEvidence (_createDomesticEvidence ());
+      ret.add (_createDomesticEvidence ());
     return ret;
   }
 
   @Nonnull
-  public static RequestForwardEvidenceType createDemoDE_USI (@Nonnull final Element aCanonicalEvidence)
-  {
-    final RequestForwardEvidenceType ret = new RequestForwardEvidenceType ();
-    ret.setRequestId (UUID.randomUUID ().toString ());
-    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
-    ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
-    ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
-    return ret;
-  }
-
-  @Nonnull
-  public static RequestTransferEvidenceUSIDTType createDemoDT_USI (@Nonnull final Element aCanonicalEvidence)
+  private static ICommonsList <ErrorType> _createErrorList ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestTransferEvidenceUSIDTType ret = new RequestTransferEvidenceUSIDTType ();
-    ret.setRequestId (UUID.randomUUID ().toString ());
-    ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
-    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataEvaluator (_createAgent ());
-    ret.setDataOwner (_createAgent ());
-    ret.setDataRequestSubject (_createDRS ());
-    ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
-    ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
-    return ret;
-  }
-
-  @Nonnull
-  private static ErrorListType _createErrorList ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ErrorListType ret = new ErrorListType ();
+    final ICommonsList <ErrorType> ret = new CommonsArrayList <> ();
     // Max length 10
-    ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something went wrong"));
+    ret.add (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something went wrong"));
     if (aTLR.nextBoolean ())
-      ret.addError (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something else also went wrong"));
+      ret.add (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something else also went wrong"));
     return ret;
   }
 
@@ -556,166 +572,64 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
     final ResponseErrorType ret = new ResponseErrorType ();
     if (aTLR.nextBoolean ())
     {
-      ret.setAck (AckType.OK);
+      ret.setAck (true);
     }
     else
     {
-      ret.setAck (AckType.KO);
-      ret.setErrorList (_createErrorList ());
+      ret.setAck (false);
+      ret.getError ().addAll (_createErrorList ());
     }
     return ret;
   }
 
   @Nonnull
-  public static ResponseTransferEvidenceType createResponseTransferEvidence (@Nonnull final Element aCanonicalEvidence)
+  private static ResponseExtractEvidenceItemType _createResponseExtractEvidenceItem (@Nonnull final Element aCanonicalEvidence)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ResponseTransferEvidenceType ret = new ResponseTransferEvidenceType ();
-    ret.setRequestId (UUID.randomUUID ().toString ());
-    ret.setSpecificationId ("Specification-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
-    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataEvaluator (_createAgent ());
-    ret.setDataOwner (_createAgent ());
+    final ResponseExtractEvidenceItemType ret = new ResponseExtractEvidenceItemType ();
+    ret.setRequestItemId ("RequestItem-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDataRequestSubject (_createDRS ());
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     if (aTLR.nextBoolean ())
     {
       ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
       if (aTLR.nextBoolean ())
-        ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
+        ret.getDomesticEvidence ().addAll (_createDomesticEvidenceList ());
     }
     else
-      ret.setErrorList (_createErrorList ());
+      ret.getError ().addAll (_createErrorList ());
     return ret;
   }
 
   @Nonnull
-  public static ResponseExtractEvidenceType createResponseExtractEvidence (@Nonnull final Element aCanonicalEvidence)
+  public static ResponseExtractMultiEvidenceType createDemoResponseExtractMultiEvidence (@Nonnull final Element aCanonicalEvidence)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ResponseExtractEvidenceType ret = new ResponseExtractEvidenceType ();
+    final ResponseExtractMultiEvidenceType ret = new ResponseExtractMultiEvidenceType ();
+    ret.setRequestId (UUID.randomUUID ().toString ());
+    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
+    ret.setDataEvaluator (_createAgent ());
+    ret.setDataOwner (_createAgent ());
+    ret.addResponseExtractEvidenceItem (_createResponseExtractEvidenceItem (aCanonicalEvidence));
     if (aTLR.nextBoolean ())
-    {
-      ret.setCanonicalEvidence (_createCanonicalEvidence (aCanonicalEvidence));
-      if (aTLR.nextBoolean ())
-        ret.setDomesticEvidenceList (_createDomesticEvidenceList ());
-    }
-    else
-      ret.setErrorList (_createErrorList ());
+      ret.addResponseExtractEvidenceItem (_createResponseExtractEvidenceItem (aCanonicalEvidence));
     return ret;
   }
 
   @Nonnull
-  public static RequestLookupRoutingInformationType createIDKRequestLookupRoutingInformation ()
+  public static RedirectUserType createUSIRedirectUser ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final RequestLookupRoutingInformationType ret = new RequestLookupRoutingInformationType ();
+    final RedirectUserType ret = new RedirectUserType ();
+    ret.setRequestId (UUID.randomUUID ().toString ());
+    ret.setSpecificationId (CIEM.SPECIFICATION_ID);
+    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
+    ret.setDataEvaluator (_createAgent ());
+    ret.setDataOwner (_createAgent ());
+    // TOD remove?
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setCountryCode (random (ECountry.values ()).getISOCountryCode ().toUpperCase (Locale.ROOT));
-    return ret;
-  }
-
-  @Nonnull
-  public static TextType _createText ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final TextType ret = new TextType ();
-    ret.setLang ("Lang-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setLabel ("Label" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDefinition ("Def-" + MathHelper.abs (aTLR.nextInt ()));
-    return ret;
-  }
-
-  @Nonnull
-  public static TextsType _createTexts ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final TextsType ret = new TextsType ();
-    ret.addText (_createText ());
-    if (aTLR.nextBoolean ())
-      ret.addText (_createText ());
-    return ret;
-  }
-
-  @Nonnull
-  public static ParameterType _createParameter ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ParameterType ret = new ParameterType ();
-    ret.setItemId ("ItemId-" + MathHelper.abs (aTLR.nextInt ()));
-    if (aTLR.nextBoolean ())
-      ret.setItemType ("ItemType-" + MathHelper.abs (aTLR.nextInt ()));
-    if (aTLR.nextBoolean ())
-      ret.setDataType (random (DataTypeType.values ()));
-    if (aTLR.nextBoolean ())
-      ret.setConstraints ("Constraints-" + MathHelper.abs (aTLR.nextInt ()));
-    if (aTLR.nextBoolean ())
-      ret.setTexts (_createTexts ());
-    return ret;
-  }
-
-  @Nonnull
-  public static ParametersType _createParameters ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ParametersType ret = new ParametersType ();
-    ret.addParameter (_createParameter ());
-    if (aTLR.nextBoolean ())
-      ret.addParameter (_createParameter ());
-    if (aTLR.nextBoolean ())
-      ret.addParameter (_createParameter ());
-    return ret;
-  }
-
-  @Nonnull
-  public static InputParameterSetsType _createInputParameterSets ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final InputParameterSetsType ret = new InputParameterSetsType ();
-    ret.setSerialNumber (aTLR.nextInt (1, 101));
-    ret.setTitle ("Title-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setRecordMatchingAssurance (random (RecordMatchingAssuranceType.values ()));
-    ret.setParameters (_createParameters ());
-    return ret;
-  }
-
-  @Nonnull
-  public static SourceType _createSource ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final SourceType ret = new SourceType ();
-    ret.setCountryCode (random (ECountry.values ()).getISOCountryCode ());
-    ret.setAtuLevel (random (AtuLevelType.values ()));
-    ret.setNumProvisions (Integer.valueOf (aTLR.nextInt (10_000)));
-    return ret;
-  }
-
-  @Nonnull
-  public static AvailableSourcesType _createAvaliableSources ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final AvailableSourcesType ret = new AvailableSourcesType ();
-    ret.addSource (_createSource ());
-    if (aTLR.nextBoolean ())
-      ret.addSource (_createSource ());
-    return ret;
-  }
-
-  @Nonnull
-  public static ResponseLookupRoutingInformationType createIDKResponseLookupRoutingInformation ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final ResponseLookupRoutingInformationType ret = new ResponseLookupRoutingInformationType ();
-    switch (aTLR.nextInt (2))
-    {
-      case 0:
-        ret.setAvailableSources (_createAvaliableSources ());
-        break;
-      case 1:
-        ret.setErrorList (_createErrorList ());
-        break;
-    }
+    ret.setRedirectUrl ("https://de.example.org/preview?key=" + MathHelper.abs (aTLR.nextLong ()));
+    // NO errors
     return ret;
   }
 }

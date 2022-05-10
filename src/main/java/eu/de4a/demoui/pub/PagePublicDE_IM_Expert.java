@@ -68,10 +68,11 @@ import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceType;
-import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
-import eu.de4a.iem.xml.de4a.DE4AMarshaller;
-import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
+import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
+import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
+import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_Expert extends AbstractPageDE
@@ -85,32 +86,42 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
   @Nonnull
-  private static RequestExtractEvidenceType _createDemoRequest ()
+  private static RequestExtractMultiEvidenceIMType _createDemoRequest ()
   {
-    RequestExtractEvidenceType aDemoRequest;
+    RequestExtractMultiEvidenceIMType aDemoRequest;
     if (ThreadLocalRandom.current ().nextBoolean ())
     {
+      // We want a natural person
       while (true)
       {
-        aDemoRequest = (RequestExtractEvidenceType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getDataRequestSubject ().getDataSubjectPerson () != null)
+        aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_PT.getParticipantID ());
-      aDemoRequest.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/NL/123456789");
-      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
+                  .getDataRequestSubject ()
+                  .getDataSubjectPerson ()
+                  .setPersonIdentifier ("PT/NL/123456789");
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
+                  .setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
     }
     else
     {
+      // We want a legal person
       while (true)
       {
-        aDemoRequest = (RequestExtractEvidenceType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getDataRequestSubject ().getDataSubjectCompany () != null)
+        aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectCompany () != null)
           break;
       }
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
-      aDemoRequest.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("AT/NL/???");
-      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
+                  .getDataRequestSubject ()
+                  .getDataSubjectCompany ()
+                  .setLegalPersonIdentifier ("AT/NL/???");
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
+                  .setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
     }
     return aDemoRequest;
   }
@@ -168,7 +179,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         else
         {
           // Send only valid documents
-          final RequestExtractEvidenceType aParsedRequest = (RequestExtractEvidenceType) DEMO_DOC_TYPE.parseMessage (sPayload);
+          final RequestExtractMultiEvidenceIMType aParsedRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
                                 "DemoUI sending IM request '" + aParsedRequest.getRequestId () + "' to '" + sTargetURL + "'");
@@ -179,15 +190,15 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
           aHCS.setSocketTimeoutMS (120_000);
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
-            final ResponseTransferEvidenceType aResponseObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                            .read (aResponse);
-            if (aResponseObj == null)
-              throw new IOException ("Failed to parse response XML");
-            if (aResponseObj.getErrorList () == null)
+
+            final ResponseExtractMultiEvidenceType aResponseObj = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                                    .read (aResponse);
+            if (aResponseObj != null)
             {
               aResNL.addChild (h2 ("Preview of the response data"));
               aResNL.addChild (_createPreviewIM (aWPEC, aResponseObj));
@@ -202,9 +213,22 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
             }
             else
             {
-              final HCUL aUL = new HCUL ();
-              aResponseObj.getErrorList ().getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-              aResNL.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
+              // Try reading the data as an error
+              final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponse);
+              if (aErrorObj != null)
+              {
+                final HCUL aUL = new HCUL ();
+                aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                aResNL.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
+              }
+              else
+              {
+                // Unknown payload.
+                String sFirstBytes = new String (aResponse, StandardCharsets.UTF_8);
+                if (sFirstBytes.length () > 100)
+                  sFirstBytes = sFirstBytes.substring (0, 100);
+                aResNL.addChild (error (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes))));
+              }
             }
           }
           catch (final IOException ex)

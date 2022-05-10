@@ -55,16 +55,17 @@ import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
-import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.types.AgentType;
-import eu.de4a.iem.jaxb.common.types.CanonicalEvidenceType;
-import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
-import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
+import eu.de4a.iem.cev.de4a.t42.v0_6.DE4AT42Marshaller;
+import eu.de4a.iem.core.jaxb.common.AgentType;
+import eu.de4a.iem.core.jaxb.common.CanonicalEvidenceType;
+import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
+import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractEvidenceItemType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.iem.jaxb.t42.v0_6.ActivityType;
 import eu.de4a.iem.jaxb.t42.v0_6.AddressType;
 import eu.de4a.iem.jaxb.t42.v0_6.LegalEntityType;
-import eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller;
 
 public abstract class AbstractPageDE extends AbstractAppWebPage
 {
@@ -477,36 +478,37 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
   @Nonnull
   protected static IHCNode _createPreviewIM (@Nonnull final WebPageExecutionContext aWPEC,
-                                             @Nonnull final ResponseTransferEvidenceType aResponseObj)
+                                             @Nonnull final ResponseExtractMultiEvidenceType aResponseObj)
   {
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
 
     final BootstrapViewForm aTable = new BootstrapViewForm ();
     aTable.setSplitting (BootstrapGridSpec.create (-1, -1, -1, 2, 2), BootstrapGridSpec.create (-1, -1, -1, 10, 10));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID").setCtrl (_code (aResponseObj.getRequestId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID").setCtrl (_code (aResponseObj.getSpecificationId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Time stamp")
                                                   .setCtrl (_text (PDTToString.getAsString (aResponseObj.getTimeStamp (),
                                                                                             aDisplayLocale))));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID").setCtrl (_code (aResponseObj.getProcedureId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (_createAgent (aResponseObj.getDataOwner ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
-                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject (), aDisplayLocale)));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
-                                                  .setCtrl (_code (aResponseObj.getCanonicalEvidenceTypeId ())));
-    if (aResponseObj.getCanonicalEvidence () != null)
+
+    for (final ResponseExtractEvidenceItemType aItem : aResponseObj.getResponseExtractEvidenceItem ())
     {
-      // TODO
-      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
-                                                    .setCtrl (_createCE (aResponseObj.getCanonicalEvidence (), aDisplayLocale)));
-    }
-    if (aResponseObj.getDomesticEvidenceList () != null && aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
-    {
-      // TODO
-      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
-                                                    .setCtrl (_text (aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () +
-                                                                     " present, but not shown yet")));
+      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
+                                                    .setCtrl (_createDRS (aItem.getDataRequestSubject (), aDisplayLocale)));
+      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
+                                                    .setCtrl (_code (aItem.getCanonicalEvidenceTypeId ())));
+      if (aItem.getCanonicalEvidence () != null)
+      {
+        // TODO
+        aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
+                                                      .setCtrl (_createCE (aItem.getCanonicalEvidence (), aDisplayLocale)));
+      }
+      if (aItem.hasDomesticEvidenceEntries ())
+      {
+        // TODO
+        aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
+                                                      .setCtrl (_text (aItem.getDomesticEvidenceCount () + " present, but not shown yet")));
+      }
     }
     return aTable;
   }
