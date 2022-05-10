@@ -23,7 +23,5 @@ package eu.de4a.demoui.model;
 public enum EDemoDocumentType
 {
   REQUEST,
-  RESPONSE,
-  IDK_REQUEST,
-  IDK_RESPONSE
+  RESPONSE
 }

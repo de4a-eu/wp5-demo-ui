@@ -28,9 +28,9 @@ import com.helger.photon.api.IAPIExecutor;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.jaxb.common.types.RequestForwardEvidenceType;
-import eu.de4a.iem.xml.de4a.DE4AMarshaller;
-import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 /**
@@ -52,8 +52,8 @@ public class APIExecutorPostUSIResponse implements IAPIExecutor
     final byte [] aPayloadBytes = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
 
     // Parse without a specific evidence
-    final RequestForwardEvidenceType aRequest = DE4AMarshaller.deUsiRequestMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                              .read (aPayloadBytes);
+    final RequestForwardEvidenceType aRequest = DE4ACoreMarshaller.deUsiRequestMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                  .read (aPayloadBytes);
     if (aRequest == null)
     {
       DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse USI response");
