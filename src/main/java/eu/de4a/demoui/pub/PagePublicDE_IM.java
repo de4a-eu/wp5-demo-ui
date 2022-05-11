@@ -1,13 +1,16 @@
 package eu.de4a.demoui.pub;
 
+import java.awt.Color;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,14 +26,24 @@ import com.helger.commons.collection.impl.ICommonsOrderedSet;
 import com.helger.commons.collection.impl.ICommonsSet;
 import com.helger.commons.collection.impl.ICommonsSortedSet;
 import com.helger.commons.datetime.PDTFactory;
+import com.helger.commons.datetime.PDTToString;
+import com.helger.commons.error.IError;
+import com.helger.commons.error.SingleError;
+import com.helger.commons.error.list.ErrorList;
+import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.locale.country.CountryCache;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
+import com.helger.commons.url.URLHelper;
+import com.helger.datetime.util.PDTIOHelper;
 import com.helger.dcng.core.ial.DcngIALClientRemote;
+import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
+import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCDiv;
 import com.helger.html.hc.html.script.HCScriptInline;
+import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.html.jquery.JQuery;
 import com.helger.html.js.EJSEvent;
@@ -43,20 +56,37 @@ import com.helger.html.jscode.JSPackage;
 import com.helger.html.jscode.JSReturn;
 import com.helger.html.jscode.JSVar;
 import com.helger.html.jscode.html.JSHtml;
+import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
+import com.helger.pdflayout.PageLayoutPDF;
+import com.helger.pdflayout.base.IPLRenderableObject;
+import com.helger.pdflayout.base.PLPageSet;
+import com.helger.pdflayout.element.box.PLBox;
+import com.helger.pdflayout.element.table.PLTable;
+import com.helger.pdflayout.element.table.PLTableCell;
+import com.helger.pdflayout.element.text.PLText;
+import com.helger.pdflayout.spec.FontSpec;
+import com.helger.pdflayout.spec.PreloadFont;
+import com.helger.pdflayout.spec.WidthSpec;
+import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
+import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
+import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePicker;
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
+import com.helger.photon.core.form.RequestFieldBoolean;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
 import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
+import com.helger.photon.uictrls.famfam.EFamFamIcon;
 import com.helger.scope.singleton.AbstractSessionSingleton;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -69,6 +99,7 @@ import eu.de4a.ial.api.jaxb.ResponseItemType;
 import eu.de4a.ial.api.jaxb.ResponseLookupRoutingInformationType;
 import eu.de4a.ial.api.jaxb.ResponsePerCountryType;
 import eu.de4a.iem.core.CIEM;
+import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.AgentType;
 import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
 import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
@@ -173,6 +204,7 @@ public class PagePublicDE_IM extends AbstractPageDE
     private MDSPerson m_aDRSPerson;
 
     private RequestExtractMultiEvidenceIMType m_aIMRequest;
+    private String m_sRequestTargetURL;
     private boolean m_bConfirmedToSendRequest;
 
     @Deprecated
@@ -219,6 +251,7 @@ public class PagePublicDE_IM extends AbstractPageDE
       if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
       {
         m_aIMRequest = null;
+        m_sRequestTargetURL = null;
         m_bConfirmedToSendRequest = false;
       }
     }
@@ -331,7 +364,7 @@ public class PagePublicDE_IM extends AbstractPageDE
     }
 
     @Nonnull
-    public RequestExtractMultiEvidenceIMType buildRequest ()
+    public RequestExtractMultiEvidenceIMType buildIMRequest ()
     {
       final RequestExtractMultiEvidenceIMType aRequest = new RequestExtractMultiEvidenceIMType ();
       aRequest.setRequestId (m_sRequestID);
@@ -473,6 +506,148 @@ public class PagePublicDE_IM extends AbstractPageDE
   }
 
   private static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
+
+  private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_REQUEST_DATA;
+  static
+  {
+    AJAX_CALL_DOWNLOAD_REQUEST_DATA = addAjax ( (aRequestScope, aAjaxResponse) -> {
+      final SessionState aState = SessionState.getInstance ();
+      final Locale aDisplayLocale = CApp.DEFAULT_LOCALE;
+      // Passed via URL param
+      final EPatternType ePattern = EPatternType.getFromIDOrNull (aRequestScope.params ().getAsString ("pattern"));
+      LOGGER.info ("Trying to download request data as PDF for " + ePattern + " pattern");
+
+      // Create the PDF on the fly
+      final FontSpec c10 = new FontSpec (PreloadFont.MONOSPACE, 10);
+      final FontSpec r10 = new FontSpec (PreloadFont.REGULAR, 10);
+      final FontSpec r10i = new FontSpec (PreloadFont.REGULAR_ITALIC, 10);
+      final FontSpec r12b = new FontSpec (PreloadFont.REGULAR_BOLD, 12);
+
+      final float fMargin = 5f;
+      final WidthSpec aCol1 = WidthSpec.perc (25);
+      final WidthSpec aCol2 = WidthSpec.star ();
+
+      final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
+
+      final Function <String, PLText> _code = s -> StringHelper.hasNoText (s) ? new PLText ("none", r10i).setFillColor (Color.LIGHT_GRAY)
+                                                                              : new PLText (s, c10);
+
+      // Headline
+      final String sTitle = "Preview of DE4A Iteration 2 request data before sending";
+      aPS1.addElement (new PLText (sTitle, r12b).setMarginLeft (fMargin).setMarginTop (fMargin));
+      aPS1.addElement (new PLText ("Date and time of creation of this report: " + PDTFactory.getCurrentZonedDateTimeUTC ().toString (),
+                                   r10).setMarginLeft (fMargin));
+
+      // Evidence type
+      final PLTable aTable = new PLTable (aCol1, aCol2).setMargin (fMargin);
+      aTable.addAndReturnRow (new PLTableCell (new PLText ("Canonical Evidence Type:", r10)),
+                              new PLTableCell (new PLText (aState.getUseCase ().getDisplayName (), r10)))
+            .setMarginTop (fMargin)
+            .setMarginBottom (fMargin);
+
+      // DE
+      {
+        final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+        aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
+                            new PLTableCell (new PLText (aState.getDataEvaluatorName (), r10)));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataEvaluatorPID ())));
+        final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
+        aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
+                            new PLTableCell (new PLText (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
+                                                                            : aState.getDataEvaluatorCountryCode (),
+                                                         r10)));
+        aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Evaluator:", r10)), new PLTableCell (aInnerTable))
+              .setMarginTop (fMargin)
+              .setMarginBottom (fMargin);
+      }
+
+      // DO
+      {
+        final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+        aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)), new PLTableCell (new PLText (aState.getDataOwnerName (), r10)));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataOwnerPID ())));
+        final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
+        aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
+                            new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
+                                                                            : aState.getDataOwnerCountryCode (),
+                                                         r10)));
+        aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Owner:", r10)), new PLTableCell (aInnerTable))
+              .setMarginTop (fMargin)
+              .setMarginBottom (fMargin);
+      }
+
+      // DRS
+      switch (aState.getUseCase ().getDRSType ())
+      {
+        case PERSON:
+        {
+          final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+          aInnerTable.addRow (new PLTableCell (new PLText ("Person ID:", r10)),
+                              new PLTableCell (_code.apply (aState.m_aDRSPerson.getID ())));
+          aInnerTable.addRow (new PLTableCell (new PLText ("First Name:", r10)),
+                              new PLTableCell (new PLText (aState.m_aDRSPerson.getFirstName (), r10)));
+          aInnerTable.addRow (new PLTableCell (new PLText ("Family Name:", r10)),
+                              new PLTableCell (new PLText (aState.m_aDRSPerson.getFamilyName (), r10)));
+          aInnerTable.addRow (new PLTableCell (new PLText ("Birthday:", r10)),
+                              new PLTableCell (new PLText (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (), aDisplayLocale),
+                                                           r10)));
+          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)), new PLTableCell (aInnerTable))
+                .setMarginTop (fMargin)
+                .setMarginBottom (fMargin);
+          break;
+        }
+        case COMPANY:
+        {
+          final PLTable aInnerTable = new PLTable (aCol1, aCol2);
+          aInnerTable.addRow (new PLTableCell (new PLText ("Company ID:", r10)),
+                              new PLTableCell (_code.apply (aState.m_aDRSCompany.getID ())));
+          aInnerTable.addRow (new PLTableCell (new PLText ("Company Name:", r10)),
+                              new PLTableCell (new PLText (aState.m_aDRSCompany.getName (), r10)));
+          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)), new PLTableCell (aInnerTable))
+                .setMarginTop (fMargin)
+                .setMarginBottom (fMargin);
+          break;
+        }
+        default:
+          throw new IllegalStateException ();
+      }
+
+      // Created XML
+      {
+        final IPLRenderableObject <?> aXML;
+        if (aState.m_aIMRequest != null)
+          aXML = new PLText (DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ().formatted ().getAsString (aState.m_aIMRequest),
+                             c10);
+        else
+          aXML = new PLBox (new PLText ("Failed to create Request Object", r10i).setFillColor (new Color (0xf4, 0xd5, 0xce)));
+        aTable.addAndReturnRow (new PLTableCell (new PLText ("Created XML:", r10)), new PLTableCell (aXML))
+              .setMarginTop (fMargin)
+              .setMarginBottom (fMargin);
+      }
+
+      // Target URL
+      aTable.addAndReturnRow (new PLTableCell (new PLText ("Default target URL:", r10)),
+                              new PLTableCell (new PLText (getTargetURLTestDR (ePattern), c10)))
+            .setMarginTop (fMargin)
+            .setMarginBottom (fMargin);
+
+      aPS1.addElement (aTable);
+
+      // Write the PDF
+      try (final NonBlockingByteArrayOutputStream aBAOS = new NonBlockingByteArrayOutputStream ())
+      {
+        new PageLayoutPDF ().addPageSet (aPS1)
+                            .setCompressPDF (true)
+                            .setDocumentAuthor ("DE4A Demo UI")
+                            .setDocumentCreationDateTime (PDTFactory.getCurrentLocalDateTime ())
+                            .setDocumentTitle (sTitle)
+                            .renderTo (aBAOS);
+        aAjaxResponse.pdf (aBAOS, "de4a-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
+      }
+
+      LOGGER.info ("Finished rendering PDF");
+    });
+  }
 
   public PagePublicDE_IM (@Nonnull @Nonempty final String sID)
   {
@@ -665,6 +840,29 @@ public class PagePublicDE_IM extends AbstractPageDE
             default:
               throw new IllegalStateException ();
           }
+          break;
+        }
+        case EXPLICIT_CONSENT:
+        {
+          final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
+          final boolean bConfirm = aWPEC.params ().isCheckBoxChecked (FIELD_CONFIRM, false);
+
+          if (StringHelper.hasNoText (sTargetURL))
+            aFormErrors.addFieldError (FIELD_TARGET_URL, "A target URL is required");
+          else
+            if (URLHelper.getAsURL (sTargetURL, false) == null)
+              aFormErrors.addFieldError (FIELD_TARGET_URL, "The target URL must be valid URL");
+
+          if (!bConfirm)
+            aFormErrors.addFieldError (FIELD_CONFIRM, "Confirmation is required");
+
+          aState.m_sRequestTargetURL = null;
+          aState.m_bConfirmedToSendRequest = bConfirm;
+          if (aFormErrors.isEmpty ())
+          {
+            aState.m_sRequestTargetURL = sTargetURL;
+          }
+
           break;
         }
         // TODO
@@ -973,6 +1171,114 @@ public class PagePublicDE_IM extends AbstractPageDE
           default:
             throw new IllegalStateException ();
         }
+        break;
+      }
+      case EXPLICIT_CONSENT:
+      {
+        // Create request
+        final RequestExtractMultiEvidenceIMType aRequest = aState.buildIMRequest ();
+
+        // Check against XSD
+        final ErrorList aErrorList = new ErrorList ();
+        final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ();
+        m.setFormattedOutput (true).setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (aErrorList));
+
+        final byte [] aRequestBytes = m.getAsBytes (aRequest);
+        if (aRequestBytes == null)
+        {
+          aState.m_aIMRequest = null;
+          for (final IError a : aErrorList)
+            aFormErrors.add (SingleError.builder (a).errorFieldName (FIELD_REQUEST_XML).build ());
+        }
+        else
+        {
+          aState.m_aIMRequest = aRequest;
+        }
+
+        // First column for all nested tables
+        final HCCol aCol1 = new HCCol (150);
+
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
+                                                     .setCtrl (aState.getUseCase ().getDisplayName ()));
+
+        {
+          final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
+          final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+          t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataEvaluatorName ());
+          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorPID ()));
+          t.addBodyRow ()
+           .addCell (strong ("Country:"))
+           .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale) : aState.getDataEvaluatorCountryCode ());
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
+        }
+
+        {
+          final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
+          final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+          t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataOwnerName ());
+          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerPID ()));
+          t.addBodyRow ()
+           .addCell (strong ("Country:"))
+           .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
+          aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
+        }
+
+        switch (aState.getUseCase ().getDRSType ())
+        {
+          case PERSON:
+          {
+            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+            t.addBodyRow ().addCell (strong ("Person ID:")).addCell (aState.m_aDRSPerson.getID ());
+            t.addBodyRow ().addCell (strong ("First Name:")).addCell (aState.m_aDRSPerson.getFirstName ());
+            t.addBodyRow ().addCell (strong ("Family Name:")).addCell (aState.m_aDRSPerson.getFamilyName ());
+            t.addBodyRow ()
+             .addCell (strong ("Birthday:"))
+             .addCell (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (), aDisplayLocale));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
+            break;
+          }
+          case COMPANY:
+          {
+            final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
+            t.addBodyRow ().addCell (strong ("Company ID:")).addCell (aState.m_aDRSCompany.getID ());
+            t.addBodyRow ().addCell (strong ("Company Name:")).addCell (aState.m_aDRSCompany.getName ());
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject").setCtrl (t));
+            break;
+          }
+          default:
+            throw new IllegalStateException ();
+        }
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
+                                                     .setCtrl (aState.m_aIMRequest == null ? error ("Failed to create Request Object")
+                                                                                           : new HCTextArea (new RequestField (FIELD_REQUEST_XML,
+                                                                                                                               m.getAsString (aState.m_aIMRequest))).setRows (10)
+                                                                                                                                                                    .setReadOnly (true)
+                                                                                                                                                                    .addClass (CBootstrapCSS.FORM_CONTROL)
+                                                                                                                                                                    .addClass (CBootstrapCSS.TEXT_MONOSPACE))
+                                                     .setHelpText ("This is the technical request. It is just shown for helping developers")
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
+                                                     .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_TEST_DR)))
+                                                     .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO_DT))
+                                                                                                                .addChild (" for the mock DO, or ")
+                                                                                                                .addChild (code (TARGET_URL_TEST_DR))
+                                                                                                                .addChild (" for the test DE4A Connector"))
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Confirmation to send request")
+                                                     .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM, false)))
+                                                     .setHelpText ("You need to give your explicit consent here to proceed")
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
+
+        EFamFamIcon.registerResourcesForThisRequest ();
+        // Open link in new window
+        aForm.addFormGroup (new BootstrapFormGroup ().setCtrl (new BootstrapButton ().addChild ("Download request data as PDF")
+                                                                                     .setIcon (EFamFamIcon.PAGE_WHITE_ACROBAT)
+                                                                                     .setOnClick (JSHtml.windowOpen ()
+                                                                                                        .arg (AJAX_CALL_DOWNLOAD_REQUEST_DATA.getInvocationURL (aRequestScope)
+                                                                                                                                             .add ("pattern",
+                                                                                                                                                   m_ePattern.getID ())
+                                                                                                                                             .getAsStringWithEncodedParameters ()))));
+
         break;
       }
       // TODO
