@@ -1,5 +1,6 @@
 package eu.de4a.demoui.pub;
 
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -45,6 +46,7 @@ import com.helger.html.jscode.html.JSHtml;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
+import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePicker;
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
@@ -322,6 +324,12 @@ public class PagePublicDE_IM extends AbstractPageDE
       m_aDRSPerson = null;
     }
 
+    @Nullable
+    public LocalDate getBirthDayOr (@Nullable final LocalDate aFallbackDate)
+    {
+      return m_aDRSPerson != null ? m_aDRSPerson.getBirthday () : aFallbackDate;
+    }
+
     @Nonnull
     public RequestExtractMultiEvidenceIMType buildRequest ()
     {
@@ -591,6 +599,74 @@ public class PagePublicDE_IM extends AbstractPageDE
           }
           break;
         }
+        case SELECT_DATA_REQUEST_SUBJECT:
+        {
+          switch (aState.getUseCase ().getDRSType ())
+          {
+            case PERSON:
+            {
+              final String sDRSID = aWPEC.params ()
+                                         .getAsStringTrimmed (FIELD_DRS_ID,
+                                                              aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID () : null);
+              final String sDRSFirstName = aWPEC.params ()
+                                                .getAsStringTrimmed (FIELD_DRS_FIRSTNAME,
+                                                                     aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
+                                                                                                 : null);
+              final String sDRSFamilyName = aWPEC.params ()
+                                                 .getAsStringTrimmed (FIELD_DRS_FAMILYNAME,
+                                                                      aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFamilyName ()
+                                                                                                  : null);
+              LocalDate aDRSBirthday = aWPEC.params ().getAsLocalDate (FIELD_DRS_BIRTHDAY, aDisplayLocale);
+              if (aDRSBirthday == null)
+                aDRSBirthday = aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getBirthday () : null;
+
+              if (StringHelper.hasNoText (sDRSID))
+                aFormErrors.addFieldError (FIELD_DRS_ID, "A person ID must be provided");
+              if (StringHelper.hasNoText (sDRSFirstName))
+                aFormErrors.addFieldError (FIELD_DRS_FIRSTNAME, "A person first name must be provided");
+              if (StringHelper.hasNoText (sDRSFamilyName))
+                aFormErrors.addFieldError (FIELD_DRS_FAMILYNAME, "A person family name must be provided");
+              if (aDRSBirthday == null)
+                aFormErrors.addFieldError (FIELD_DRS_BIRTHDAY, "A person birthday name must be provided");
+
+              aState.resetDRS ();
+              if (aFormErrors.isEmpty ())
+              {
+                aState.m_aDRSPerson = MDSPerson.builder ()
+                                               .id (sDRSID)
+                                               .firstName (sDRSFirstName)
+                                               .familyName (sDRSFamilyName)
+                                               .birthday (aDRSBirthday)
+                                               .build ();
+              }
+              break;
+            }
+            case COMPANY:
+            {
+              final String sDRSID = aWPEC.params ()
+                                         .getAsStringTrimmed (FIELD_DRS_ID,
+                                                              aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID () : null);
+              final String sDRSName = aWPEC.params ()
+                                           .getAsStringTrimmed (FIELD_DRS_NAME,
+                                                                aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName () : null);
+
+              if (StringHelper.hasNoText (sDRSID))
+                aFormErrors.addFieldError (FIELD_DRS_ID, "A company ID must be provided");
+              if (StringHelper.hasNoText (sDRSName))
+                aFormErrors.addFieldError (FIELD_DRS_NAME, "A company name must be provided");
+
+              aState.resetDRS ();
+              if (aFormErrors.isEmpty ())
+              {
+                aState.m_aDRSCompany = MDSCompany.builder ().id (sDRSID).name (sDRSName).build ();
+              }
+              break;
+            }
+            default:
+              throw new IllegalStateException ();
+          }
+          break;
+        }
         // TODO
       }
 
@@ -803,6 +879,100 @@ public class PagePublicDE_IM extends AbstractPageDE
           aMockDOSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
         }
 
+        break;
+      }
+      case SELECT_DATA_REQUEST_SUBJECT:
+      {
+        switch (aState.getUseCase ().getDRSType ())
+        {
+          case PERSON:
+          {
+            aForm.addChild (info ("The selected use case " +
+                                  aState.getUseCase ().getDisplayName () +
+                                  " requires a person as Data Request Subject"));
+
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            if (eMockDO == null)
+              LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
+
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person ID")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
+                                                                                                 bIsResubmitted ? null
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
+                                                                                                                                                                        : null,
+                                                                                                                                            aState.getDataOwnerCountryCode () +
+                                                                                                                                                                                "/" +
+                                                                                                                                                                                aState.getDataEvaluatorCountryCode () +
+                                                                                                                                                                                "/" +
+                                                                                                                                                                                (eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                                                          .getID ()
+                                                                                                                                                                                                 : "")))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person First Name")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FIRSTNAME,
+                                                                                                 bIsResubmitted ? null
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
+                                                                                                                                                                        : null,
+                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                     .getFirstName ()
+                                                                                                                                                            : null))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FIRSTNAME)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Family Name")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_FAMILYNAME,
+                                                                                                 bIsResubmitted ? null
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFamilyName ()
+                                                                                                                                                                        : null,
+                                                                                                                                            eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                     .getFamilyName ()
+                                                                                                                                                            : null))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_FAMILYNAME)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Person Birthday")
+                                                         .setCtrl (BootstrapDateTimePicker.create (FIELD_DRS_BIRTHDAY,
+                                                                                                   bIsResubmitted ? null
+                                                                                                                  : aState.getBirthDayOr (eMockDO != null ? eMockDO.getMDSPerson ()
+                                                                                                                                                                   .getBirthday ()
+                                                                                                                                                          : null),
+                                                                                                   aDisplayLocale))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_BIRTHDAY)));
+            break;
+          }
+          case COMPANY:
+          {
+            aForm.addChild (info ("The selected use case " +
+                                  aState.getUseCase ().getDisplayName () +
+                                  " requires a company as Data Request Subject"));
+
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            if (eMockDO == null)
+              LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
+
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company ID")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_ID,
+                                                                                                 bIsResubmitted ? null
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
+                                                                                                                                                                         : null,
+                                                                                                                                            aState.getDataOwnerCountryCode () +
+                                                                                                                                                                                 "/" +
+                                                                                                                                                                                 aState.getDataEvaluatorCountryCode () +
+                                                                                                                                                                                 "/" +
+                                                                                                                                                                                 (eMockDO != null ? eMockDO.getMDSCompany ()
+                                                                                                                                                                                                           .getID ()
+                                                                                                                                                                                                  : "")))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_ID)));
+            aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Company Name")
+                                                         .setCtrl (new HCEdit (new RequestField (FIELD_DRS_NAME,
+                                                                                                 bIsResubmitted ? null
+                                                                                                                : StringHelper.getNotEmpty (aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
+                                                                                                                                                                         : null,
+                                                                                                                                            eMockDO != null ? eMockDO.getMDSCompany ()
+                                                                                                                                                                     .getName ()
+                                                                                                                                                            : null))))
+                                                         .setErrorList (aFormErrors.getListOfField (FIELD_DRS_NAME)));
+            break;
+          }
+          default:
+            throw new IllegalStateException ();
+        }
         break;
       }
       // TODO
