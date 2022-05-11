@@ -23,6 +23,6 @@ public final class JettyStopWP5DEMOUI
 {
   public static void main (final String [] args) throws IOException
   {
-    new JettyStopper ().run ();
+    new JettyStopper ().setStopPort (8089).run ();
   }
 }
