@@ -46,7 +46,6 @@ import javax.annotation.Nullable;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +64,6 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
-import com.helger.commons.http.CHttp;
 import com.helger.commons.http.CHttpHeader;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.locale.country.CountryCache;
@@ -104,9 +102,6 @@ import com.helger.httpclient.HttpClientSettings;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
 import com.helger.jaxb.GenericJAXBMarshaller;
 import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
-import com.helger.json.IJsonObject;
-import com.helger.json.JsonObject;
-import com.helger.json.serialize.JsonWriterSettings;
 import com.helger.pdflayout.PageLayoutPDF;
 import com.helger.pdflayout.base.IPLRenderableObject;
 import com.helger.pdflayout.base.PLPageSet;
@@ -144,7 +139,6 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.api.DemoUIAPI;
-import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -160,16 +154,12 @@ import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
 import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
 import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
+import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceType;
+import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
 import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
-import eu.de4a.iem.jaxb.common.types.AckType;
-import eu.de4a.iem.jaxb.common.types.ErrorListType;
-import eu.de4a.iem.jaxb.common.types.ProvisionItemType;
-import eu.de4a.iem.jaxb.common.types.RequestExtractEvidenceType;
-import eu.de4a.iem.jaxb.common.types.RequestLookupRoutingInformationType;
-import eu.de4a.iem.jaxb.common.types.ResponseLookupRoutingInformationType;
-import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
-import eu.de4a.iem.jaxb.common.types.SourceType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public abstract class AbstractPageDE_User extends AbstractPageDE
@@ -206,7 +196,6 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   private static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
 
   private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE_User.class);
-  private static final AjaxFunctionDeclaration AJAX_CALL_IDK;
   private static final AjaxFunctionDeclaration AJAX_CALL_DOWNLOAD_REQUEST_DATA;
 
   // All country codes for which mock data is available
@@ -236,109 +225,20 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
   }
 
   @Nonnull
-  protected static final GenericJAXBMarshaller <RequestExtractEvidenceType> createDRMarshaller (@Nullable final EPatternType ePattern,
-                                                                                                @Nullable final ErrorList aEL)
+  protected static final GenericJAXBMarshaller <? extends RequestExtractMultiEvidenceType> createDRMarshaller (@Nullable final EPatternType ePattern,
+                                                                                                               @Nullable final ErrorList aEL)
   {
-    final DE4ACoreMarshaller <RequestExtractEvidenceType> m;
+    final DE4ACoreMarshaller <? extends RequestExtractMultiEvidenceType> m;
     if (ePattern.isUSI ())
-      m = DE4ACoreMarshaller.drUsiRequestMarshaller ();
+      m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ();
     else
-      m = DE4ACoreMarshaller.drImRequestMarshaller ();
+      m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ();
     return m.setFormattedOutput (true)
             .setValidationEventHandlerFactory (aEL == null ? null : x -> new WrappedCollectingValidationEventHandler (aEL));
   }
 
   static
   {
-    AJAX_CALL_IDK = addAjax ( (aRequestScope, aAjaxResponse) -> {
-      final SessionState aState = SessionState.getInstance ();
-
-      // Build the request
-      final RequestLookupRoutingInformationType aReq = new RequestLookupRoutingInformationType ();
-      aReq.setCanonicalEvidenceTypeId (aState.getUseCase ().getDocumentTypeID ().getURIEncoded ());
-      aReq.setCountryCode (aRequestScope.params ().getAsString ("cc"));
-
-      // Serialize to XML
-      final String sPayload = DE4ACoreMarshaller.idkRequestLookupRoutingInformationMarshaller ().getAsString (aReq);
-
-      if (LOGGER.isInfoEnabled ())
-        LOGGER.info ("IDK request:\n" + sPayload);
-
-      ResponseLookupRoutingInformationType aResponse = null;
-      String sErrorMsg = null;
-
-      // Prepare the HTTP POST call
-      final HttpClientSettings aHCS = new HttpClientSettings ();
-      try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
-      {
-        final String sTargetURL = AppConfig.getConnectorEndpoint () + EDemoDocument.IDK_LOOKUP_ROUTING_INFO_REQUEST.getRelativeURL ();
-
-        if (LOGGER.isInfoEnabled ())
-          LOGGER.info ("Calling IDK '" +
-                       sTargetURL +
-                       "' for country '" +
-                       aReq.getCountryCode () +
-                       "' and CET '" +
-                       aReq.getCanonicalEvidenceTypeId () +
-                       "'");
-
-        final HttpPost aPost = new HttpPost (sTargetURL);
-        aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-
-        // Main execute
-        final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-
-        if (LOGGER.isInfoEnabled ())
-          LOGGER.info ("IDK response:\n" + new String (aResponseBytes, StandardCharsets.UTF_8));
-
-        // Evaluate the response XML and parse it
-        aResponse = DE4ACoreMarshaller.idkResponseLookupRoutingInformationMarshaller ().read (aResponseBytes);
-        if (aResponse == null)
-          sErrorMsg = "Failed to parse " + aResponseBytes.length + " response bytes as ResponseLookupRoutingInformationType";
-      }
-      catch (final IOException ex)
-      {
-        LOGGER.error ("Failed to query IDK", ex);
-        sErrorMsg = ex.getClass ().getName () + " - " + ex.getMessage ();
-      }
-
-      // Build the AJAX request response
-      final IJsonObject aJson = new JsonObject ();
-      if (aResponse == null || aResponse.getErrorList () != null)
-      {
-        aJson.addIfNotNull ("errormsg", sErrorMsg);
-        if (aResponse != null && aResponse.getErrorList () != null)
-          for (final ErrorType aError : aResponse.getErrorList ().getError ())
-            aJson.add ("error", StringHelper.getConcatenatedOnDemand (aError.getCode (), " - ", aError.getText ()));
-        if (false)
-        {
-          // Causes JS popup
-          aAjaxResponse.setStatus (CHttp.HTTP_BAD_REQUEST).setAllowContentOnStatusCode (true);
-        }
-        else
-        {
-          aJson.add ("id", "");
-          aJson.add ("name", "");
-          aJson.add ("redirecturl", "");
-        }
-      }
-      else
-      {
-        // Use the first one
-        final SourceType aSource = aResponse.getAvailableSources ().getSourceAtIndex (0);
-
-        final ProvisionItemType aPI = aSource.getProvisionItems ().getProvisionItemAtIndex (0);
-        aJson.add ("id", aPI.getDataOwnerId ().toLowerCase (Locale.ROOT));
-        aJson.add ("name", aPI.getDataOwnerPrefLabel ());
-      }
-
-      if (LOGGER.isInfoEnabled ())
-        LOGGER.info ("Out: " + aJson.getAsJsonString (JsonWriterSettings.DEFAULT_SETTINGS_FORMATTED));
-
-      // Put the response to the AJAX response
-      aAjaxResponse.json (aJson);
-    });
-
     AJAX_CALL_DOWNLOAD_REQUEST_DATA = addAjax ( (aRequestScope, aAjaxResponse) -> {
       final SessionState aState = SessionState.getInstance ();
       final Locale aDisplayLocale = CApp.DEFAULT_LOCALE;
@@ -400,12 +300,6 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
                             new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
                                                                             : aState.getDataOwnerCountryCode (),
                                                          r10)));
-        if (ePattern.isUSI ())
-        {
-          aInnerTable.addRow (new PLTableCell (new PLText ("Redirect URL:", r10)),
-                              new PLTableCell (_code.apply (aState.getDataOwnerRedirectURL ())));
-        }
-
         aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Owner:", r10)), new PLTableCell (aInnerTable))
               .setMarginTop (fMargin)
               .setMarginBottom (fMargin);
@@ -450,10 +344,10 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       // Created XML
       {
         final IPLRenderableObject <?> aXML;
-        if (aState.m_aRequest == null)
-          aXML = new PLBox (new PLText ("Failed to create Request Object", r10i).setFillColor (new Color (0xf4, 0xd5, 0xce)));
+        if (aState.hasRequest ())
+          aXML = new PLText (aState.getRequestAsString (), c10);
         else
-          aXML = new PLText (createDRMarshaller (ePattern, null).getAsString (aState.m_aRequest), c10);
+          aXML = new PLBox (new PLText ("Failed to create Request Object", r10i).setFillColor (new Color (0xf4, 0xd5, 0xce)));
         aTable.addAndReturnRow (new PLTableCell (new PLText ("Created XML:", r10)), new PLTableCell (aXML))
               .setMarginTop (fMargin)
               .setMarginBottom (fMargin);
@@ -468,7 +362,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       aPS1.addElement (aTable);
 
       // Write the PDF
-      try (NonBlockingByteArrayOutputStream aBAOS = new NonBlockingByteArrayOutputStream ())
+      try (final NonBlockingByteArrayOutputStream aBAOS = new NonBlockingByteArrayOutputStream ())
       {
         new PageLayoutPDF ().addPageSet (aPS1)
                             .setCompressPDF (true)
@@ -580,12 +474,13 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     private MDSCompany m_aDRSCompany;
     private MDSPerson m_aDRSPerson;
     // Consent to send this
-    private RequestExtractEvidenceType m_aRequest;
+    private RequestExtractMultiEvidenceIMType m_aIMRequest;
+    private RequestExtractMultiEvidenceUSIType m_aUSIRequest;
     private String m_sRequestTargetURL;
     private boolean m_bConfirmedToSendRequest;
     // Response received
-    public ResponseTransferEvidenceType m_aResponseIM;
-    public ResponseErrorType m_aResponseUSI;
+    public ResponseExtractMultiEvidenceType m_aDataResponse;
+    public ResponseErrorType m_aErrorResponse;
     private final boolean m_bUserRedirected = false;
 
     @Deprecated
@@ -624,7 +519,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_OWNER);
       if (_allDRSNull ())
         m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_REQUEST_SUBJECT);
-      if (m_aRequest == null || !m_bConfirmedToSendRequest)
+      if ((m_aIMRequest == null && m_aUSIRequest == null) || !m_bConfirmedToSendRequest)
         m_eStep = EStep.min (m_eStep, EStep.EXPLICIT_CONSENT);
     }
 
@@ -640,7 +535,8 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         resetDRS ();
       if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
       {
-        m_aRequest = null;
+        m_aIMRequest = null;
+        m_aUSIRequest = null;
         m_sRequestTargetURL = null;
         m_bConfirmedToSendRequest = false;
       }
@@ -733,12 +629,6 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
       return m_aDO == null ? null : m_aDO.getCountryCode ();
     }
 
-    @Nullable
-    public String getDataOwnerRedirectURL ()
-    {
-      return m_aDO == null ? null : m_aDO.getRedirectURL ();
-    }
-
     private boolean _allDRSNull ()
     {
       return m_aDRSCompany == null && m_aDRSPerson == null;
@@ -754,6 +644,38 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
     public LocalDate getBirthDayOr (@Nullable final LocalDate aFallbackDate)
     {
       return m_aDRSPerson != null ? m_aDRSPerson.getBirthday () : aFallbackDate;
+    }
+
+    public boolean hasRequest ()
+    {
+      return m_aIMRequest != null || m_aUSIRequest != null;
+    }
+
+    @Nullable
+    public DE4ACoreMarshaller <? extends RequestExtractMultiEvidenceType> getRequestMarshaller (@Nullable final ErrorList aErrorList)
+    {
+      final DE4ACoreMarshaller <? extends RequestExtractMultiEvidenceType> m;
+      if (m_aIMRequest != null)
+        m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ();
+      else
+        if (m_aUSIRequest != null)
+          m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ();
+        else
+          m = null;
+      if (m != null)
+        m.setFormattedOutput (true)
+         .setValidationEventHandlerFactory (aErrorList == null ? null : x -> new WrappedCollectingValidationEventHandler (aErrorList));
+      return m;
+    }
+
+    @Nullable
+    public String getRequestAsString ()
+    {
+      if (m_aIMRequest != null)
+        return DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ().formatted ().getAsString (m_aIMRequest);
+      if (m_aUSIRequest != null)
+        return DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ().formatted ().getAsString (m_aUSIRequest);
+      return null;
     }
 
     @Nonnull

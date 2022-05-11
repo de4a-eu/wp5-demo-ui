@@ -29,7 +29,6 @@ public final class EDemoCanonicalEvidenceTest
   @Test
   public void testBasic ()
   {
-    assertNotNull (EDemoCanonicalEvidence.createT41_UC1_v2021_02_11 ());
     assertNotNull (EDemoCanonicalEvidence.createT41_UC1_v2021_04_13 ());
     assertNotNull (EDemoCanonicalEvidence.createDBA_v06 ());
     assertNotNull (EDemoCanonicalEvidence.createMA_Birth_v16b ());

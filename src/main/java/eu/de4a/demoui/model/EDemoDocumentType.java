@@ -23,5 +23,10 @@ package eu.de4a.demoui.model;
 public enum EDemoDocumentType
 {
   REQUEST,
-  RESPONSE
+  RESPONSE;
+
+  public boolean isRequest ()
+  {
+    return this == REQUEST;
+  }
 }

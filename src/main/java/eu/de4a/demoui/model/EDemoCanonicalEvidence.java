@@ -37,7 +37,6 @@ import eu.de4a.iem.jaxb.t41.edci.LegalIdentifierType;
 import eu.de4a.iem.jaxb.t41.edci.LocationType;
 import eu.de4a.iem.jaxb.t41.edci.PersonType;
 import eu.de4a.iem.jaxb.t41.edci.TextContentTypeCodeEnumType;
-import eu.de4a.iem.jaxb.t41.uc1.v2021_02_11.ModeOfStudy;
 import eu.de4a.iem.jaxb.t43.birth.v1_6b.BirthType;
 import eu.de4a.iem.jaxb.t43.birth.v1_6b.ChildType;
 import eu.de4a.iem.jaxb.t43.birth.v1_6b.DateObjectType;
@@ -52,7 +51,6 @@ import eu.de4a.iem.jaxb.w3.cv10.bc.IdentifierType;
 import eu.de4a.iem.jaxb.w3.cv10.bc.PostCodeType;
 import eu.de4a.iem.jaxb.w3.cv11.bc.LegalEntityLegalNameType;
 import oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.CodeType;
-import oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.NumericType;
 import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.DateType;
 import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.FamilyNameType;
 
@@ -63,7 +61,6 @@ import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.FamilyN
  */
 public enum EDemoCanonicalEvidence
 {
-  T41_UC1_2021_02_11 (EDE4ACanonicalEvidenceType.T41_UC1_2021_02_11, EDemoCanonicalEvidence::createT41_UC1_v2021_02_11),
   T41_UC1_2021_04_13 (EDE4ACanonicalEvidenceType.T41_UC1_2021_04_13, EDemoCanonicalEvidence::createT41_UC1_v2021_04_13),
   T42_COMPANY_INFO_V06 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V06, EDemoCanonicalEvidence::createDBA_v06),
   T43_BIRTH_EVIDENCE_V16B (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V16B, EDemoCanonicalEvidence::createMA_Birth_v16b),
@@ -105,53 +102,6 @@ public enum EDemoCanonicalEvidence
     t.setContentType (EDemoDocument.random (TextContentTypeCodeEnumType.values ()));
     t.setLang (EDemoDocument.random (LanguageCharCodeEnumType.values ()));
     return t;
-  }
-
-  @Nonnull
-  public static Element createT41_UC1_v2021_02_11 ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final eu.de4a.iem.jaxb.t41.uc1.v2021_02_11.HigherEducationEvidenceType p = new eu.de4a.iem.jaxb.t41.uc1.v2021_02_11.HigherEducationEvidenceType ();
-    p.setId ("urn:credential:" + UUID.randomUUID ().toString ());
-    {
-      final LanguageStringType a = new LanguageStringType ();
-      a.setText (_createText ());
-      p.addTitle (a);
-    }
-    p.addDegree (_createText ());
-    p.setCountry ("http://publications.europa.eu/resource/authority/country/NZL");
-    p.addInstitutionName (_createText ());
-    p.addStudyProgramme (_createText ());
-    p.setMainFieldOfStudy ("http://data.europa.eu/snb/isced-f/0610");
-    p.setModeOfStudy (EDemoDocument.random (ModeOfStudy.values ()));
-    p.setDurationOfEducation (new NumericType (MathHelper.toBigDecimal (MathHelper.abs (aTLR.nextInt ()))));
-    p.setScope (new NumericType (MathHelper.toBigDecimal (MathHelper.abs (aTLR.nextInt ()))));
-    p.setDateOfIssue (new DateType (PDTFactory.getCurrentLocalDate ()));
-    p.addPlaceOfIssue (_createText ());
-    {
-      final PersonType a = new PersonType ();
-      a.setId ("id-" + MathHelper.abs (aTLR.nextInt ()));
-      {
-        final LegalIdentifierType b = new LegalIdentifierType ();
-        b.setValue ("NationalID-" + MathHelper.abs (aTLR.nextInt ()));
-        b.setSpatialID ("SpatialID-" + MathHelper.abs (aTLR.nextInt ()));
-        a.setNationalId (b);
-      }
-      {
-        final LanguageStringType b = new LanguageStringType ();
-        b.setText (_createText ());
-        a.setGivenNames (b);
-      }
-      {
-        final LanguageStringType b = new LanguageStringType ();
-        b.setText (_createText ());
-        a.setFamilyName (b);
-      }
-      a.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (80)));
-      p.setHolderOfAchievement (a);
-    }
-
-    return eu.de4a.iem.cev.de4a.t41.v2021_02_11.DE4AT41Marshaller.higherEducationEvidence ().getAsDocument (p).getDocumentElement ();
   }
 
   @Nonnull

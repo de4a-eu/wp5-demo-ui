@@ -80,13 +80,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     private final String m_sPID;
     private final String m_sName;
     private final String m_sCountryCode;
-    // Only for USI
-    private final String m_sRedirectURL;
 
-    public Agent (@Nonnull @Nonempty final String sPID,
-                  @Nonnull @Nonempty final String sName,
-                  @Nonnull @Nonempty final String sCountryCode,
-                  @Nullable final String sRedirectURL)
+    public Agent (@Nonnull @Nonempty final String sPID, @Nonnull @Nonempty final String sName, @Nonnull @Nonempty final String sCountryCode)
     {
       ValueEnforcer.notEmpty (sPID, "PID");
       ValueEnforcer.notEmpty (sName, "Name");
@@ -94,7 +89,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       m_sPID = sPID;
       m_sName = sName;
       m_sCountryCode = sCountryCode;
-      m_sRedirectURL = sRedirectURL;
     }
 
     @Nonnull
@@ -118,12 +112,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       return m_sCountryCode;
     }
 
-    @Nullable
-    public String getRedirectURL ()
-    {
-      return m_sRedirectURL;
-    }
-
     @Nonnull
     public static Agent.Builder builder ()
     {
@@ -135,7 +123,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       private String m_sPID;
       private String m_sName;
       private String m_sCountryCode;
-      private String m_sRedirectURL;
 
       public Builder ()
       {}
@@ -162,16 +149,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       }
 
       @Nonnull
-      public Builder redirectURL (@Nullable final String s)
-      {
-        m_sRedirectURL = s;
-        return this;
-      }
-
-      @Nonnull
       public Agent build ()
       {
-        return new Agent (m_sPID, m_sName, m_sCountryCode, m_sRedirectURL);
+        return new Agent (m_sPID, m_sName, m_sCountryCode);
       }
     }
   }
@@ -182,7 +162,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   {
     if (ePattern == EPatternType.IM)
       return AppConfig.getPublicURL () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
-    return AppConfig.getPublicURL () + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
+    return AppConfig.getPublicURL () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
   }
 
   @Nonnull

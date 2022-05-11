@@ -120,130 +120,118 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
 
   /* USI pattern */
 
-  /* phase1 - request + redirect URL */
+  /* USI request */
 
   // DE-DR request (C1 -> C2)
-  USI1_REQ_DE_DR ("usi1-req-de-dr",
-                  "USI step 1 Request from DE to DR (C1 -> C2)",
-                  "/dr1/usi/transferevidence",
-                  EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoRequestExtractMultiEvidenceUSI,
-                  DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ()),
+  USI_REQ_DE_DR ("usi-req-de-dr",
+                 "USI Request from DE to DR (C1 -> C2)",
+                 "/dr1/usi/transferevidence",
+                 EDemoDocumentType.REQUEST,
+                 EDemoDocument::createDemoRequestExtractMultiEvidenceUSI,
+                 DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ()),
 
   // DT-DO request (C3 -> C4)
-  USI1_REQ_DT_DO ("usi1-req-dt-do",
-                  "USI step 1 Request from DT to DO (C3 -> C4)",
-                  "/do1/usi/extractevidence",
-                  EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoRequestExtractMultiEvidenceUSI,
-                  DE4ACoreMarshaller.doRequestExtractMultiEvidenceUSIMarshaller ()),
+  USI_REQ_DT_DO ("usi-req-dt-do",
+                 "USI Request from DT to DO (C3 -> C4)",
+                 "/do1/usi/extractevidence",
+                 EDemoDocumentType.REQUEST,
+                 EDemoDocument::createDemoRequestExtractMultiEvidenceUSI,
+                 DE4ACoreMarshaller.doRequestExtractMultiEvidenceUSIMarshaller ()),
+
+  /* USI Redirect Response */
 
   // DO-DT response (C4 -> C3)
-  USI1_RESP_DO_DT ("usi1-resp-do-dt",
-                   "USI step 1 Response from DO to DT (C4 -> C3)",
-                   null,
-                   EDemoDocumentType.RESPONSE,
-                   EDemoDocument::createUSIRedirectUser,
-                   DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ()),
+  USI_RESP_REDIR_DO_DT ("usi-redirect-do-dt",
+                        "USI Redirect Response from DO to DT (C4 -> C3)",
+                        null,
+                        EDemoDocumentType.RESPONSE,
+                        EDemoDocument::createDemoUSIRedirectUser,
+                        DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ()),
 
   // DR-DE response (C2 -> C1)
-  USI1_RESP_DE_DE ("usi1-resp-dr-de",
-                   "USI step 1 Response from DR to DE (C2 -> C1)",
-                   null,
-                   EDemoDocumentType.RESPONSE,
-                   EDemoDocument::createUSIRedirectUser,
-                   DE4ACoreMarshaller.deUSIRedirectUserMarshaller ()),
+  USI_RESP_REDIR_DE_DE ("usi-redirect-dr-de",
+                        "USI Redirect Response from DR to DE (C2 -> C1)",
+                        null,
+                        EDemoDocumentType.RESPONSE,
+                        EDemoDocument::createDemoUSIRedirectUser,
+                        DE4ACoreMarshaller.deUSIRedirectUserMarshaller ()),
 
-  /* phase2 data */
+  /* USI Data Response */
 
   // DO-DT (C4 ->C3)
-  USI2_REQ_DO_DT_T41_UC1_V2021_02_11 ("usi2-req-do-dt",
-                                      "USI step 2 Response DO to DT (C4 -> C3)",
-                                      "/dt1/usi/transferevidence",
-                                      EDemoDocumentType.REQUEST,
-                                      EDemoCanonicalEvidence.T41_UC1_2021_02_11,
-                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                      DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DO_DT_T41_UC1_V2021_04_13 ("usi2-req-do-dt",
-                                      "USI step 2 Response DO to DT (C4 -> C3)",
-                                      "/dt1/usi/transferevidence",
-                                      EDemoDocumentType.REQUEST,
-                                      EDemoCanonicalEvidence.T41_UC1_2021_04_13,
-                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                      DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DO_DT_T43_BIRTH_EVIDENCE_V16A ("usi2-req-do-dt",
-                                          "USI step 2 Response DO to DT (C4 -> C3)",
-                                          "/dt1/usi/transferevidence",
-                                          EDemoDocumentType.REQUEST,
-                                          EDemoCanonicalEvidence.T43_BIRTH_EVIDENCE_V16B,
-                                          EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                          DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DO_DT_T43_DOMREG_EVIDENCE_V16A ("usi2-req-do-dt",
-                                           "USI step 2 Response DO to DT (C4 -> C3)",
+  USI_RESP_DATA_DO_DT_T41_UC1_V2021_04_13 ("usi-resp-do-dt",
+                                           "USI Data Response DO to DT (C4 -> C3)",
                                            "/dt1/usi/transferevidence",
-                                           EDemoDocumentType.REQUEST,
-                                           EDemoCanonicalEvidence.T43_DOMREG_EVIDENCE_V16B,
+                                           EDemoDocumentType.RESPONSE,
+                                           EDemoCanonicalEvidence.T41_UC1_2021_04_13,
                                            EDemoDocument::createDemoResponseExtractMultiEvidence,
                                            DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DO_DT_T43_MARRIAGE_EVIDENCE_V16A ("usi2-req-do-dt",
-                                             "USI step 2 Response DO to DT (C4 -> C3)",
-                                             "/dt1/usi/transferevidence",
-                                             EDemoDocumentType.REQUEST,
-                                             EDemoCanonicalEvidence.T43_MARRIAGE_EVIDENCE_V16B,
-                                             EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                             DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+  USI_RESP_DATA_DO_DT_T43_BIRTH_EVIDENCE_V16A ("usi-resp-do-dt",
+                                               "USI Data Response DO to DT (C4 -> C3)",
+                                               "/dt1/usi/transferevidence",
+                                               EDemoDocumentType.RESPONSE,
+                                               EDemoCanonicalEvidence.T43_BIRTH_EVIDENCE_V16B,
+                                               EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                               DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+  USI_RESP_DATA_DO_DT_T43_DOMREG_EVIDENCE_V16A ("usi-resp-do-dt",
+                                                "USI Data Response DO to DT (C4 -> C3)",
+                                                "/dt1/usi/transferevidence",
+                                                EDemoDocumentType.RESPONSE,
+                                                EDemoCanonicalEvidence.T43_DOMREG_EVIDENCE_V16B,
+                                                EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                                DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+  USI_RESP_DATA_DO_DT_T43_MARRIAGE_EVIDENCE_V16A ("usi-resp-do-dt",
+                                                  "USI Data Response DO to DT (C4 -> C3)",
+                                                  "/dt1/usi/transferevidence",
+                                                  EDemoDocumentType.RESPONSE,
+                                                  EDemoCanonicalEvidence.T43_MARRIAGE_EVIDENCE_V16B,
+                                                  EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                                  DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
 
   // DT-DO (C3 -> C4)
-  USI2_RESP_DT_DO ("usi2-resp-dt-do",
-                   "USI step 2 Response from DT to DO (C3 -> C4)",
-                   null,
-                   EDemoDocumentType.RESPONSE,
-                   EDemoDocument::createResponseError,
-                   DE4ACoreMarshaller.defResponseErrorMarshaller ()),
+  USI_RESP_DATA_ERROR_DT_DO ("usi-resp-error-dt-do",
+                             "USI Data Response Error from DT to DO (C3 -> C4)",
+                             null,
+                             EDemoDocumentType.RESPONSE,
+                             EDemoDocument::createDemoResponseError,
+                             DE4ACoreMarshaller.defResponseErrorMarshaller ()),
 
   // DR-DE (C2 -> C1)
-  USI2_REQ_DR_DE_T41_UC1_V2021_02_11 ("usi2-req-dr-de",
-                                      "USI step 2 Response DR to DE (C2 -> C1)",
-                                      "/de1/usi/forwardevidence",
-                                      EDemoDocumentType.REQUEST,
-                                      EDemoCanonicalEvidence.T41_UC1_2021_02_11,
-                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                      DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DR_DE_T41_UC1_V2021_04_13 ("usi2-req-dr-de",
-                                      "USI step 2 Response DR to DE (C2 -> C1)",
-                                      "/de1/usi/forwardevidence",
-                                      EDemoDocumentType.REQUEST,
-                                      EDemoCanonicalEvidence.T41_UC1_2021_04_13,
-                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                      DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DR_DE_T43_BIRTH_EVIDENCE_V16A ("usi2-req-dr-de",
-                                          "USI step 2 Response DR to DE (C2 -> C1)",
-                                          "/de1/usi/forwardevidence",
-                                          EDemoDocumentType.REQUEST,
-                                          EDemoCanonicalEvidence.T43_BIRTH_EVIDENCE_V16B,
-                                          EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                          DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DR_DE_T43_DOMREG_EVIDENCE_V16A ("usi2-req-dr-de",
-                                           "USI step 2 Response DR to DE (C2 -> C1)",
+  USI_RESP_DATA_DR_DE_T41_UC1_V2021_04_13 ("usi-resp-dr-de",
+                                           "USI Data Response DR to DE (C2 -> C1)",
                                            "/de1/usi/forwardevidence",
-                                           EDemoDocumentType.REQUEST,
-                                           EDemoCanonicalEvidence.T43_DOMREG_EVIDENCE_V16B,
+                                           EDemoDocumentType.RESPONSE,
+                                           EDemoCanonicalEvidence.T41_UC1_2021_04_13,
                                            EDemoDocument::createDemoResponseExtractMultiEvidence,
                                            DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
-  USI2_REQ_DR_DE_T43_MARRIAGE_EVIDENCE_V16A ("usi2-req-dr-de",
-                                             "USI step 2 Response DR to DE (C2 -> C1)",
-                                             "/de1/usi/forwardevidence",
-                                             EDemoDocumentType.REQUEST,
-                                             EDemoCanonicalEvidence.T43_MARRIAGE_EVIDENCE_V16B,
-                                             EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                             DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+  USI_RESP_DATA_DR_DE_T43_BIRTH_EVIDENCE_V16A ("usi-resp-dr-de",
+                                               "USI Data Response DR to DE (C2 -> C1)",
+                                               "/de1/usi/forwardevidence",
+                                               EDemoDocumentType.RESPONSE,
+                                               EDemoCanonicalEvidence.T43_BIRTH_EVIDENCE_V16B,
+                                               EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                               DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+  USI_RESP_DATA_DR_DE_T43_DOMREG_EVIDENCE_V16A ("usi-resp-dr-de",
+                                                "USI Data Response DR to DE (C2 -> C1)",
+                                                "/de1/usi/forwardevidence",
+                                                EDemoDocumentType.RESPONSE,
+                                                EDemoCanonicalEvidence.T43_DOMREG_EVIDENCE_V16B,
+                                                EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                                DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+  USI_RESP_DATA_DR_DE_T43_MARRIAGE_EVIDENCE_V16A ("usi-resp-dr-de",
+                                                  "USI Data Response DR to DE (C2 -> C1)",
+                                                  "/de1/usi/forwardevidence",
+                                                  EDemoDocumentType.RESPONSE,
+                                                  EDemoCanonicalEvidence.T43_MARRIAGE_EVIDENCE_V16B,
+                                                  EDemoDocument::createDemoResponseExtractMultiEvidence,
+                                                  DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
   // DE-DR Response (C1->C2)
-  USI2_RESP_DE_DR ("usi2-resp-de-dr",
-                   "USI step 2 Response from DE to DR (C1 -> C2)",
-                   null,
-                   EDemoDocumentType.RESPONSE,
-                   EDemoDocument::createResponseError,
-                   DE4ACoreMarshaller.defResponseErrorMarshaller ());
+  USI_RESP_DATA_ERROR_DE_DR ("usi-resp-error-de-dr",
+                             "USI Data Response Error from DE to DR (C1 -> C2)",
+                             null,
+                             EDemoDocumentType.RESPONSE,
+                             EDemoDocument::createDemoResponseError,
+                             DE4ACoreMarshaller.defResponseErrorMarshaller ());
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -566,7 +554,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static ResponseErrorType createResponseError ()
+  public static ResponseErrorType createDemoResponseError ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseErrorType ret = new ResponseErrorType ();
@@ -617,7 +605,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName
   }
 
   @Nonnull
-  public static RedirectUserType createUSIRedirectUser ()
+  public static RedirectUserType createDemoUSIRedirectUser ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RedirectUserType ret = new RedirectUserType ();

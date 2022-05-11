@@ -116,6 +116,13 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>com.helger.dcng</groupId>
+        <artifactId>dcng-parent-pom</artifactId>
+        <version>0.2.5-SNAPSHOT</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
 
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
@@ -173,6 +180,10 @@
     <dependency>
       <groupId>com.sun.xml.bind</groupId>
       <artifactId>jaxb-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.helger.dcng</groupId>
+      <artifactId>dcng-api</artifactId>
     </dependency>
 
     <dependency>

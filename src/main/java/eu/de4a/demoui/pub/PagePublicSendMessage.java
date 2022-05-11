@@ -68,7 +68,6 @@ import com.helger.xml.serialize.write.XMLWriterSettings;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
-import eu.de4a.demoui.model.EDemoDocumentType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreNamespaceContext;
@@ -232,8 +231,7 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
-          if (e.getDocumentType () == EDemoDocumentType.REQUEST || e.getDocumentType () == EDemoDocumentType.IDK_REQUEST)
-            aSelect.addOption (e.getID (), e.getDisplayName () + (e.hasRelativeURL () ? " (" + e.getRelativeURL () + ")" : ""));
+          aSelect.addOption (e.getID (), e.getDisplayName () + (e.hasRelativeURL () ? " (" + e.getRelativeURL () + ")" : ""));
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")
                                                      .setCtrl (aSelect)

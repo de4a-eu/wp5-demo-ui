@@ -22,8 +22,8 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
+import com.helger.dcng.api.DcngIdentifierFactory;
 import com.helger.peppolid.IDocumentTypeIdentifier;
-import com.helger.peppolid.factory.SimpleIdentifierFactory;
 
 public enum EUseCase implements IHasID <String>, IHasDisplayName
 {
@@ -32,35 +32,34 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
                             "Application to public higher education",
                             EPatternType.USI,
                             EDataRequestSubjectType.PERSON,
-                            SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                           "HigherEducationDiploma")),
+                            DcngIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                         "HigherEducationDiploma")),
   COMPANY_REGISTRATION (EPilot.DOING_BUSINESS_ABROAD,
                         "cr",
                         "Starting a business in another Member State",
                         EPatternType.IM,
                         EDataRequestSubjectType.COMPANY,
-                        SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                       "CompanyRegistration")),
+                        DcngIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                     "CompanyRegistration")),
   BIRTH_EVIDENCE (EPilot.MOVING_ABROAD,
                   "birth",
                   "Birth Evidence",
                   EPatternType.USI,
                   EDataRequestSubjectType.PERSON,
-                  SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")),
+                  DcngIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")),
   DOMREG_EVIDENCE (EPilot.MOVING_ABROAD,
                    "domreg",
                    "Domicile Registration Evidence",
                    EPatternType.USI,
                    EDataRequestSubjectType.PERSON,
-                   SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                  "DomicileRegistrationEvidence")),
+                   DcngIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
+                                                                                "DomicileRegistrationEvidence")),
   MARRIAGE_EVIDENCE (EPilot.MOVING_ABROAD,
                      "marriage",
                      "Marriage Evidence",
                      EPatternType.USI,
                      EDataRequestSubjectType.PERSON,
-                     SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                    "MarriageEvidence"));
+                     DcngIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType", "MarriageEvidence"));
 
   private final EPilot m_ePilot;
   private final String m_sID;
