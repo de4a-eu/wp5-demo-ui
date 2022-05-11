@@ -46,9 +46,11 @@ import com.helger.html.jscode.JSVar;
 import com.helger.html.jscode.html.JSHtml;
 import com.helger.httpclient.HttpClientManager;
 import com.helger.httpclient.HttpClientSettings;
+import com.helger.httpclient.response.ExtendedHttpResponseException;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
 import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
+import com.helger.photon.bootstrap4.alert.BootstrapErrorBox;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
 import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
@@ -192,14 +194,37 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
           final HttpClientSettings aHCS = new HttpClientSettings ();
           aHCS.setConnectionRequestTimeoutMS (120_000);
           aHCS.setSocketTimeoutMS (120_000);
+
+          byte [] aResponseBytes = null;
+          final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+            aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
+          }
+          catch (final ExtendedHttpResponseException ex)
+          {
+            aErrorBox.addChild (div ("Error sending HTTP request to ").addChild (code (sTargetURL)))
+                     .addChild (div ("HTTP response: " + ex.getMessagePartStatusLine ()));
+            aResponseBytes = ex.getResponseBody ();
+            if (aResponseBytes != null)
+              DE4AKafkaClient.send (EErrorLevel.INFO, "Error response content received (" + aResponseBytes.length + " bytes)");
+          }
+          catch (final IOException ex)
+          {
+            aErrorBox.addChild (div ("Error sending request to ").addChild (code (sTargetURL)))
+                     .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true));
+          }
+          finally
+          {
+            aSW.stop ();
+          }
 
+          if (aResponseBytes != null)
+          {
             final ResponseExtractMultiEvidenceType aResponseObj = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE)
                                                                                     .read (aResponseBytes);
             if (aResponseObj != null)
@@ -231,7 +256,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
                 {
                   final HCUL aUL = new HCUL ();
                   aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-                  aResNL.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
+                  aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
                 }
               }
               else
@@ -241,20 +266,11 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
                 DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
                 if (sFirstBytes.length () > 100)
                   sFirstBytes = sFirstBytes.substring (0, 100);
-                aResNL.addChild (error (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes))));
+                aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
               }
             }
           }
-          catch (final IOException ex)
-          {
-            aResNL.addChild (error ().addChild (div ("Error sending request to ").addChild (code (sTargetURL)))
-                                     .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
-          }
-          finally
-          {
-            aSW.stop ();
-            aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
-          }
+          aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
         }
         aNodeList.addChild (aResNL);
       }
@@ -262,6 +278,8 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
 
     if (bShowForm)
     {
+      aNodeList.addChild (info ("This page lets you create arbitrary IM messages and send them to a WP5 Connector. This simulates the DE-DR interface."));
+
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
