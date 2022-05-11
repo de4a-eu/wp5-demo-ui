@@ -197,13 +197,14 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            final byte [] aResponse = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-            DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponse.length + " bytes)");
+            final byte [] aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+            DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
 
             final ResponseExtractMultiEvidenceType aResponseObj = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                                    .read (aResponse);
+                                                                                    .read (aResponseBytes);
             if (aResponseObj != null)
             {
+              DE4AKafkaClient.send (EErrorLevel.INFO, "Read response as 'ResponseExtractMultiEvidenceType'");
               aResNL.addChild (h2 ("Preview of the response data"));
               aResNL.addChild (_createPreviewIM (aWPEC, aResponseObj));
               final BootstrapButtonGroup aDiv = aResNL.addAndReturnChild (new BootstrapButtonGroup ());
@@ -218,9 +219,10 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
             else
             {
               // Try reading the data as an error
-              final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponse);
+              final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponseBytes);
               if (aErrorObj != null)
               {
+                DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
                 final HCUL aUL = new HCUL ();
                 aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
                 aResNL.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
@@ -228,7 +230,8 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
               else
               {
                 // Unknown payload.
-                String sFirstBytes = new String (aResponse, StandardCharsets.UTF_8);
+                String sFirstBytes = new String (aResponseBytes, StandardCharsets.UTF_8);
+                DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
                 if (sFirstBytes.length () > 100)
                   sFirstBytes = sFirstBytes.substring (0, 100);
                 aResNL.addChild (error (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes))));
