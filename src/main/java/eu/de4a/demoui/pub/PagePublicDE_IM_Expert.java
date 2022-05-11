@@ -223,9 +223,16 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
               if (aErrorObj != null)
               {
                 DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
-                final HCUL aUL = new HCUL ();
-                aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-                aResNL.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
+                if (aErrorObj.isAck ())
+                {
+                  aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
+                }
+                else
+                {
+                  final HCUL aUL = new HCUL ();
+                  aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                  aResNL.addChild (error (div ("The data could not be fetched from the Data Owner")).addChild (aUL));
+                }
               }
               else
               {
