@@ -18,6 +18,7 @@ import com.helger.commons.collection.impl.CommonsHashSet;
 import com.helger.commons.collection.impl.CommonsLinkedHashSet;
 import com.helger.commons.collection.impl.CommonsTreeSet;
 import com.helger.commons.collection.impl.ICommonsList;
+import com.helger.commons.collection.impl.ICommonsOrderedSet;
 import com.helger.commons.collection.impl.ICommonsSet;
 import com.helger.commons.collection.impl.ICommonsSortedSet;
 import com.helger.commons.datetime.PDTFactory;
@@ -61,6 +62,7 @@ import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
+import eu.de4a.ial.api.jaxb.ProvisionType;
 import eu.de4a.ial.api.jaxb.ResponseItemType;
 import eu.de4a.ial.api.jaxb.ResponseLookupRoutingInformationType;
 import eu.de4a.ial.api.jaxb.ResponsePerCountryType;
@@ -386,6 +388,38 @@ public class PagePublicDE_IM extends AbstractPageDE
     }
   }
 
+  private static class MiniDO
+  {
+    private String m_sCountryCode;
+    private String m_sName;
+    private String m_sParticipantID;
+
+    public String getCountryCode ()
+    {
+      return m_sCountryCode;
+    }
+
+    public String getDisplayName ()
+    {
+      return m_sName;
+    }
+
+    public String getParticipantID ()
+    {
+      return m_sParticipantID;
+    }
+
+    @Nonnull
+    public static MiniDO create (final String sCountryCode, final ProvisionType aProvision)
+    {
+      final MiniDO ret = new MiniDO ();
+      ret.m_sCountryCode = sCountryCode;
+      ret.m_sName = aProvision.getDataOwnerPrefLabel ();
+      ret.m_sParticipantID = aProvision.getDataOwnerId ();
+      return ret;
+    }
+  }
+
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM.class);
   private static final String PARAM_DIRECTION = "dir";
   private static final String DIRECTION_BACK = "back";
@@ -402,7 +436,6 @@ public class PagePublicDE_IM extends AbstractPageDE
   private static final String FIELD_DO_PID = "do_id";
   private static final String FIELD_DO_NAME = "do_name";
   private static final String FIELD_DO_COUNTRY_CODE = "do_cc";
-  private static final String FIELD_DO_REDIRECT_URL = "do_rurl";
   // Select DRS
   private static final String FIELD_DRS_ID = "id";
   private static final String FIELD_DRS_NAME = "name";
@@ -415,7 +448,8 @@ public class PagePublicDE_IM extends AbstractPageDE
   private static final String FIELD_CONFIRM = "confirm";
 
   // All country codes for which mock data is available
-  private static final ICommonsList <Locale> ALLOWED_COUNTRIES;
+  private static final ICommonsOrderedSet <String> ALLOWED_COUNTRIES_STRING;
+  private static final ICommonsOrderedSet <Locale> ALLOWED_COUNTRIES_LOCALE;
   static
   {
     // Get from all Mock DE and DO
@@ -425,10 +459,9 @@ public class PagePublicDE_IM extends AbstractPageDE
     for (final EMockDataOwner aDO : EMockDataOwner.values ())
       aAllCCs.add (aDO.getCountryCode ());
 
+    ALLOWED_COUNTRIES_STRING = new CommonsLinkedHashSet <> (aAllCCs);
     final CountryCache aCC = CountryCache.getInstance ();
-    ALLOWED_COUNTRIES = new CommonsArrayList <> (aAllCCs.size ());
-    for (final String s : aAllCCs)
-      ALLOWED_COUNTRIES.add (aCC.getCountry (s));
+    ALLOWED_COUNTRIES_LOCALE = new CommonsLinkedHashSet <> (aAllCCs, aCC::getCountry);
   }
 
   private static final String REGEX_COUNTRY_CODE = "[A-Z]{2}";
@@ -483,8 +516,18 @@ public class PagePublicDE_IM extends AbstractPageDE
               final ResponseItemType aRIT = CollectionHelper.findFirst (aIALResponse.getResponseItem (),
                                                                         x -> sCOTID.equals (x.getCanonicalObjectTypeId ()));
               if (aRIT != null)
-                aCountries = new CommonsHashSet <> (aRIT.getResponsePerCountry (), ResponsePerCountryType::getCountryCode);
+              {
+                // Limit results to pilot countries
+                aCountries = CommonsHashSet.createFiltered (aRIT.getResponsePerCountry (),
+                                                            ResponsePerCountryType::getCountryCode,
+                                                            ALLOWED_COUNTRIES_STRING::contains);
+              }
+              else
+                LOGGER.error ("Found no matching ResponseItem from IAL (" + aIALResponse.getResponseItemCount () + " response items)");
             }
+            else
+              LOGGER.error ("Got nothing back from IAL");
+
             LOGGER.info ("IAL response countries: " + aCountries);
             if (aCountries == null || aCountries.isEmpty ())
               aFormErrors.addFieldError (FIELD_USE_CASE,
@@ -521,6 +564,30 @@ public class PagePublicDE_IM extends AbstractPageDE
           if (aFormErrors.isEmpty ())
           {
             aState.m_aDE = Agent.builder ().pid (sDEPID).name (sDEName).countryCode (sDECC).build ();
+          }
+          break;
+        }
+        case SELECT_DATA_OWNER:
+        {
+          final String sDOPID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_PID, aState.getDataOwnerPID ());
+          final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
+          final String sDOCC = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
+
+          if (StringHelper.hasNoText (sDOPID))
+            aFormErrors.addFieldError (FIELD_DO_PID, "A Data Owner ID is needed");
+
+          if (StringHelper.hasNoText (sDOName))
+            aFormErrors.addFieldError (FIELD_DO_NAME, "A Data Owner name is needed");
+
+          if (StringHelper.hasNoText (sDOCC))
+            aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "A Data Owner country code is needed");
+          else
+            if (!RegExHelper.stringMatchesPattern (REGEX_COUNTRY_CODE, sDOCC))
+              aFormErrors.addFieldError (FIELD_DO_COUNTRY_CODE, "The Data Owner country code is invalid");
+
+          if (aFormErrors.isEmpty ())
+          {
+            aState.m_aDO = Agent.builder ().pid (sDOPID).name (sDOName).countryCode (sDOCC).build ();
           }
           break;
         }
@@ -600,7 +667,7 @@ public class PagePublicDE_IM extends AbstractPageDE
         final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
                                                                                       aState.getDataEvaluatorCountryCode ()),
                                                                     aDisplayLocale,
-                                                                    ALLOWED_COUNTRIES);
+                                                                    ALLOWED_COUNTRIES_LOCALE);
         aCountrySelect.ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator country")
                                                      .setCtrl (aCountrySelect)
@@ -649,6 +716,93 @@ public class PagePublicDE_IM extends AbstractPageDE
                                    .arg (aEditName.getID ())
                                    .arg (aCountrySelect.getID ()));
         aMockDESelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+        break;
+      }
+      case SELECT_DATA_OWNER:
+      {
+        final ICommonsList <MiniDO> aAllowedDOs = new CommonsArrayList <> ();
+        final ResponseItemType aIALItem = CollectionHelper.findFirst (aState.m_aIALResponse.getResponseItem (),
+                                                                      x -> aState.m_eUseCase.getDocumentTypeID ()
+                                                                                            .getURIEncoded ()
+                                                                                            .equals (x.getCanonicalObjectTypeId ()));
+        for (final ResponsePerCountryType aPC : aIALItem.getResponsePerCountry ())
+          for (final ProvisionType aProv : aPC.getProvision ())
+          {
+            final MiniDO aDO = MiniDO.create (aPC.getCountryCode (), aProv);
+            if (!aDO.getParticipantID ().equals (aState.getDataEvaluatorPID ()))
+              if (ALLOWED_COUNTRIES_STRING.contains (aDO.getCountryCode ()))
+                aAllowedDOs.add (aDO);
+          }
+
+        // All DOs from IAL
+        final HCExtSelect aMockDOSelect = new HCExtSelect (new RequestField ("mockdo", aState.getDataOwnerPID ()));
+        for (final MiniDO aDO : aAllowedDOs)
+          aMockDOSelect.addOption (aDO.getParticipantID (), aDO.getDisplayName () + " (" + aDO.getCountryCode () + ")");
+        aMockDOSelect.addOptionPleaseSelect (aDisplayLocale);
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Owner to be used")
+                                                     .setCtrl (aMockDOSelect)
+                                                     .setHelpText ("This list was retrieved from the IAL, by filtering for all participants that match the select Canonical Evidence Type"));
+
+        // Country
+        final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DO_COUNTRY_CODE,
+                                                                                      aState.getDataOwnerCountryCode ()),
+                                                                    aDisplayLocale,
+                                                                    ALLOWED_COUNTRIES_LOCALE);
+        aCountrySelect.ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner country")
+                                                     .setCtrl (aCountrySelect)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_COUNTRY_CODE)));
+
+        // Name
+        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DO_NAME, aState.getDataOwnerName ())).ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner name")
+                                                     .setCtrl (aEditName)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_NAME)));
+
+        // ID
+        final HCEdit aEditID = new HCEdit (new RequestField (FIELD_DO_PID, aState.getDataOwnerPID ())).ensureID ();
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Owner ID")
+                                                     .setCtrl (aEditID)
+                                                     .setErrorList (aFormErrors.getListOfField (FIELD_DO_PID)));
+
+        final JSFunction jFuncSetDO = aGlobalJS.function ("_setMDO");
+        {
+          final JSVar jID = jFuncSetDO.param ("id");
+          final JSVar jElementID = jFuncSetDO.param ("eid");
+          final JSVar jElementName = jFuncSetDO.param ("en");
+          final JSVar jElementCC = jFuncSetDO.param ("ecc");
+          final JSArray jMDO = new JSArray ();
+          for (final MiniDO aDO : aAllowedDOs)
+          {
+            jMDO.add (new JSAssocArray ().add ("id", aDO.getParticipantID ())
+                                         .add ("n", aDO.getDisplayName ())
+                                         .add ("cc", aDO.getCountryCode ()));
+          }
+          final JSVar jArray = jFuncSetDO.body ().var ("array", jMDO);
+          final JSVar jCallbackParam = new JSVar ("x");
+          final JSVar jFound = jFuncSetDO.body ()
+                                         .var ("f",
+                                               jArray.invoke ("find")
+                                                     .arg (new JSAnonymousFunction (jCallbackParam,
+                                                                                    new JSReturn (jID.invoke ("endsWith")
+                                                                                                     .arg (jCallbackParam.ref ("id"))))));
+          final JSBlock jIfFound = jFuncSetDO.body ()._if (jFound)._then ();
+          jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
+          jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
+          jIfFound.add (JQuery.idRef (jElementCC).val (jFound.component ("cc")));
+        }
+
+        {
+          // Mock DO - set values from enum
+          final JSPackage aJSOnChange = new JSPackage ();
+          aJSOnChange.invoke (jFuncSetDO)
+                     .arg (JSHtml.getSelectSelectedValue ())
+                     .arg (aEditID.getID ())
+                     .arg (aEditName.getID ())
+                     .arg (aCountrySelect.getID ());
+          aMockDOSelect.setEventHandler (EJSEvent.CHANGE, aJSOnChange);
+        }
+
         break;
       }
       // TODO

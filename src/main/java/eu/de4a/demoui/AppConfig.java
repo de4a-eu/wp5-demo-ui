@@ -79,10 +79,15 @@ public final class AppConfig extends AbstractGlobalSingleton
     return getConfig ().getAsBoolean ("webapp.status.enabled", true);
   }
 
+  public static boolean isKafkaEnabled ()
+  {
+    return getConfig ().getAsBoolean ("de4a.kafka.enabled", false);
+  }
+
   @Nullable
   public static String getKafkaEndpoint ()
   {
-    return getConfig ().getAsString ("webapp.kafka.endpoint");
+    return getConfig ().getAsString ("de4a.kafka.url");
   }
 
   @Nullable
