@@ -183,7 +183,7 @@
     </dependency>
     <dependency>
       <groupId>com.helger.dcng</groupId>
-      <artifactId>dcng-api</artifactId>
+      <artifactId>dcng-core</artifactId>
     </dependency>
 
     <dependency>

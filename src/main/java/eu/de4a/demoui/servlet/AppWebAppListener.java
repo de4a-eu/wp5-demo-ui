@@ -93,7 +93,7 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
     VendorInfo.setInceptionYear (2021);
 
     DE4AKafkaSettings.setKafkaEnabled (true);
-    DE4AKafkaSettings.setKafkaTopic ("wp5-demoui");
+    DE4AKafkaSettings.setKafkaTopic ("wp5-demoui-it2");
     DE4AKafkaSettings.defaultProperties ().put ("bootstrap.servers", AppConfig.getKafkaEndpoint ());
   }
 

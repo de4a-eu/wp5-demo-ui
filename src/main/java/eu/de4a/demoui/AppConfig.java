@@ -73,27 +73,27 @@ public final class AppConfig extends AbstractGlobalSingleton
   {
     return getConfig ().getAsString ("webapp.publicurl");
   }
-  
-  @Nullable
-  public static String getBaseURL ()
-  {
-    return getConfig ().getAsString ("webapp.baseurl");
-  }
 
   public static boolean isStatusEnabled ()
   {
     return getConfig ().getAsBoolean ("webapp.status.enabled", true);
   }
-  
-  @Nullable
-  public static String getConnectorEndpoint ()
-  {
-    return getConfig ().getAsString ("webapp.connector.endpoint");
-  }
-  
+
   @Nullable
   public static String getKafkaEndpoint ()
   {
     return getConfig ().getAsString ("webapp.kafka.endpoint");
+  }
+
+  @Nullable
+  public static String getMockDOBaseURL ()
+  {
+    return getConfig ().getAsString ("webapp.mock-do.baseurl");
+  }
+
+  @Nullable
+  public static String getDRBaseUrl ()
+  {
+    return getConfig ().getAsString ("webapp.dr.baseurl");
   }
 }

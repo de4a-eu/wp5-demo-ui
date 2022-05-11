@@ -161,9 +161,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
   {
     if (ePattern == EPatternType.IM)
-      return AppConfig.getConnectorEndpoint () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+      return AppConfig.getDRBaseUrl () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
     if (ePattern == EPatternType.USI)
-      return AppConfig.getConnectorEndpoint () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
+      return AppConfig.getDRBaseUrl () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
     throw new IllegalStateException ("Unsupported pattern " + ePattern);
   }
 
@@ -172,9 +172,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
   {
     if (ePattern == EPatternType.IM)
-      return AppConfig.getPublicURL () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+      return AppConfig.getMockDOBaseURL () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
     if (ePattern == EPatternType.USI)
-      return AppConfig.getPublicURL () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
+      return AppConfig.getMockDOBaseURL () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
     throw new IllegalStateException ("Unsupported pattern " + ePattern);
   }
 
