@@ -1141,7 +1141,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         "http://eidas.europa.eu/attributes/naturalperson" xmlns:de4aid=
         "http://www.de4a.eu/2020/commons/identity/type" xmlns:de4a=
         "http://www.de4a.eu/2020/commons/type">
-        <de4a:CanonicalEvidenceTypeId>CompanyRegistration</de4a:CanonicalEvidenceTypeId>
+        <de4a:CanonicalEvidenceTypeId>CompanyRegistration:1.0</de4a:CanonicalEvidenceTypeId>
         <de4a:CountryCode>AT</de4a:CountryCode>
         </RequestLookupRoutingInformation>
          * </pre>

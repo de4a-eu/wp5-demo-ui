@@ -7,12 +7,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.helger.dcng.api.DcngConfig;
 import com.helger.dcng.api.DcngIdentifierFactory;
 import com.helger.peppol.sml.ISMLInfo;
 import com.helger.peppol.sml.SMLInfo;
 import com.helger.peppol.smp.ESMPTransportProfile;
 import com.helger.peppolid.IParticipantIdentifier;
 import com.helger.peppolid.IProcessIdentifier;
+import com.helger.peppolid.factory.IIdentifierFactory;
 import com.helger.security.keystore.EKeyStoreType;
 import com.helger.security.keystore.KeyStoreHelper;
 import com.helger.security.keystore.LoadedKeyStore;
@@ -44,8 +46,8 @@ public final class EMockDataEvaluatorTest
   @Ignore ("Participants not yet registered")
   public void testLookups () throws SMPDNSResolutionException, SMPClientException
   {
-    final IProcessIdentifier aResponseProcessID = DcngIdentifierFactory.INSTANCE.createProcessIdentifier ("urn:de4a-eu:MessageType",
-                                                                                                          "response");
+    final IIdentifierFactory aIF = DcngConfig.getIdentifierFactory ();
+    final IProcessIdentifier aResponseProcessID = aIF.createProcessIdentifier (DcngIdentifierFactory.PROCESS_SCHEME, "response");
     assertTrue (SMP_TRUST_STORE.isSuccess ());
 
     for (final EUseCase eUC : EUseCase.values ())
@@ -53,7 +55,7 @@ public final class EMockDataEvaluatorTest
         if (e.getPilot () == eUC.getPilot ())
         {
           LOGGER.info ("Trying " + eUC + " - " + e + " - " + e.getParticipantID ());
-          final IParticipantIdentifier aRecipient = DcngIdentifierFactory.INSTANCE.parseParticipantIdentifier (e.getParticipantID ());
+          final IParticipantIdentifier aRecipient = aIF.parseParticipantIdentifier (e.getParticipantID ());
           final EndpointType aEndpoint = new BDXRClientReadOnly (BDXLURLProvider.INSTANCE,
                                                                  aRecipient,
                                                                  SML_DE4A).setTrustStore (SMP_TRUST_STORE.getKeyStore ())

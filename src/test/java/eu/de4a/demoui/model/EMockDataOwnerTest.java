@@ -7,10 +7,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.helger.dcng.api.DcngConfig;
 import com.helger.dcng.api.DcngIdentifierFactory;
 import com.helger.peppol.smp.ESMPTransportProfile;
 import com.helger.peppolid.IParticipantIdentifier;
 import com.helger.peppolid.IProcessIdentifier;
+import com.helger.peppolid.factory.IIdentifierFactory;
 import com.helger.smpclient.bdxr1.BDXRClientReadOnly;
 import com.helger.smpclient.exception.SMPClientException;
 import com.helger.smpclient.url.BDXLURLProvider;
@@ -30,8 +32,8 @@ public final class EMockDataOwnerTest
   @Ignore ("Participants not yet registered")
   public void testLookups () throws SMPDNSResolutionException, SMPClientException
   {
-    final IProcessIdentifier aRequestProcessID = DcngIdentifierFactory.INSTANCE.createProcessIdentifier ("urn:de4a-eu:MessageType",
-                                                                                                         "request");
+    final IIdentifierFactory aIF = DcngConfig.getIdentifierFactory ();
+    final IProcessIdentifier aRequestProcessID = aIF.createProcessIdentifier (DcngIdentifierFactory.PROCESS_SCHEME, "request");
     assertTrue (EMockDataEvaluatorTest.SMP_TRUST_STORE.isSuccess ());
 
     for (final EUseCase eUC : EUseCase.values ())
@@ -39,7 +41,7 @@ public final class EMockDataOwnerTest
         if (e.getPilot () == eUC.getPilot ())
         {
           LOGGER.info ("Trying " + eUC + " - " + e + " - " + e.getParticipantID ());
-          final IParticipantIdentifier aRecipient = DcngIdentifierFactory.INSTANCE.parseParticipantIdentifier (e.getParticipantID ());
+          final IParticipantIdentifier aRecipient = aIF.parseParticipantIdentifier (e.getParticipantID ());
           final EndpointType aEndpoint = new BDXRClientReadOnly (BDXLURLProvider.INSTANCE,
                                                                  aRecipient,
                                                                  EMockDataEvaluatorTest.SML_DE4A).setTrustStore (EMockDataEvaluatorTest.SMP_TRUST_STORE.getKeyStore ())
