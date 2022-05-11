@@ -30,6 +30,6 @@ public final class RunInJettyWP5DEMOUI
 {
   public static void main (final String [] args) throws Exception
   {
-    new JettyStarter (RunInJettyWP5DEMOUI.class).run ();
+    new JettyStarter (RunInJettyWP5DEMOUI.class).setPort (8090).setStopPort (p -> p - 1).run ();
   }
 }

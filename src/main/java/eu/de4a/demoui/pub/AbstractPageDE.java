@@ -158,24 +158,28 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
   @Nonnull
   @Nonempty
-  protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
+  protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
   {
     if (ePattern == EPatternType.IM)
-      return AppConfig.getPublicURL () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
-    return AppConfig.getPublicURL () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
+      return AppConfig.getConnectorEndpoint () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+    if (ePattern == EPatternType.USI)
+      return AppConfig.getConnectorEndpoint () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
+    throw new IllegalStateException ("Unsupported pattern " + ePattern);
   }
 
   @Nonnull
   @Nonempty
-  protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
+  protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
   {
     if (ePattern == EPatternType.IM)
-      return AppConfig.getConnectorEndpoint () + "/requestTransferEvidenceIM";
-    return AppConfig.getConnectorEndpoint () + "/requestTransferEvidenceUSI";
+      return AppConfig.getPublicURL () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+    if (ePattern == EPatternType.USI)
+      return AppConfig.getPublicURL () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
+    throw new IllegalStateException ("Unsupported pattern " + ePattern);
   }
 
   protected final EPatternType m_ePattern;
-  protected final String TARGET_URL_MOCK_DO;
+  protected final String TARGET_URL_MOCK_DO_DT;
   protected final String TARGET_URL_TEST_DR;
 
   public AbstractPageDE (@Nonnull @Nonempty final String sID,
@@ -184,7 +188,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   {
     super (sID, sDisplayName);
     m_ePattern = ePattern;
-    TARGET_URL_MOCK_DO = getTargetURLMockDO (ePattern);
+    TARGET_URL_MOCK_DO_DT = getTargetURLMockDO (ePattern);
     TARGET_URL_TEST_DR = getTargetURLTestDR (ePattern);
   }
 

@@ -27,7 +27,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.oldstuff;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -146,6 +146,9 @@ import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
+import eu.de4a.demoui.pub.AbstractPageDE;
+import eu.de4a.demoui.pub.MenuPublic;
+import eu.de4a.demoui.pub.AbstractPageDE.Agent;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.CIEM;
 import eu.de4a.iem.core.DE4ACoreMarshaller;

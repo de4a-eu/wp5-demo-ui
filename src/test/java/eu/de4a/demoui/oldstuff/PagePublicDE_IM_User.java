@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.de4a.demoui.pub;
+package eu.de4a.demoui.oldstuff;
 
 import javax.annotation.Nonnull;
 
@@ -21,10 +21,10 @@ import com.helger.commons.annotation.Nonempty;
 
 import eu.de4a.demoui.model.EPatternType;
 
-public class PagePublicDE_USI_User extends AbstractPageDE_User
+public class PagePublicDE_IM_User extends AbstractPageDE_User
 {
-  public PagePublicDE_USI_User (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_IM_User (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "USI Exchange (User)", EPatternType.USI);
+    super (sID, "IM Exchange (User)", EPatternType.IM);
   }
 }
