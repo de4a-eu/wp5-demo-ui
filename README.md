@@ -5,8 +5,6 @@ Other functionality:
 * Create random example messages of all document types
 * Validate arbitrary messages against all supported document types
 
-A live version can be found at https://de4a-dev-mock.egovlab.eu
-
 ## Building
 
 Prerequisites

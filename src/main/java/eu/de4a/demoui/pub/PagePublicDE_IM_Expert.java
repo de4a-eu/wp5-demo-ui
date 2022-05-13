@@ -18,7 +18,6 @@ package eu.de4a.demoui.pub;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import java.util.concurrent.ThreadLocalRandom;
 
 import javax.annotation.Nonnull;
 
@@ -88,25 +87,6 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
   private static RequestExtractMultiEvidenceIMType _createDemoRequest ()
   {
     RequestExtractMultiEvidenceIMType aDemoRequest;
-    if (ThreadLocalRandom.current ().nextBoolean ())
-    {
-      // We want a natural person
-      while (true)
-      {
-        aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
-          break;
-      }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_PT.getParticipantID ());
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
-                  .getDataRequestSubject ()
-                  .getDataSubjectPerson ()
-                  .setPersonIdentifier ("PT/NL/123456789");
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
-                  .setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
-    }
-    else
     {
       // We want a legal person
       while (true)
@@ -120,7 +100,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
       aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
                   .getDataRequestSubject ()
                   .getDataSubjectCompany ()
-                  .setLegalPersonIdentifier ("AT/NL/???");
+                  .setLegalPersonIdentifier ("AT/NL/R123T1234");
       aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
                   .setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
     }
