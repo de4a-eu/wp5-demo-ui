@@ -414,7 +414,13 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
       aRequest.setProcedureId ("ProcedureId");
       {
         final AgentType aDE = new AgentType ();
-        aDE.setAgentUrn (m_aDE.getPID ());
+        if (true)
+        {
+          // Must be constant to receive answers
+          aDE.setAgentUrn (CApp.DEMO_UI_PID);
+        }
+        else
+          aDE.setAgentUrn (m_aDE.getPID ());
         aDE.setAgentName (m_aDE.getName ());
         aRequest.setDataEvaluator (aDE);
       }
