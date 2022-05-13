@@ -49,7 +49,7 @@ public final class MenuPublic
     // DE stuff
     {
       final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE, "Data Evaluator", aMenuTree));
-      aMenuTree.createItem (aDE, new PagePublicDE_IM (MENU_DE_IM));
+      aMenuTree.createItem (aDE, new PagePublicDE_IM_Guided (MENU_DE_IM));
       // aMenuTree.createItem (aDE, new PagePublicDE_IM_User (MENU_DE_IM_USER));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert (MENU_DE_IM_EXPERT));
       // aMenuTree.createItem (aDE, new PagePublicDE_USI_User

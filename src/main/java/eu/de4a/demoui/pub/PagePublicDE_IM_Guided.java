@@ -1,7 +1,10 @@
 package eu.de4a.demoui.pub;
 
 import java.awt.Color;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Function;
@@ -10,10 +13,14 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.helger.commons.CGlobal;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
@@ -29,19 +36,25 @@ import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
+import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
+import com.helger.commons.http.CHttpHeader;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.locale.country.CountryCache;
+import com.helger.commons.mime.CMimeType;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
+import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
 import com.helger.datetime.util.PDTIOHelper;
+import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.dcng.core.ial.DcngIALClientRemote;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCDiv;
+import com.helger.html.hc.html.grouping.HCUL;
 import com.helger.html.hc.html.script.HCScriptInline;
 import com.helger.html.hc.html.tabular.HCCol;
 import com.helger.html.hc.impl.HCNodeList;
@@ -56,6 +69,9 @@ import com.helger.html.jscode.JSPackage;
 import com.helger.html.jscode.JSReturn;
 import com.helger.html.jscode.JSVar;
 import com.helger.html.jscode.html.JSHtml;
+import com.helger.httpclient.HttpClientManager;
+import com.helger.httpclient.response.ExtendedHttpResponseException;
+import com.helger.httpclient.response.ResponseHandlerByteArray;
 import com.helger.jaxb.validation.WrappedCollectingValidationEventHandler;
 import com.helger.pdflayout.PageLayoutPDF;
 import com.helger.pdflayout.base.IPLRenderableObject;
@@ -69,6 +85,7 @@ import com.helger.pdflayout.spec.PreloadFont;
 import com.helger.pdflayout.spec.WidthSpec;
 import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
+import com.helger.photon.bootstrap4.alert.BootstrapErrorBox;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
@@ -94,6 +111,7 @@ import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
+import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.ial.api.jaxb.ProvisionType;
 import eu.de4a.ial.api.jaxb.ResponseItemType;
 import eu.de4a.ial.api.jaxb.ResponseLookupRoutingInformationType;
@@ -102,14 +120,17 @@ import eu.de4a.iem.core.CIEM;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.AgentType;
 import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
+import eu.de4a.iem.core.jaxb.common.ErrorType;
 import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
 import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
 import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
+import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
+import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM extends AbstractPageDE
+public class PagePublicDE_IM_Guided extends AbstractPageDE
 {
   /**
    * Defines the different steps of the wizard
@@ -185,10 +206,16 @@ public class PagePublicDE_IM extends AbstractPageDE
     }
   }
 
+  /**
+   * Defines the per-session state of this page
+   *
+   * @author Philip Helger
+   */
   public static final class SessionState extends AbstractSessionSingleton
   {
     private static final Supplier <String> NEW_REQUEST_ID_PROVIDER = () -> UUID.randomUUID ().toString ();
 
+    private EPatternType m_ePattern;
     private EStep m_eStep = EStep.first ();
     private String m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
     // use case
@@ -222,6 +249,19 @@ public class PagePublicDE_IM extends AbstractPageDE
     {
       if (m_eStep == null)
         throw new IllegalStateException ("No step");
+      if (m_ePattern == null)
+      {
+        // First time init
+        m_ePattern = eExpectedPattern;
+      }
+      else
+        if (m_ePattern != eExpectedPattern)
+        {
+          // Switch between IM and USI
+          m_ePattern = eExpectedPattern;
+          reset ();
+        }
+
       if (m_eUseCase == null)
         m_eStep = EStep.min (m_eStep, EStep.SELECT_USE_CASE);
       if (m_aDE == null)
@@ -461,7 +501,7 @@ public class PagePublicDE_IM extends AbstractPageDE
     }
   }
 
-  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_Guided.class);
   private static final String PARAM_DIRECTION = "dir";
   private static final String DIRECTION_BACK = "back";
   private static final String DIRECTION_NEXT = "next";
@@ -649,7 +689,7 @@ public class PagePublicDE_IM extends AbstractPageDE
     });
   }
 
-  public PagePublicDE_IM (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_IM_Guided (@Nonnull @Nonempty final String sID)
   {
     super (sID, "Guided IM exchange", EPatternType.IM);
   }
@@ -865,7 +905,13 @@ public class PagePublicDE_IM extends AbstractPageDE
 
           break;
         }
-        // TODO
+        case SEND_REQUEST:
+        {
+          // Nothing
+          break;
+        }
+        default:
+          aNodeList.addChild (error ("Unsupported step " + aState.step ()));
       }
 
     // Change step now
@@ -1281,7 +1327,101 @@ public class PagePublicDE_IM extends AbstractPageDE
 
         break;
       }
-      // TODO
+      case SEND_REQUEST:
+      {
+        aForm.addChild (info ("Sending the request to ").addChild (code (aState.m_sRequestTargetURL)));
+
+        final StopWatch aSW = StopWatch.createdStarted ();
+
+        // Basic Http client settings
+        final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
+        // Here we need a 2 minute timeout (required for USI)
+        aHCS.setConnectionRequestTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
+        aHCS.setSocketTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
+
+        try
+        {
+          final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ();
+          m.setFormattedOutput (true);
+
+          byte [] aResponseBytesRequest1 = null;
+          final BootstrapErrorBox aErrorBox = aForm.addAndReturnChild (error ());
+          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+          {
+            DE4AKafkaClient.send (EErrorLevel.INFO,
+                                  "DemoUI sending " +
+                                                    m_ePattern.getDisplayName () +
+                                                    " request '" +
+                                                    aState.m_aIMRequest.getRequestId () +
+                                                    "' to '" +
+                                                    aState.m_sRequestTargetURL +
+                                                    "'");
+            final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
+
+            final byte [] aRequestBytes = m.getAsBytes (aState.m_aIMRequest);
+            LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
+
+            aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
+
+            // Main POST to DR
+            aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+            if (aResponseBytesRequest1 == null)
+            {
+              DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received no response content");
+            }
+            else
+            {
+              DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received response content (" + aResponseBytesRequest1.length + " bytes)");
+              LOGGER.info ("Response received (in UTF-8):\n" + new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
+            }
+          }
+          catch (final ExtendedHttpResponseException ex)
+          {
+            LOGGER.error ("HTTP query returned an error", ex);
+            aErrorBox.addChild (div ("HTTP error received from DR: " + ex.getMessagePartStatusLine ()));
+            aResponseBytesRequest1 = ex.getResponseBody ();
+          }
+
+          // IM request
+          // -> preview on our (DE) side
+          // -> we already have the response and can preview it
+          final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponseBytesRequest1);
+          if (aResponseObj == null)
+            throw new IOException ("Failed to parse response XML - see log for details");
+
+          final List <ErrorType> aErrorList = aResponseObj.getError ();
+          if (aErrorList.isEmpty ())
+          {
+            // Just some fake UI to let the user decide
+            aForm.addChild (success ("The data was received by the DR and forwarded to the DT. The response will be received asynchronously."));
+          }
+          else
+          {
+            final HCUL aUL = new HCUL ();
+            aErrorList.forEach (x -> {
+              final String sMsg = "[" + x.getCode () + "] " + x.getText ();
+              aUL.addItem (sMsg);
+              LOGGER.info ("Response error: " + sMsg);
+            });
+            aErrorBox.addChild (div ("The request could not be accepted by the DR because of the following reasons:")).addChild (aUL);
+          }
+        }
+        catch (final IOException ex)
+        {
+          aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sRequestTargetURL)))
+                                  .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
+        }
+        finally
+        {
+          aSW.stop ();
+          aForm.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
+        }
+
+        break;
+      }
+      default:
+        aForm.addChild (error ("Unsupported step " + aState.step ()));
     }
 
     // Buttons

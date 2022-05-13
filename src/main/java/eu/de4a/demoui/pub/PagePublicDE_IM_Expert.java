@@ -33,6 +33,7 @@ import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
+import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
@@ -45,7 +46,6 @@ import com.helger.html.jscode.JSPackage;
 import com.helger.html.jscode.JSVar;
 import com.helger.html.jscode.html.JSHtml;
 import com.helger.httpclient.HttpClientManager;
-import com.helger.httpclient.HttpClientSettings;
 import com.helger.httpclient.response.ExtendedHttpResponseException;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
 import com.helger.photon.ajax.decl.AjaxFunctionDeclaration;
@@ -65,6 +65,7 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -90,8 +91,6 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
   @Nonnull
   private static RequestExtractMultiEvidenceIMType _createDemoRequest ()
   {
-    final String sSendingPID = "iso6523-actorid-upis::9999:demoui-it2";
-
     RequestExtractMultiEvidenceIMType aDemoRequest;
     if (ThreadLocalRandom.current ().nextBoolean ())
     {
@@ -102,7 +101,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (sSendingPID);
+      aDemoRequest.getDataEvaluator ().setAgentUrn (CApp.DEMO_UI_PID);
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_PT.getParticipantID ());
       aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
                   .getDataRequestSubject ()
@@ -120,7 +119,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectCompany () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (sSendingPID);
+      aDemoRequest.getDataEvaluator ().setAgentUrn (CApp.DEMO_UI_PID);
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
       aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
                   .getDataRequestSubject ()
@@ -191,7 +190,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
                                 "DemoUI sending IM request '" + aParsedRequest.getRequestId () + "' to '" + sTargetURL + "'");
 
           final StopWatch aSW = StopWatch.createdStarted ();
-          final HttpClientSettings aHCS = new HttpClientSettings ();
+          final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
           aHCS.setConnectionRequestTimeoutMS (120_000);
           aHCS.setSocketTimeoutMS (120_000);
 

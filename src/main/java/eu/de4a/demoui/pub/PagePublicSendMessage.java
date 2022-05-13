@@ -36,12 +36,12 @@ import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
 import com.helger.css.property.CCSSProperties;
+import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.httpclient.HttpClientManager;
-import com.helger.httpclient.HttpClientSettings;
 import com.helger.httpclient.response.ResponseHandlerString;
 import com.helger.photon.app.html.PhotonCSS;
 import com.helger.photon.app.html.PhotonJS;
@@ -153,7 +153,7 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
           final String sFinalURL = StringHelper.getConcatenatedOnDemand (sTargetBaseURL, eMode.getRelativeURL ());
           String sResponse = null;
           Exception aResponseEx = null;
-          final HttpClientSettings aHCS = new HttpClientSettings ();
+          final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
             final HttpPost aPost = new HttpPost (sFinalURL);

@@ -1531,7 +1531,7 @@ public abstract class AbstractPageDE_User extends AbstractPageDE
         final StopWatch aSW = StopWatch.createdStarted ();
 
         // Basic Http client settings
-        final HttpClientSettings aHCS = new HttpClientSettings ();
+        final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
         // Here we need a 2 minute timeout (required for USI)
         aHCS.setConnectionRequestTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
         aHCS.setSocketTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
