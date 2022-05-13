@@ -103,6 +103,7 @@ import com.helger.photon.uictrls.famfam.EFamFamIcon;
 import com.helger.scope.singleton.AbstractSessionSingleton;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
@@ -417,7 +418,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
         if (true)
         {
           // Must be constant to receive answers
-          aDE.setAgentUrn (CApp.DEMO_UI_PID);
+          aDE.setAgentUrn (AppConfig.getDEParticipantID ());
         }
         else
           aDE.setAgentUrn (m_aDE.getPID ());

@@ -81,7 +81,7 @@ import eu.de4a.iem.core.jaxb.eidas.np.GenderType;
  *
  * @author Philip Helger
  */
-public enum EDemoDocument implements IHasID <String>, IHasDisplayName
+public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocument
 {
   /* IM pattern */
 

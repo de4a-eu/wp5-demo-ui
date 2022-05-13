@@ -51,11 +51,6 @@ public final class CApp
   public static final Locale USER_ADMINISTRATOR_LOCALE = CApp.DEFAULT_LOCALE;
   public static final ICommonsMap <String, String> USER_ADMINISTRATOR_CUSTOMATTRS = null;
 
-  /**
-   * The participant identifier of the Demo UI / Mocked DE
-   */
-  public static final String DEMO_UI_PID = "iso6523-actorid-upis::9999:demoui-it2";
-
   private CApp ()
   {}
 }

@@ -186,6 +186,13 @@
       <artifactId>dcng-core</artifactId>
     </dependency>
 
+    <!-- For the backwards compatible layer -->
+    <dependency>
+      <groupId>eu.de4a</groupId>
+      <artifactId>de4a-iem</artifactId>
+      <version>0.1.11</version>
+    </dependency>
+
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>

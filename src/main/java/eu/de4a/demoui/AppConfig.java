@@ -101,4 +101,10 @@ public final class AppConfig extends AbstractGlobalSingleton
   {
     return getConfig ().getAsString ("webapp.dr.baseurl");
   }
+
+  @Nullable
+  public static String getDEParticipantID ()
+  {
+    return getConfig ().getAsString ("webapp.de.pid");
+  }
 }

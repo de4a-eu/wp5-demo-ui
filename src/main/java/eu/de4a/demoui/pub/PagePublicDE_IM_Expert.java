@@ -44,7 +44,6 @@ import com.helger.html.jquery.JQueryAjaxBuilder;
 import com.helger.html.jscode.JSAnonymousFunction;
 import com.helger.html.jscode.JSPackage;
 import com.helger.html.jscode.JSVar;
-import com.helger.html.jscode.html.JSHtml;
 import com.helger.httpclient.HttpClientManager;
 import com.helger.httpclient.response.ExtendedHttpResponseException;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
@@ -53,8 +52,6 @@ import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.alert.BootstrapErrorBox;
 import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
-import com.helger.photon.bootstrap4.button.EBootstrapButtonType;
-import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonGroup;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
@@ -65,23 +62,22 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
+import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
-import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
-import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_Expert extends AbstractPageDE
 {
   // We're doing a DR-IM request
-  public static final EDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR;
+  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR;
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
@@ -101,7 +97,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (CApp.DEMO_UI_PID);
+      aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_PT.getParticipantID ());
       aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
                   .getDataRequestSubject ()
@@ -119,7 +115,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectCompany () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (CApp.DEMO_UI_PID);
+      aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
       aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
                   .getDataRequestSubject ()
@@ -151,7 +147,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
     final IRequestWebScopeWithoutResponse aRequestScope = aWPEC.getRequestScope ();
 
     final FormErrorList aFormErrors = new FormErrorList ();
-    boolean bShowForm = true;
+    final boolean bShowForm = true;
     if (aWPEC.hasAction (CPageParam.ACTION_PERFORM))
     {
       final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
@@ -224,49 +220,30 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
 
           if (aResponseBytes != null)
           {
-            final ResponseExtractMultiEvidenceType aResponseObj = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                                    .read (aResponseBytes);
-            if (aResponseObj != null)
+            // Try reading the data as the default response
+            final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponseBytes);
+            if (aErrorObj != null)
             {
-              DE4AKafkaClient.send (EErrorLevel.INFO, "Read response as 'ResponseExtractMultiEvidenceType'");
-              aResNL.addChild (h2 ("Preview of the response data"));
-              aResNL.addChild (_createPreviewIM (aWPEC, aResponseObj));
-              final BootstrapButtonGroup aDiv = aResNL.addAndReturnChild (new BootstrapButtonGroup ());
-              aDiv.addChild (new BootstrapButton (EBootstrapButtonType.SUCCESS).addChild ("Accept data")
-                                                                               .setIcon (EDefaultIcon.YES)
-                                                                               .setOnClick (JSHtml.windowAlert ("Okay, you accepted")));
-              aDiv.addChild (new BootstrapButton (EBootstrapButtonType.OUTLINE_DANGER).addChild ("Reject data")
-                                                                                      .setIcon (EDefaultIcon.NO)
-                                                                                      .setOnClick (JSHtml.windowAlert ("Okay, you rejected")));
-              bShowForm = false;
-            }
-            else
-            {
-              // Try reading the data as an error
-              final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponseBytes);
-              if (aErrorObj != null)
+              DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
+              if (aErrorObj.isAck ())
               {
-                DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
-                if (aErrorObj.isAck ())
-                {
-                  aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
-                }
-                else
-                {
-                  final HCUL aUL = new HCUL ();
-                  aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-                  aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
-                }
+                aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
               }
               else
               {
-                // Unknown payload.
-                String sFirstBytes = new String (aResponseBytes, StandardCharsets.UTF_8);
-                DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
-                if (sFirstBytes.length () > 100)
-                  sFirstBytes = sFirstBytes.substring (0, 100);
-                aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
+                final HCUL aUL = new HCUL ();
+                aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
               }
+            }
+            else
+            {
+              // Unknown payload.
+              String sFirstBytes = new String (aResponseBytes, StandardCharsets.UTF_8);
+              DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
+              if (sFirstBytes.length () > 100)
+                sFirstBytes = sFirstBytes.substring (0, 100);
+              aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
             }
           }
           aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
