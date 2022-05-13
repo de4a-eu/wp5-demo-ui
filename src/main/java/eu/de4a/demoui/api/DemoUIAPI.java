@@ -46,5 +46,12 @@ public final class DemoUIAPI
                                                            new APIExecutorGetStatus ()).setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
+
+    // POST /inbound
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-inbound"),
+                                                           new APIExecutorPostDEInbound ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
   }
 }
