@@ -111,17 +111,28 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
                    .birthday (1987, Month.DECEMBER, 17)
                    .build (),
           null),
-  MOCK_DO (EPilot.MOVING_ABROAD,
-           "iso6523-actorid-upis::9999:mock-do-localhost-it2",
-           "ES",
-           "Mocked DO (Localhost)",
-           MDSPerson.builder ()
-                    .id ("87654321")
-                    .firstName ("Stavros")
-                    .familyName ("Karakolis")
-                    .birthday (1987, Month.JANUARY, 1)
-                    .build (),
-           MDSCompany.builder ().id ("22446688").name ("Acme Mock Limited").build ());
+  MOCK_DO_MA (EPilot.MOVING_ABROAD,
+              "iso6523-actorid-upis::9999:mock-do-localhost-it2",
+              "ES",
+              "Mocked DO (Localhost)",
+              MDSPerson.builder ()
+                       .id ("87654321")
+                       .firstName ("Stavros")
+                       .familyName ("Karakolis")
+                       .birthday (1987, Month.JANUARY, 1)
+                       .build (),
+              MDSCompany.builder ().id ("87654321").name ("Acme Mock Limited").build ()),
+  MOCK_DO_SA (EPilot.STUDYING_ABROAD,
+              "iso6523-actorid-upis::9999:mock-do-localhost-it2",
+              "ES",
+              "Mocked DO (Localhost)",
+              MDSPerson.builder ()
+                       .id ("87654321")
+                       .firstName ("Stavros")
+                       .familyName ("Karakolis")
+                       .birthday (1987, Month.JANUARY, 1)
+                       .build (),
+              MDSCompany.builder ().id ("87654321").name ("Acme Mock Limited").build ());
 
   private final EPilot m_ePilot;
   private final String m_sParticipantID;
