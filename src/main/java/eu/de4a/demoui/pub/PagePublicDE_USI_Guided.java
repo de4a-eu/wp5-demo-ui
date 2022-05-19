@@ -579,13 +579,15 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
 
       final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
 
-      final Function <String, PLText> _code = s -> StringHelper.hasNoText (s) ? new PLText ("none", r10i).setFillColor (Color.LIGHT_GRAY)
+      final Function <String, PLText> _code = s -> StringHelper.hasNoText (s) ? new PLText ("none",
+                                                                                            r10i).setFillColor (Color.LIGHT_GRAY)
                                                                               : new PLText (s, c10);
 
       // Headline
       final String sTitle = "Preview of DE4A Iteration 2 request data before sending";
       aPS1.addElement (new PLText (sTitle, r12b).setMarginLeft (fMargin).setMarginTop (fMargin));
-      aPS1.addElement (new PLText ("Date and time of creation of this report: " + PDTFactory.getCurrentZonedDateTimeUTC ().toString (),
+      aPS1.addElement (new PLText ("Date and time of creation of this report: " +
+                                   PDTFactory.getCurrentZonedDateTimeUTC ().toString (),
                                    r10).setMarginLeft (fMargin));
 
       // Evidence type
@@ -600,7 +602,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         final PLTable aInnerTable = new PLTable (aCol1, aCol2);
         aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
                             new PLTableCell (new PLText (aState.getDataEvaluatorName (), r10)));
-        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataEvaluatorPID ())));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)),
+                            new PLTableCell (_code.apply (aState.getDataEvaluatorPID ())));
         final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
@@ -614,8 +617,10 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
       // DO
       {
         final PLTable aInnerTable = new PLTable (aCol1, aCol2);
-        aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)), new PLTableCell (new PLText (aState.getDataOwnerName (), r10)));
-        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)), new PLTableCell (_code.apply (aState.getDataOwnerPID ())));
+        aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
+                            new PLTableCell (new PLText (aState.getDataOwnerName (), r10)));
+        aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)),
+                            new PLTableCell (_code.apply (aState.getDataOwnerPID ())));
         final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
@@ -639,9 +644,11 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           aInnerTable.addRow (new PLTableCell (new PLText ("Family Name:", r10)),
                               new PLTableCell (new PLText (aState.m_aDRSPerson.getFamilyName (), r10)));
           aInnerTable.addRow (new PLTableCell (new PLText ("Birthday:", r10)),
-                              new PLTableCell (new PLText (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (), aDisplayLocale),
+                              new PLTableCell (new PLText (PDTToString.getAsString (aState.m_aDRSPerson.getBirthday (),
+                                                                                    aDisplayLocale),
                                                            r10)));
-          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)), new PLTableCell (aInnerTable))
+          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)),
+                                  new PLTableCell (aInnerTable))
                 .setMarginTop (fMargin)
                 .setMarginBottom (fMargin);
           break;
@@ -653,7 +660,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                               new PLTableCell (_code.apply (aState.m_aDRSCompany.getID ())));
           aInnerTable.addRow (new PLTableCell (new PLText ("Company Name:", r10)),
                               new PLTableCell (new PLText (aState.m_aDRSCompany.getName (), r10)));
-          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)), new PLTableCell (aInnerTable))
+          aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)),
+                                  new PLTableCell (aInnerTable))
                 .setMarginTop (fMargin)
                 .setMarginBottom (fMargin);
           break;
@@ -671,7 +679,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                                .getAsString (aState.m_aUSIRequest),
                              c10);
         else
-          aXML = new PLBox (new PLText ("Failed to create Request Object", r10i).setFillColor (new Color (0xf4, 0xd5, 0xce)));
+          aXML = new PLBox (new PLText ("Failed to create Request Object",
+                                        r10i).setFillColor (new Color (0xf4, 0xd5, 0xce)));
         aTable.addAndReturnRow (new PLTableCell (new PLText ("Created XML:", r10)), new PLTableCell (aXML))
               .setMarginTop (fMargin)
               .setMarginBottom (fMargin);
@@ -758,7 +767,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                                             ALLOWED_COUNTRIES_STRING::contains);
               }
               else
-                LOGGER.error ("Found no matching ResponseItem from IAL (" + aIALResponse.getResponseItemCount () + " response items)");
+                LOGGER.error ("Found no matching ResponseItem from IAL (" +
+                              aIALResponse.getResponseItemCount () +
+                              " response items)");
             }
             else
               LOGGER.error ("Got nothing back from IAL");
@@ -766,7 +777,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             LOGGER.info ("IAL response countries: " + aCountries);
             if (aCountries == null || aCountries.isEmpty ())
               aFormErrors.addFieldError (FIELD_USE_CASE,
-                                         "Found no participant in the IAL yet that supports this Document Type '" + sCOTID + "'");
+                                         "Found no participant in the IAL yet that supports this Document Type '" +
+                                                         sCOTID +
+                                                         "'");
           }
           if (aFormErrors.isEmpty ())
           {
@@ -782,7 +795,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         {
           final String sDEPID = aWPEC.params ().getAsStringTrimmed (FIELD_DE_PID, aState.getDataEvaluatorPID ());
           final String sDEName = aWPEC.params ().getAsStringTrimmed (FIELD_DE_NAME, aState.getDataEvaluatorName ());
-          final String sDECC = aWPEC.params ().getAsStringTrimmed (FIELD_DE_COUNTRY_CODE, aState.getDataEvaluatorCountryCode ());
+          final String sDECC = aWPEC.params ()
+                                    .getAsStringTrimmed (FIELD_DE_COUNTRY_CODE, aState.getDataEvaluatorCountryCode ());
 
           if (StringHelper.hasNoText (sDEPID))
             aFormErrors.addFieldError (FIELD_DE_PID, "A Data Evaluator ID is needed");
@@ -806,7 +820,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         {
           final String sDOPID = aWPEC.params ().getAsStringTrimmed (FIELD_DO_PID, aState.getDataOwnerPID ());
           final String sDOName = aWPEC.params ().getAsStringTrimmed (FIELD_DO_NAME, aState.getDataOwnerName ());
-          final String sDOCC = aWPEC.params ().getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
+          final String sDOCC = aWPEC.params ()
+                                    .getAsStringTrimmed (FIELD_DO_COUNTRY_CODE, aState.getDataOwnerCountryCode ());
 
           if (StringHelper.hasNoText (sDOPID))
             aFormErrors.addFieldError (FIELD_DO_PID, "A Data Owner ID is needed");
@@ -834,7 +849,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             {
               final String sDRSID = aWPEC.params ()
                                          .getAsStringTrimmed (FIELD_DRS_ID,
-                                                              aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID () : null);
+                                                              aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getID ()
+                                                                                          : null);
               final String sDRSFirstName = aWPEC.params ()
                                                 .getAsStringTrimmed (FIELD_DRS_FIRSTNAME,
                                                                      aState.m_aDRSPerson != null ? aState.m_aDRSPerson.getFirstName ()
@@ -872,10 +888,12 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             {
               final String sDRSID = aWPEC.params ()
                                          .getAsStringTrimmed (FIELD_DRS_ID,
-                                                              aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID () : null);
+                                                              aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getID ()
+                                                                                           : null);
               final String sDRSName = aWPEC.params ()
                                            .getAsStringTrimmed (FIELD_DRS_NAME,
-                                                                aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName () : null);
+                                                                aState.m_aDRSCompany != null ? aState.m_aDRSCompany.getName ()
+                                                                                             : null);
 
               if (StringHelper.hasNoText (sDRSID))
                 aFormErrors.addFieldError (FIELD_DRS_ID, "A company ID must be provided");
@@ -974,7 +992,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
       case SELECT_USE_CASE:
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_USE_CASE, aState.getUseCaseID ()));
-        for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (), IHasDisplayName.getComparatorCollating (aDisplayLocale)))
+        for (final EUseCase e : CollectionHelper.getSorted (EUseCase.values (),
+                                                            IHasDisplayName.getComparatorCollating (aDisplayLocale)))
           if (e.getPatternType () == m_ePattern)
             aSelect.addOption (e.getID (), e.getDisplayName ());
         if (aSelect.getOptionCount () > 1)
@@ -993,7 +1012,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           if (e.supportsPilot (aState.getPilot ()))
             aMockDESelect.addOption (e.getID (), e.getDisplayName ());
         aMockDESelect.addOptionPleaseSelect (aDisplayLocale);
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used").setCtrl (aMockDESelect));
+        aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Mock Data Evaluator to be used")
+                                                     .setCtrl (aMockDESelect));
 
         // Country
         final HCCountrySelect aCountrySelect = new HCCountrySelect (new RequestField (FIELD_DE_COUNTRY_CODE,
@@ -1006,7 +1026,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE_COUNTRY_CODE)));
 
         // Name
-        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME, aState.getDataEvaluatorName ())).ensureID ();
+        final HCEdit aEditName = new HCEdit (new RequestField (FIELD_DE_NAME,
+                                                               aState.getDataEvaluatorName ())).ensureID ();
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Data Evaluator name")
                                                      .setCtrl (aEditName)
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_DE_NAME)));
@@ -1025,7 +1046,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           final JSVar jElementCC = jFuncSetDE.param ("ecc");
           final JSArray jMDE = new JSArray ();
           for (final EMockDataEvaluator e : EMockDataEvaluator.values ())
-            jMDE.add (new JSAssocArray ().add ("id", e.getParticipantID ()).add ("n", e.getDisplayName ()).add ("cc", e.getCountryCode ()));
+            jMDE.add (new JSAssocArray ().add ("id", e.getParticipantID ())
+                                         .add ("n", e.getDisplayName ())
+                                         .add ("cc", e.getCountryCode ()));
           final JSVar jArray = jFuncSetDE.body ().var ("array", jMDE);
           final JSVar jCallbackParam = new JSVar ("x");
           final JSVar jFound = jFuncSetDE.body ()
@@ -1147,7 +1170,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                   aState.getUseCase ().getDisplayName () +
                                   " requires a person as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (),
+                                                                                    aState.getDataOwnerPID ());
             if (eMockDO == null)
               LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
 
@@ -1198,7 +1222,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                   aState.getUseCase ().getDisplayName () +
                                   " requires a company as Data Request Subject"));
 
-            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (), aState.getDataOwnerPID ());
+            final EMockDataOwner eMockDO = EMockDataOwner.getFromPilotAndPIDOrNull (aState.getPilot (),
+                                                                                    aState.getDataOwnerPID ());
             if (eMockDO == null)
               LOGGER.warn ("Failed to resolve Mock DO for " + aState.getPilot () + " and " + aState.getDataOwnerPID ());
 
@@ -1239,7 +1264,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         // Check against XSD
         final ErrorList aErrorList = new ErrorList ();
         final DE4ACoreMarshaller <RequestExtractMultiEvidenceUSIType> m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ();
-        m.setFormattedOutput (true).setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (aErrorList));
+        m.setFormattedOutput (true)
+         .setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (aErrorList));
 
         final byte [] aRequestBytes = m.getAsBytes (aRequest);
         if (aRequestBytes == null)
@@ -1266,7 +1292,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorPID ()));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
-           .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale) : aState.getDataEvaluatorCountryCode ());
+           .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
+                                        : aState.getDataEvaluatorCountryCode ());
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
         }
 
@@ -1277,7 +1304,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataOwnerPID ()));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
-           .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale) : aState.getDataOwnerCountryCode ());
+           .addCell (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
+                                        : aState.getDataOwnerCountryCode ());
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (t));
         }
 
@@ -1316,14 +1344,14 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                                      .setHelpText ("This is the technical request. It is just shown for helping developers")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
-                                                     .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_TEST_DR)))
-                                                     .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO_DT))
-                                                                                                                .addChild (" for the mock DO, or ")
-                                                                                                                .addChild (code (TARGET_URL_TEST_DR))
-                                                                                                                .addChild (" for the test DE4A Connector"))
+                                                     .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
+                                                                                             TARGET_URL_TEST_DR)))
+                                                     .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (TARGET_URL_TEST_DR))
+                                                                                                                               .addChild (" for the test DE4A Connector"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Confirmation to send request")
-                                                     .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM, false)))
+                                                     .setCtrl (new HCCheckBox (new RequestFieldBoolean (FIELD_CONFIRM,
+                                                                                                        false)))
                                                      .setHelpText ("You need to give your explicit consent here to proceed")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_CONFIRM)));
 
@@ -1373,7 +1401,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             final byte [] aRequestBytes = m.getAsBytes (aState.m_aUSIRequest);
             LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
-            aPost.setEntity (new ByteArrayEntity (aRequestBytes, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setEntity (new ByteArrayEntity (aRequestBytes,
+                                                  ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
             // Main POST to DR
@@ -1384,8 +1413,10 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             }
             else
             {
-              DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received response content (" + aResponseBytesRequest1.length + " bytes)");
-              LOGGER.info ("Response received (in UTF-8):\n" + new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
+              DE4AKafkaClient.send (EErrorLevel.INFO,
+                                    "DemoUI received response content (" + aResponseBytesRequest1.length + " bytes)");
+              LOGGER.info ("Response received (in UTF-8):\n" +
+                           new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
             }
           }
           catch (final ExtendedHttpResponseException ex)
@@ -1398,7 +1429,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           // IM request
           // -> preview on our (DE) side
           // -> we already have the response and can preview it
-          final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponseBytesRequest1);
+          final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseErrorMarshaller ()
+                                                                   .read (aResponseBytesRequest1);
           if (aResponseObj == null)
             throw new IOException ("Failed to parse response XML - see log for details");
 
@@ -1416,7 +1448,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
               aUL.addItem (sMsg);
               LOGGER.info ("Response error: " + sMsg);
             });
-            aErrorBox.addChild (div ("The request could not be accepted by the DR because of the following reasons:")).addChild (aUL);
+            aErrorBox.addChild (div ("The request could not be accepted by the DR because of the following reasons:"))
+                     .addChild (aUL);
           }
         }
         catch (final IOException ex)
@@ -1451,7 +1484,11 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         {
           final JSPackage aFunc = new JSPackage ();
           aFunc.add (JQuery.idRef (aForm)
-                           .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='" + DIRECTION_BACK + "'></input>")
+                           .append ("<input type='hidden' name='" +
+                                    PARAM_DIRECTION +
+                                    "' value='" +
+                                    DIRECTION_BACK +
+                                    "'></input>")
                            .submit ());
           aFunc._return (false);
           aRow.addChild (new BootstrapButton ().addChild ("Back").setIcon (EDefaultIcon.BACK).setOnClick (aFunc));
@@ -1468,11 +1505,16 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
       {
         final JSPackage aFunc = new JSPackage ();
         aFunc.add (JQuery.idRef (aForm)
-                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='" + DIRECTION_NEXT + "'></input>")
+                         .append ("<input type='hidden' name='" +
+                                  PARAM_DIRECTION +
+                                  "' value='" +
+                                  DIRECTION_NEXT +
+                                  "'></input>")
                          .submit ());
         aFunc._return (false);
         aRow.addChild (new BootstrapButton ().addChild (aState.step ().isNextSendRequest () ? "Send Request" : "Next")
-                                             .setIcon (aState.step ().isNextSendRequest () ? EDefaultIcon.YES : EDefaultIcon.NEXT)
+                                             .setIcon (aState.step ().isNextSendRequest () ? EDefaultIcon.YES
+                                                                                           : EDefaultIcon.NEXT)
                                              .setOnClick (aFunc));
       }
 
@@ -1482,7 +1524,11 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         aRow.addChild (" ");
         final JSPackage aFunc = new JSPackage ();
         aFunc.add (JQuery.idRef (aForm)
-                         .append ("<input type='hidden' name='" + PARAM_DIRECTION + "' value='" + DIRECTION_RESET + "'></input>")
+                         .append ("<input type='hidden' name='" +
+                                  PARAM_DIRECTION +
+                                  "' value='" +
+                                  DIRECTION_RESET +
+                                  "'></input>")
                          .submit ());
         aFunc._return (false);
         aRow.addChild (new BootstrapButton ().addChild ("Restart").setIcon (EFontAwesome5Icon.UNDO).setOnClick (aFunc));

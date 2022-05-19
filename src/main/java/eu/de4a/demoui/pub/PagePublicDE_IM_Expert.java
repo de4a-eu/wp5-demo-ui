@@ -163,7 +163,11 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
           final RequestExtractMultiEvidenceIMType aParsedRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending IM request '" + aParsedRequest.getRequestId () + "' to '" + sTargetURL + "'");
+                                "DemoUI sending IM request '" +
+                                                  aParsedRequest.getRequestId () +
+                                                  "' to '" +
+                                                  sTargetURL +
+                                                  "'");
 
           final StopWatch aSW = StopWatch.createdStarted ();
           final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
@@ -176,7 +180,8 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
           {
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
-            aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setEntity (new StringEntity (sPayload,
+                                               ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
@@ -186,7 +191,8 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
                      .addChild (div ("HTTP response: " + ex.getMessagePartStatusLine ()));
             aResponseBytes = ex.getResponseBody ();
             if (aResponseBytes != null)
-              DE4AKafkaClient.send (EErrorLevel.INFO, "Error response content received (" + aResponseBytes.length + " bytes)");
+              DE4AKafkaClient.send (EErrorLevel.INFO,
+                                    "Error response content received (" + aResponseBytes.length + " bytes)");
           }
           catch (final IOException ex)
           {
@@ -239,11 +245,10 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, TARGET_URL_MOCK_DO_DT)))
-                                                   .setHelpText (span ("The URL to send the request to. Use ").addChild (code (TARGET_URL_MOCK_DO_DT))
-                                                                                                              .addChild (" for the mock DO, or ")
-                                                                                                              .addChild (code (TARGET_URL_TEST_DR))
-                                                                                                              .addChild (" for the test DE4A Connector"))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
+                                                                                           TARGET_URL_TEST_DR)))
+                                                   .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (TARGET_URL_TEST_DR))
+                                                                                                                             .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
       {
         final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
@@ -254,7 +259,9 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         aJSAppend.body ().add (JQuery.idRef (aTA).val (aJSAppendData));
 
         final JSPackage aOnClick = new JSPackage ();
-        aOnClick.add (new JQueryAjaxBuilder ().url (CREATE_NEW_REQUEST.getInvocationURL (aRequestScope)).success (aJSAppend).build ());
+        aOnClick.add (new JQueryAjaxBuilder ().url (CREATE_NEW_REQUEST.getInvocationURL (aRequestScope))
+                                              .success (aJSAppend)
+                                              .build ());
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
                                                      .setCtrl (aTA,
                                                                new BootstrapButton ().addChild ("Other message")

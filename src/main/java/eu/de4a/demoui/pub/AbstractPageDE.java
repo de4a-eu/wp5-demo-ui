@@ -81,7 +81,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     private final String m_sName;
     private final String m_sCountryCode;
 
-    public Agent (@Nonnull @Nonempty final String sPID, @Nonnull @Nonempty final String sName, @Nonnull @Nonempty final String sCountryCode)
+    public Agent (@Nonnull @Nonempty final String sPID,
+                  @Nonnull @Nonempty final String sName,
+                  @Nonnull @Nonempty final String sCountryCode)
     {
       ValueEnforcer.notEmpty (sPID, "PID");
       ValueEnforcer.notEmpty (sName, "Name");
@@ -160,26 +162,15 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   @Nonempty
   protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
   {
+    final String sBaseUrl = AppConfig.getDRBaseUrl ();
     if (ePattern == EPatternType.IM)
-      return AppConfig.getDRBaseUrl () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+      return sBaseUrl + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
     if (ePattern == EPatternType.USI)
-      return AppConfig.getDRBaseUrl () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
-    throw new IllegalStateException ("Unsupported pattern " + ePattern);
-  }
-
-  @Nonnull
-  @Nonempty
-  protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
-  {
-    if (ePattern == EPatternType.IM)
-      return AppConfig.getMockDOBaseURL () + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
-    if (ePattern == EPatternType.USI)
-      return AppConfig.getMockDOBaseURL () + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
+      return sBaseUrl + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
     throw new IllegalStateException ("Unsupported pattern " + ePattern);
   }
 
   protected final EPatternType m_ePattern;
-  protected final String TARGET_URL_MOCK_DO_DT;
   protected final String TARGET_URL_TEST_DR;
 
   public AbstractPageDE (@Nonnull @Nonempty final String sID,
@@ -188,7 +179,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   {
     super (sID, sDisplayName);
     m_ePattern = ePattern;
-    TARGET_URL_MOCK_DO_DT = getTargetURLMockDO (ePattern);
     TARGET_URL_TEST_DR = getTargetURLTestDR (ePattern);
   }
 
@@ -245,13 +235,16 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP, @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP,
+                                                 @Nonnull final Locale aDisplayLocale)
   {
     final BootstrapTable aTable2 = new BootstrapTable (HCCol.fromString ("170"), HCCol.star ());
     aTable2.addBodyRow ().addCell ("Person Identifier:").addCell (_code (aNP.getPersonIdentifier ()));
     aTable2.addBodyRow ().addCell ("First Name:").addCell (_text (aNP.getFirstNameValue ()));
     aTable2.addBodyRow ().addCell ("Family Identifier:").addCell (_text (aNP.getFamilyNameValue ()));
-    aTable2.addBodyRow ().addCell ("Date of Birth:").addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
+    aTable2.addBodyRow ()
+           .addCell ("Date of Birth:")
+           .addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
     if (aNP.getGender () != null)
       aTable2.addBodyRow ().addCell ("Gender:").addCell (_text (aNP.getGender ().value ()));
     if (StringHelper.hasText (aNP.getBirthNameValue ()))
@@ -264,7 +257,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS, @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS,
+                                       @Nonnull final Locale aDisplayLocale)
   {
     if (aDRS == null)
       return _text (null);
@@ -274,7 +268,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
     if (aDRS.getDataSubjectPerson () != null)
     {
-      aTable.addBodyRow ().addCell ("Natural Person").addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
+      aTable.addBodyRow ()
+            .addCell ("Natural Person")
+            .addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
     }
     if (aDRS.getDataSubjectCompany () != null)
     {
@@ -282,7 +278,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     }
     if (aDRS.getDataSubjectRepresentative () != null)
     {
-      aTable.addBodyRow ().addCell ("Representative").addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
+      aTable.addBodyRow ()
+            .addCell ("Representative")
+            .addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
     }
     return aTable;
   }
@@ -292,7 +290,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   {
     final HCDiv aNaceCodes = new HCDiv ();
     if (a.hasNaceCodeEntries ())
-      aNaceCodes.addChild ("NACE codes: ").addChild (StringHelper.imploder ().source (a.getNaceCode ()).separator (", ").build ());
+      aNaceCodes.addChild ("NACE codes: ")
+                .addChild (StringHelper.imploder ().source (a.getNaceCode ()).separator (", ").build ());
 
     final HCDiv aActDesc = new HCDiv ();
     if (a.hasActivityDescriptionEntries ())
@@ -324,7 +323,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  private static IHCNode _createCE_DBA (@Nonnull final LegalEntityType aLegalEntity, @Nonnull final Locale aDisplayLocale)
+  private static IHCNode _createCE_DBA (@Nonnull final LegalEntityType aLegalEntity,
+                                        @Nonnull final Locale aDisplayLocale)
   {
     final BootstrapTable aTable = new BootstrapTable (HCCol.fromString ("180"), HCCol.star ());
     if (aLegalEntity.hasCompanyNameEntries ())
@@ -343,7 +343,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
     if (aLegalEntity.getCompanyActivity () != null)
     {
-      aTable.addBodyRow ().addCell ("Company Activity:").addCell (_createDBAActivity (aLegalEntity.getCompanyActivity ()));
+      aTable.addBodyRow ()
+            .addCell ("Company Activity:")
+            .addCell (_createDBAActivity (aLegalEntity.getCompanyActivity ()));
     }
 
     if (aLegalEntity.getRegistrationDate () != null)
@@ -409,17 +411,22 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     {
       final HCNodeList aNL = new HCNodeList ();
       aNL.addChild (new HCDiv ().addChild ("Name: " +
-                                           aLegalEntity.getHasBranch ().getBranchName ().getLegalEntityLegalName ().getValue ()));
+                                           aLegalEntity.getHasBranch ()
+                                                       .getBranchName ()
+                                                       .getLegalEntityLegalName ()
+                                                       .getValue ()));
       aNL.addChild (new HCDiv ().addChild ("EUID: ").addChild (_code (aLegalEntity.getHasBranch ().getBranchEUID ())));
       if (aLegalEntity.getHasBranch ().getBranchActivity () != null)
         aNL.addChild (new HCDiv ().addChild ("Activity: ")
                                   .addChild (_createDBAActivity (aLegalEntity.getHasBranch ().getBranchActivity ())));
       if (aLegalEntity.getHasBranch ().getBranchRegistredAddress () != null)
         aNL.addChild (new HCDiv ().addChild ("Registered Address: ")
-                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ().getBranchRegistredAddress ())));
+                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ()
+                                                                             .getBranchRegistredAddress ())));
       if (aLegalEntity.getHasBranch ().getBranchPostalAddress () != null)
         aNL.addChild (new HCDiv ().addChild ("Postal Address: ")
-                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ().getBranchPostalAddress ())));
+                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ()
+                                                                             .getBranchPostalAddress ())));
       aTable.addBodyRow ().addCell ("Branch:").addCell (aNL);
     }
 
@@ -427,7 +434,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createCE (@Nonnull final CanonicalEvidenceType aCanonicalEvidence, @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createCE (@Nonnull final CanonicalEvidenceType aCanonicalEvidence,
+                                      @Nonnull final Locale aDisplayLocale)
   {
     final Element aElement = (Element) aCanonicalEvidence.getAny ();
 
@@ -468,30 +476,36 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
     final BootstrapViewForm aTable = new BootstrapViewForm ();
     aTable.setSplitting (BootstrapGridSpec.create (-1, -1, -1, 2, 2), BootstrapGridSpec.create (-1, -1, -1, 10, 10));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID").setCtrl (_code (aResponseObj.getRequestId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID")
+                                                  .setCtrl (_code (aResponseObj.getRequestId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Time stamp")
                                                   .setCtrl (_text (PDTToString.getAsString (aResponseObj.getTimeStamp (),
                                                                                             aDisplayLocale))));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (_createAgent (aResponseObj.getDataOwner ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
+                                                  .setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
+                                                  .setCtrl (_createAgent (aResponseObj.getDataOwner ())));
 
     for (final ResponseExtractEvidenceItemType aItem : aResponseObj.getResponseExtractEvidenceItem ())
     {
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
-                                                    .setCtrl (_createDRS (aItem.getDataRequestSubject (), aDisplayLocale)));
+                                                    .setCtrl (_createDRS (aItem.getDataRequestSubject (),
+                                                                          aDisplayLocale)));
       aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
                                                     .setCtrl (_code (aItem.getCanonicalEvidenceTypeId ())));
       if (aItem.getCanonicalEvidence () != null)
       {
         // TODO
         aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
-                                                      .setCtrl (_createCE (aItem.getCanonicalEvidence (), aDisplayLocale)));
+                                                      .setCtrl (_createCE (aItem.getCanonicalEvidence (),
+                                                                           aDisplayLocale)));
       }
       if (aItem.hasDomesticEvidenceEntries ())
       {
         // TODO
         aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
-                                                      .setCtrl (_text (aItem.getDomesticEvidenceCount () + " present, but not shown yet")));
+                                                      .setCtrl (_text (aItem.getDomesticEvidenceCount () +
+                                                                       " present, but not shown yet")));
       }
     }
     return aTable;

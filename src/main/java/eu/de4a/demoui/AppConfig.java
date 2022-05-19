@@ -32,7 +32,7 @@ import com.helger.scope.singleton.AbstractGlobalSingleton;
 public final class AppConfig extends AbstractGlobalSingleton
 {
   /** The name of the file containing the settings */
-  private static final IConfig s_aCF = ConfigFactory.getDefaultConfig ();
+  private static final IConfig CF = ConfigFactory.getDefaultConfig ();
 
   @Deprecated
   @UsedViaReflection
@@ -42,7 +42,7 @@ public final class AppConfig extends AbstractGlobalSingleton
   @Nonnull
   public static IConfig getConfig ()
   {
-    return s_aCF;
+    return CF;
   }
 
   @Nullable
@@ -91,17 +91,20 @@ public final class AppConfig extends AbstractGlobalSingleton
   }
 
   @Nullable
-  public static String getMockDOBaseURL ()
-  {
-    return getConfig ().getAsString ("webapp.mock-do.baseurl");
-  }
-
-  @Nullable
   public static String getDRBaseUrl ()
   {
     return getConfig ().getAsString ("webapp.dr.baseurl");
   }
 
+  /**
+   * @return The participant ID that should be used for the DE. This PID must be
+   *         registered in an SMP to receive something. For localhost testing,
+   *         the identifier
+   *         <code>iso6523-actorid-upis::9999:demoui-localhost-it2</code> should
+   *         be used. It assumes a Connector running on
+   *         <code>localhost:8080</code> (the final certificate choice has not
+   *         been made).
+   */
   @Nullable
   public static String getDEParticipantID ()
   {

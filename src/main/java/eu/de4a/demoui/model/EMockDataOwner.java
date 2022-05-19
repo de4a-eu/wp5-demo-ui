@@ -45,13 +45,23 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "iso6523-actorid-upis::9999:pt990000101-it2",
           "PT",
           "Portuguese IST, University of Lisbon",
-          MDSPerson.builder ().id ("123456789").firstName ("Alice").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
+          MDSPerson.builder ()
+                   .id ("123456789")
+                   .firstName ("Alice")
+                   .familyName ("Alves")
+                   .birthday (1997, Month.JANUARY, 1)
+                   .build (),
           null),
   T41_SI (EPilot.STUDYING_ABROAD,
           "iso6523-actorid-upis::9999:si000000016-it2",
           "SI",
           "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-          MDSPerson.builder ().id ("123456").firstName ("Marjeta").familyName ("Maček").birthday (1999, Month.SEPTEMBER, 16).build (),
+          MDSPerson.builder ()
+                   .id ("123456")
+                   .firstName ("Marjeta")
+                   .familyName ("Maček")
+                   .birthday (1999, Month.SEPTEMBER, 16)
+                   .build (),
           null),
   // T4.2
   T42_AT (EPilot.DOING_BUSINESS_ABROAD,
@@ -94,8 +104,24 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
           "iso6523-actorid-upis::9999:pt000000026-it2",
           "PT",
           "(AMA IP) Agencia para a Modernizacao Administrativa IP (Administration Modernization Agency)",
-          MDSPerson.builder ().id ("12345678").firstName ("Stavros").familyName ("Karakolis").birthday (1987, Month.DECEMBER, 17).build (),
-          null);
+          MDSPerson.builder ()
+                   .id ("12345678")
+                   .firstName ("Stavros")
+                   .familyName ("Karakolis")
+                   .birthday (1987, Month.DECEMBER, 17)
+                   .build (),
+          null),
+  MOCK_DO (EPilot.MOVING_ABROAD,
+           "iso6523-actorid-upis::9999:mock-do-localhost-it2",
+           "ES",
+           "Mocked DO (Localhost)",
+           MDSPerson.builder ()
+                    .id ("87654321")
+                    .firstName ("Stavros")
+                    .familyName ("Karakolis")
+                    .birthday (1987, Month.JANUARY, 1)
+                    .build (),
+           MDSCompany.builder ().id ("22446688").name ("Acme Mock Limited").build ());
 
   private final EPilot m_ePilot;
   private final String m_sParticipantID;
@@ -179,7 +205,8 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
   }
 
   @Nullable
-  public static EMockDataOwner getFromPilotAndPIDOrNull (@Nullable final EPilot ePilot, @Nullable final String sParticipantID)
+  public static EMockDataOwner getFromPilotAndPIDOrNull (@Nullable final EPilot ePilot,
+                                                         @Nullable final String sParticipantID)
   {
     if (ePilot != null && StringHelper.hasText (sParticipantID))
       for (final EMockDataOwner e : values ())
