@@ -33,7 +33,7 @@ import com.helger.photon.core.menu.MenuTree;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppSecurity;
-import eu.de4a.demoui.CAjax;
+import eu.de4a.demoui.CAppAjax;
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.api.APIExecutorGetStatus;
 import eu.de4a.demoui.api.DemoUIAPI;
@@ -110,8 +110,8 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
   @Override
   protected void initAjax (@Nonnull final IAjaxRegistry aAjaxRegistry)
   {
-    aAjaxRegistry.registerFunction (CAjax.DATATABLES);
-    aAjaxRegistry.registerFunction (CAjax.DATATABLES_I18N);
+    aAjaxRegistry.registerFunction (CAppAjax.DATATABLES);
+    aAjaxRegistry.registerFunction (CAppAjax.DATATABLES_I18N);
   }
 
   @Override
