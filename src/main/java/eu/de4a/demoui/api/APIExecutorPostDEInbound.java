@@ -18,24 +18,15 @@ package eu.de4a.demoui.api;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.pdfbox.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.http.CHttp;
@@ -48,9 +39,6 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
-import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
-import eu.de4a.iem.core.jaxb.common.ResponseEventSubscriptionType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 
 public class APIExecutorPostDEInbound implements IAPIExecutor
