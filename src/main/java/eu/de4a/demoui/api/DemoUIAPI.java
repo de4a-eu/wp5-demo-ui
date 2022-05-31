@@ -53,5 +53,12 @@ public final class DemoUIAPI
                                                            new APIExecutorPostDEInbound ()).setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
+    
+    // POST /redirect
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-redirect"),
+                                                           new APIExecutorPostDERedirect ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
   }
 }

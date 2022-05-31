@@ -110,4 +110,9 @@ public final class AppConfig extends AbstractGlobalSingleton
   {
     return getConfig ().getAsString ("webapp.de.pid");
   }
+  @Nullable
+  public static String getDEXmlWriteTo ()
+  {
+    return getConfig ().getAsString ("webapp.de.file.xml");
+  }
 }
