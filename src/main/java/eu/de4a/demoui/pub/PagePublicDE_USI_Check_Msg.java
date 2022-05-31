@@ -65,6 +65,7 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
+import eu.de4a.demoui.api.APIExecutorPostDERedirect;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -79,15 +80,17 @@ import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 import com.helger.commons.url.SimpleURL;
 
-public class PagePublicDE_USI_Expert extends AbstractPageDE
+public class PagePublicDE_USI_Check_Msg extends AbstractPageDE
 {
-	private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Expert.class);
-	
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Check_Msg.class);
+  
   // We're doing a DR-IM request
   public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
+  
+  public static final String PARAM_REQUEST_ID = "requestid";
 
-  private static final String FIELD_TARGET_URL = "targeturl";
-  private static final String FIELD_PAYLOAD = "payload";
+  //private static final String FIELD_TARGET_URL = "targeturl";
+  //private static final String FIELD_PAYLOAD = "payload";
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
@@ -122,9 +125,9 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
     });
   }
 
-  public PagePublicDE_USI_Expert (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_USI_Check_Msg (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "USI Exchange (Expert)", EPatternType.USI);
+    super (sID, "Check received messages", EPatternType.USI);
   }
 
   @Override
@@ -138,7 +141,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
     final boolean bShowForm = true;
     if (aWPEC.hasAction (CPageParam.ACTION_PERFORM))
     {
-      final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
+   /*   final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
       final String sPayload = aWPEC.params ().getAsStringTrimmed (FIELD_PAYLOAD);
 
       if (StringHelper.hasNoText (sTargetURL))
@@ -146,37 +149,38 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       else
         if (URLHelper.getAsURL (sTargetURL, false) == null)
           aFormErrors.addFieldError (FIELD_TARGET_URL, "The target URL must be valid URL");
-
-      if (StringHelper.hasNoText (sPayload))
+*/
+/*      if (StringHelper.hasNoText (sPayload))
         aFormErrors.addFieldError (FIELD_PAYLOAD, "Payload must be provided");
-
+*/
       if (aFormErrors.isEmpty ())
       {
         final HCNodeList aResNL = new HCNodeList ();
 
         // Check if document is valid
-        final IErrorList aEL = DEMO_DOC_TYPE.validateMessage (sPayload);
-        if (aEL.containsAtLeastOneError ())
+      //  final IErrorList aEL = DEMO_DOC_TYPE.validateMessage (sPayload);
+        if (true/*aEL.containsAtLeastOneError ()*/)
         {
           aResNL.addChild (error ("The provided document is not XSD compliant"));
-          for (final IError e : aEL)
+       /*   for (final IError e : aEL)
             if (e.getErrorLevel ().isError ())
               aResNL.addChild (error (e.getAsString (aDisplayLocale)));
             else
               aResNL.addChild (warn (e.getAsString (aDisplayLocale)));
+              */
         }
         else
         {
           // Send only valid documents
-          final RequestExtractMultiEvidenceUSIType aParsedRequest = (RequestExtractMultiEvidenceUSIType) DEMO_DOC_TYPE.parseMessage (sPayload);
+   //       final RequestExtractMultiEvidenceUSIType aParsedRequest = (RequestExtractMultiEvidenceUSIType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
-          DE4AKafkaClient.send (EErrorLevel.INFO,
+       /*   DE4AKafkaClient.send (EErrorLevel.INFO,
                                 "DemoUI sending USI request '" +
                                                   aParsedRequest.getRequestId () +
                                                   "' to '" +
                                                   sTargetURL +
                                                   "'");
-
+*/
           final StopWatch aSW = StopWatch.createdStarted ();
           final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
           aHCS.setConnectionRequestTimeoutMS (120_000);
@@ -187,31 +191,35 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
             // Start HTTP POST
-            final HttpPost aPost = new HttpPost (sTargetURL);
+     /*       final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload,
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+     */ 
+       //     aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
-          catch (final ExtendedHttpResponseException ex)
+   /*       catch (final ExtendedHttpResponseException ex)
           {
             aErrorBox.addChild (div ("Error sending HTTP request to ").addChild (code (sTargetURL)))
                      .addChild (div ("HTTP response: " + ex.getMessagePartStatusLine ()));
+
             aResponseBytes = ex.getResponseBody ();
             if (aResponseBytes != null)
               DE4AKafkaClient.send (EErrorLevel.INFO,
                                     "Error response content received (" + aResponseBytes.length + " bytes)");
           }
-          catch (final IOException ex)
+*/          
+/*          catch (final IOException ex)
           {
             aErrorBox.addChild (div ("Error sending request to ").addChild (code (sTargetURL)))
                      .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true));
+ 
           }
           finally
           {
             aSW.stop ();
           }
-
+*/
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
@@ -252,67 +260,40 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
-      aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
+    /*  aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
                                                    .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
                                                                                            TARGET_URL_TEST_DR)))
                                                    .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (TARGET_URL_TEST_DR))
                                                                                                                              .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
+                                                   */
       {
-        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+/*        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
                                                                  DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
                                                                                                                               .addClass (CBootstrapCSS.TEXT_MONOSPACE);
+ */
         final JSAnonymousFunction aJSAppend = new JSAnonymousFunction ();
         final JSVar aJSAppendData = aJSAppend.param ("data");
-        aJSAppend.body ().add (JQuery.idRef (aTA).val (aJSAppendData));
+        //aJSAppend.body ().add (JQuery.idRef (aTA).val (aJSAppendData));
 
         final JSPackage aOnClick = new JSPackage ();
         aOnClick.add (new JQueryAjaxBuilder ().url (CREATE_NEW_REQUEST.getInvocationURL (aRequestScope))
                                               .success (aJSAppend)
                                               .build ());
-        aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
+       /* aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
                                                      .setCtrl (aTA,
                                                                new BootstrapButton ().addChild ("Other message")
                                                                                      .setIcon (EDefaultIcon.REFRESH)
                                                                                      .setOnClick (aOnClick))
                                                      .setHelpText ("The message you want to send. By default a randomly generated message is created")
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
+*/                                                     
       }
 
-      aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
-      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send USI request"));
-      
+      //aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
+      //aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send USI request"));
       
       LOGGER.debug ("getting the request ID, iterate map");
-      String sRequestID = "";
-      RedirectResponseMap map = RedirectResponseMap.getInstance ();
-      
-      if (map.getM_aMap().size() >0) {
-    	  for (Map.Entry<String, RedirectUserType> entry : map.getM_aMap().entrySet()) {
-        	  sRequestID = entry.getKey();
-          }
-          LOGGER.debug ("getting the response for request Id: "+sRequestID);
-    	  final RedirectUserType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
-          LOGGER.debug ("redirection to: "+ aResponse.getRedirectUrl());
-          aNodeList.addChild(new BootstrapButton().addChild("Manage received redirection messages")
-        		  .setIcon(EDefaultIcon.INFO)
-        		  .setOnClick(new SimpleURL (aResponse.getRedirectUrl())));
-      } else {
-    	  LOGGER.debug ("no redirect message found");
-      }
-      
-      
-     /* final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-              DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
-                                                                           .addClass (CBootstrapCSS.TEXT_MONOSPACE);
-     *//* aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload").setCtrl(aTA, new BootstrapButton().addChild("Manage received redirection messages")
-    		  .setIcon(EDefaultIcon.INFO)
-    		  .setOnClick(new SimpleURL (aResponse.getRedirectUrl()))));*/
-      
-      //https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/do1/preview/index?requestId=860b2e73-1249-4231-9aad-e139115002de
-      //aResponse.getRedirectUrl()
-      /*
-       * LOGGER.debug ("getting the request ID, iterate map");
       String sRequestID = "";
       RedirectResponseMap map = RedirectResponseMap.getInstance ();
       for (Map.Entry<String, RedirectUserType> entry : map.getM_aMap().entrySet()) {
@@ -323,7 +304,6 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       final RedirectUserType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
       LOGGER.debug ("redirection to: "+ aResponse.getRedirectUrl());
       aWPEC.postRedirectGetExternal(new SimpleURL (aResponse.getRedirectUrl()));
-       */
     }
   }
 }
