@@ -48,12 +48,15 @@ import eu.de4a.iem.jaxb.t43.codelists.currency.CurrencyType;
 import eu.de4a.iem.jaxb.t43.codelists.humansex.GenderType;
 import eu.de4a.iem.jaxb.t43.codelists.nuts2021.NUTS2021Type;
 import eu.de4a.iem.jaxb.t43.codelists.pensioncat.PensionCategoryType;
+import eu.de4a.iem.jaxb.t43.codelists.pensioncontract.PensionContractType;
 import eu.de4a.iem.jaxb.t43.codelists.pensionstatus.PensionStatusType;
 import eu.de4a.iem.jaxb.t43.domreg.v1_7.DomicileType;
 import eu.de4a.iem.jaxb.t43.marriage.v1_7.MarriageType;
 import eu.de4a.iem.jaxb.t43.pension.v0_1.MonetaryAmountType;
 import eu.de4a.iem.jaxb.t43.pension.v0_1.PensionMeansOfLivingInfoType;
 import eu.de4a.iem.jaxb.t43.unemployment.v0_1.UnemploymentMeansOfLivingInfoType;
+import eu.de4a.iem.jaxb.t43.workinglife.v0_1.SituationType;
+import eu.de4a.iem.jaxb.t43.workinglife.v0_1.WorkingLifeMeansOfLivingInfoType;
 import eu.de4a.iem.jaxb.w3.cv10.ac.CvaddressType;
 import eu.de4a.iem.jaxb.w3.cv10.ac.CvidentifierType;
 import eu.de4a.iem.jaxb.w3.cv10.bc.GivenNameType;
@@ -82,18 +85,18 @@ public enum EDemoCanonicalEvidence
   T42_LEGAL_ENTITY_V06 (EDE4ACanonicalEvidenceType.T42_LEGAL_ENTITY_V06,
                         EDemoCanonicalEvidence::createDBA_LegalEntity_v06),
 
-  T43_BIRTH_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V17,
+  T43_BIRTH_V17 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V17,
                           EDemoCanonicalEvidence::createMA_Birth_v1_7),
-  T43_DOMREG_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_DOMREG_EVIDENCE_V17,
+  T43_DOMREG_V17 (EDE4ACanonicalEvidenceType.T43_DOMREG_EVIDENCE_V17,
                            EDemoCanonicalEvidence::createMA_DomesticRegistration_v1_7),
-  T43_MARRIAGE_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_MARRIAGE_EVIDENCE_V17,
+  T43_MARRIAGE_V17 (EDE4ACanonicalEvidenceType.T43_MARRIAGE_EVIDENCE_V17,
                              EDemoCanonicalEvidence::createMA_Marriage_v1_7),
   T43_PENSION_MOL_V01 (EDE4ACanonicalEvidenceType.T43_PENSION_MOL_EVIDENCE_V01,
                        EDemoCanonicalEvidence::createMA_PensionMOL_v0_1),
   T43_UNEMPLOYMENT_MOL_V01 (EDE4ACanonicalEvidenceType.T43_UNEMPLOYMENT_MOL_EVIDENCE_V01,
-                            EDemoCanonicalEvidence::createMA_Marriage_v1_7),
+                            EDemoCanonicalEvidence::createMA_UnemploymentMOL_v0_1),
   T43_WORKING_LIFE_MOL_V01 (EDE4ACanonicalEvidenceType.T43_WORKING_LIFE_MOL_EVIDENCE_V01,
-                            EDemoCanonicalEvidence::createMA_Marriage_v1_7);
+                            EDemoCanonicalEvidence::createMA_WorkingLifeMOL_v0_1);
 
   private final EDE4ACanonicalEvidenceType m_eCEType;
   private final Supplier <Element> m_aAnyCreator;
@@ -764,6 +767,102 @@ public enum EDemoCanonicalEvidence
       p.setCertifies (a);
     }
     return eu.de4a.iem.cev.de4a.t43.DE4AT43Marshaller.unemploymentMeansOfLivingEvidence ()
+                                                     .getAsDocument (p)
+                                                     .getDocumentElement ();
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.workinglife.v0_1.PublicOrganisationType _createWorkingLifePubOrg ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.workinglife.v0_1.PublicOrganisationType ret = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.PublicOrganisationType ();
+    ret.addIdentifier (_createT43CvID ());
+    ret.addPrefLabel (new oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.TextType ("PrefLabel-" +
+                                                                                                      MathHelper.abs (aTLR.nextInt ())));
+    return ret;
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.workinglife.v0_1.DateObjectType _createWorkingLifeDate ()
+  {
+    final LocalDate aLD = _createLocalDate ();
+    final eu.de4a.iem.jaxb.t43.workinglife.v0_1.DateObjectType a = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.DateObjectType ();
+    XMLGregorianCalendar c = XSDDataTypeHelper.getFactory ().newXMLGregorianCalendar ();
+    c.setYear (aLD.getYear ());
+    a.setYear (c);
+
+    c = XSDDataTypeHelper.getFactory ().newXMLGregorianCalendar ();
+    c.setMonth (aLD.getMonthValue ());
+    a.setMonth (c);
+
+    c = XSDDataTypeHelper.getFactory ().newXMLGregorianCalendar ();
+    c.setDay (aLD.getDayOfMonth ());
+    a.setDay (c);
+
+    return a;
+  }
+
+  @Nonnull
+  private static SituationType _createSituation ()
+  {
+    final SituationType ret = new SituationType ();
+    ret.setSocialSecurityNumber (_createT43CvID ());
+    ret.setStatus (EDemoDocument.random (PensionStatusType.class));
+    {
+      final eu.de4a.iem.jaxb.t43.workinglife.v0_1.PeriodOfTimeType a = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.PeriodOfTimeType ();
+      a.setStartDate (_createDate ());
+      a.setEndDate (_createDate ());
+      ret.setPeriodOfTime (a);
+    }
+    ret.setContractType (EDemoDocument.random (PensionContractType.class));
+    return ret;
+  }
+
+  @Nonnull
+  public static Element createMA_WorkingLifeMOL_v0_1 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.workinglife.v0_1.WorkingLifeMeansOfLivingEvidenceType p = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.WorkingLifeMeansOfLivingEvidenceType ();
+    p.setIdentifier (_createT43CvID ());
+    p.setIssueDate (_createDate ());
+    p.setIssuingAuthority (_createWorkingLifePubOrg ());
+    {
+      final WorkingLifeMeansOfLivingInfoType a = new WorkingLifeMeansOfLivingInfoType ();
+      {
+        final eu.de4a.iem.jaxb.t43.workinglife.v0_1.PersonType b = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.PersonType ();
+        b.addIdentifier (_createT43CvID ());
+        if (aTLR.nextBoolean ())
+          b.addIdentifier (_createT43CvID ());
+        b.addSocialSecurityNumber (_createT43CvID ());
+        if (aTLR.nextBoolean ())
+          b.addSocialSecurityNumber (_createT43CvID ());
+        {
+          final eu.de4a.iem.jaxb.t43.workinglife.v0_1.NameType c = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.NameType ();
+          c.addGivenName (_createT43GivenName ());
+          if (aTLR.nextBoolean ())
+            c.addGivenName (_createT43GivenName ());
+          c.addFamilyName (_createT43FamilyName ());
+          if (aTLR.nextBoolean ())
+            c.addFamilyName (_createT43FamilyName ());
+          b.setPersonName (c);
+        }
+        b.setDateOfBirth (_createWorkingLifeDate ());
+        a.setDataSubject (b);
+      }
+      {
+        final eu.de4a.iem.jaxb.t43.workinglife.v0_1.WorkingLifeType b = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.WorkingLifeType ();
+        {
+          final eu.de4a.iem.jaxb.t43.workinglife.v0_1.SituationsListType c = new eu.de4a.iem.jaxb.t43.workinglife.v0_1.SituationsListType ();
+          c.addSituation (_createSituation ());
+          if (aTLR.nextBoolean ())
+            c.addSituation (_createSituation ());
+          b.setSituationsList (c);
+        }
+        a.setWorkingLife (b);
+      }
+      p.setCertifies (a);
+    }
+    return eu.de4a.iem.cev.de4a.t43.DE4AT43Marshaller.workingLifeMeansOfLivingEvidence ()
                                                      .getAsDocument (p)
                                                      .getDocumentElement ();
   }
