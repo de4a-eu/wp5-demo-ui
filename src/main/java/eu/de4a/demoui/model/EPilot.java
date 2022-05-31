@@ -25,9 +25,9 @@ import com.helger.commons.name.IHasDisplayName;
 
 public enum EPilot implements IHasID <String>, IHasDisplayName
 {
-  STUDYING_ABROAD ("t41", "Studying Abroad"),
-  DOING_BUSINESS_ABROAD ("t42", "Doing Business Abroad"),
-  MOVING_ABROAD ("t43", "Moving Abroad");
+  T41_STUDYING_ABROAD ("t41", "Studying Abroad"),
+  T42_DOING_BUSINESS_ABROAD ("t42", "Doing Business Abroad"),
+  T43_MOVING_ABROAD ("t43", "Moving Abroad");
 
   private final String m_sID;
   private final String m_sDisplayName;
