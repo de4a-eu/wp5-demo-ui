@@ -16,6 +16,7 @@
 package eu.de4a.demoui.model;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
@@ -30,6 +31,7 @@ import com.helger.commons.math.MathHelper;
 
 import eu.de4a.iem.cev.EDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.xml.XSDDataTypeHelper;
+import eu.de4a.iem.jaxb.t41.disability.v2022_05_12.DisabilityCertificateType;
 import eu.de4a.iem.jaxb.t41.edci.IscedFOetCodeType;
 import eu.de4a.iem.jaxb.t41.edci.LanguageCharCodeEnumType;
 import eu.de4a.iem.jaxb.t41.edci.LanguageStringType;
@@ -37,6 +39,7 @@ import eu.de4a.iem.jaxb.t41.edci.LegalIdentifierType;
 import eu.de4a.iem.jaxb.t41.edci.LocationType;
 import eu.de4a.iem.jaxb.t41.edci.PersonType;
 import eu.de4a.iem.jaxb.t41.edci.TextContentTypeCodeEnumType;
+import eu.de4a.iem.jaxb.t41.largefamily.v2022_05_12.LargeFamilyCertificateType;
 import eu.de4a.iem.jaxb.t43.birth.v1_7.BirthType;
 import eu.de4a.iem.jaxb.t43.birth.v1_7.ChildType;
 import eu.de4a.iem.jaxb.t43.birth.v1_7.DateObjectType;
@@ -61,14 +64,24 @@ import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.FamilyN
  */
 public enum EDemoCanonicalEvidence
 {
-  T41_HIGHER_EDUCATION_DIPLOMA_2021_04_13 (EDE4ACanonicalEvidenceType.T41_UC1_2021_04_13, EDemoCanonicalEvidence::createT41_HED_v2021_04_13),
-  T42_LEGAL_ENTITY_V06 (EDE4ACanonicalEvidenceType.T42_COMPANY_INFO_V06, EDemoCanonicalEvidence::createDBA_LegalEntity_v06),
-  T43_BIRTH_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V16B,
-                           EDemoCanonicalEvidence::createMA_Birth_v1_7),
-  T43_DOMREG_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_DOMREG_EVIDENCE_V16B,
-                            EDemoCanonicalEvidence::createMA_DomesticRegistration_v1_7),
-  T43_MARRIAGE_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_MARRIAGE_EVIDENCE_V16B,
-                              EDemoCanonicalEvidence::createMA_Marriage_v1_7);
+  T41_HIGHER_EDUCATION_DIPLOMA_2021_04_13 (EDE4ACanonicalEvidenceType.T41_HIGHER_EDUCATION_EVIDENCE_2021_04_13,
+                                           EDemoCanonicalEvidence::createSA_HigherEducation_v2021_04_13),
+  T41_SECONDARY_EDUCATION_DIPLOMA_2022_05_12 (EDE4ACanonicalEvidenceType.T41_SECONDARY_EDUCATION_EVIDENCE_2022_05_12,
+                                              EDemoCanonicalEvidence::createSA_SecondaryEducation_v2022_05_12),
+  T41_DISABILITY_2022_05_12 (EDE4ACanonicalEvidenceType.T41_DISABILITY_EVIDENCE_2022_05_12,
+                             EDemoCanonicalEvidence::createSA_Disability_v2022_05_12),
+  T41_LARGE_FAMILY_2022_05_12 (EDE4ACanonicalEvidenceType.T41_LARGE_FAMILY_EVIDENCE_2022_05_12,
+                               EDemoCanonicalEvidence::createSA_LargeFamily_v2022_05_12),
+
+  T42_LEGAL_ENTITY_V06 (EDE4ACanonicalEvidenceType.T42_LEGAL_ENTITY_V06,
+                        EDemoCanonicalEvidence::createDBA_LegalEntity_v06),
+
+  T43_BIRTH_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V17,
+                          EDemoCanonicalEvidence::createMA_Birth_v1_7),
+  T43_DOMREG_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_DOMREG_EVIDENCE_V17,
+                           EDemoCanonicalEvidence::createMA_DomesticRegistration_v1_7),
+  T43_MARRIAGE_EVIDENCE_V17 (EDE4ACanonicalEvidenceType.T43_MARRIAGE_EVIDENCE_V17,
+                             EDemoCanonicalEvidence::createMA_Marriage_v1_7);
 
   private final EDE4ACanonicalEvidenceType m_eCEType;
   private final Supplier <Element> m_aAnyCreator;
@@ -107,10 +120,36 @@ public enum EDemoCanonicalEvidence
   }
 
   @Nonnull
-  public static Element createT41_HED_v2021_04_13 ()
+  private static PersonType _createT41Person ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final eu.de4a.iem.jaxb.t41.uc1.hed.v2021_04_13.HigherEducationDiplomaType p = new eu.de4a.iem.jaxb.t41.uc1.hed.v2021_04_13.HigherEducationDiplomaType ();
+    final PersonType a = new PersonType ();
+    a.setId ("id-" + MathHelper.abs (aTLR.nextInt ()));
+    {
+      final LegalIdentifierType b = new LegalIdentifierType ();
+      b.setValue ("NationalID-" + MathHelper.abs (aTLR.nextInt ()));
+      b.setSpatialID ("SpatialID-" + MathHelper.abs (aTLR.nextInt ()));
+      a.setNationalId (b);
+    }
+    {
+      final LanguageStringType b = new LanguageStringType ();
+      b.setText (_createText ());
+      a.setGivenNames (b);
+    }
+    {
+      final LanguageStringType b = new LanguageStringType ();
+      b.setText (_createText ());
+      a.setFamilyName (b);
+    }
+    a.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (80)));
+    return a;
+  }
+
+  @Nonnull
+  public static Element createSA_HigherEducation_v2021_04_13 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t41.higheredu.v2021_04_13.HigherEducationDiplomaType p = new eu.de4a.iem.jaxb.t41.higheredu.v2021_04_13.HigherEducationDiplomaType ();
     p.setId ("urn:credential:" + UUID.randomUUID ().toString ());
     {
       final LanguageStringType a = new LanguageStringType ();
@@ -142,30 +181,90 @@ public enum EDemoCanonicalEvidence
       }
       p.setPlaceOfIssue (l);
     }
-    {
-      final PersonType a = new PersonType ();
-      a.setId ("id-" + MathHelper.abs (aTLR.nextInt ()));
-      {
-        final LegalIdentifierType b = new LegalIdentifierType ();
-        b.setValue ("NationalID-" + MathHelper.abs (aTLR.nextInt ()));
-        b.setSpatialID ("SpatialID-" + MathHelper.abs (aTLR.nextInt ()));
-        a.setNationalId (b);
-      }
-      {
-        final LanguageStringType b = new LanguageStringType ();
-        b.setText (_createText ());
-        a.setGivenNames (b);
-      }
-      {
-        final LanguageStringType b = new LanguageStringType ();
-        b.setText (_createText ());
-        a.setFamilyName (b);
-      }
-      a.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (80)));
-      p.setHolderOfAchievement (a);
-    }
+    p.setHolderOfAchievement (_createT41Person ());
 
     return eu.de4a.iem.cev.de4a.t41.DE4AT41Marshaller.higherEducationDiploma ().getAsDocument (p).getDocumentElement ();
+  }
+
+  @Nonnull
+  public static Element createSA_SecondaryEducation_v2022_05_12 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t41.secondaryedu.v2022_05_12.SecondaryEducationDiplomaType p = new eu.de4a.iem.jaxb.t41.secondaryedu.v2022_05_12.SecondaryEducationDiplomaType ();
+    p.setId ("urn:credential:" + UUID.randomUUID ().toString ());
+    {
+      final LanguageStringType a = new LanguageStringType ();
+      a.setText (_createText ());
+      p.addTitle (a);
+    }
+    p.addDegree (_createText ());
+    p.setCountry ("http://publications.europa.eu/resource/authority/country/NZL");
+    p.addNameOfSchool (_createText ());
+    p.addNameOfProgram (_createText ());
+
+    {
+      final eu.de4a.iem.jaxb.t41.secondaryedu.v2022_05_12.GradeType a = new eu.de4a.iem.jaxb.t41.secondaryedu.v2022_05_12.GradeType ();
+      a.setSchemeID ("schemeID-" + MathHelper.abs (aTLR.nextInt ()));
+      a.setExplanation ("exp-" + MathHelper.abs (aTLR.nextInt ()));
+      a.setValue ("Grade-" + MathHelper.abs (aTLR.nextInt ()));
+      p.setGrade (a);
+    }
+
+    p.setIssuingDate (_createT41Date ());
+
+    return eu.de4a.iem.cev.de4a.t41.DE4AT41Marshaller.secondaryEducationDiploma ()
+                                                     .getAsDocument (p)
+                                                     .getDocumentElement ();
+  }
+
+  @Nonnull
+  private static DateType _createT41Date ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final DateType ret = new DateType ();
+    ret.setValue (PDTFactory.createLocalDate (2000 + aTLR.nextInt (-50, 50),
+                                              EDemoDocument.random (Month.values ()),
+                                              aTLR.nextInt (1, 29)));
+    return ret;
+  }
+
+  @Nonnull
+  public static Element createSA_Disability_v2022_05_12 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t41.disability.v2022_05_12.DisabilityEvidenceType p = new eu.de4a.iem.jaxb.t41.disability.v2022_05_12.DisabilityEvidenceType ();
+    p.setBeneficiary (_createT41Person ());
+
+    {
+      final DisabilityCertificateType a = new DisabilityCertificateType ();
+      a.setCertificateID ("Cert-" + MathHelper.abs (aTLR.nextInt ()));
+      a.setEffectiveDate (_createT41Date ());
+      a.setRevisionDate (_createT41Date ());
+      a.setDisabilityPercentage (aTLR.nextInt (0, 101));
+      p.setDisabilityCertificate (a);
+    }
+
+    return eu.de4a.iem.cev.de4a.t41.DE4AT41Marshaller.disability ().getAsDocument (p).getDocumentElement ();
+  }
+
+  @Nonnull
+  public static Element createSA_LargeFamily_v2022_05_12 ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t41.largefamily.v2022_05_12.LargeFamilyEvidenceType p = new eu.de4a.iem.jaxb.t41.largefamily.v2022_05_12.LargeFamilyEvidenceType ();
+    p.setBeneficiary (_createT41Person ());
+
+    {
+      final LargeFamilyCertificateType a = new LargeFamilyCertificateType ();
+      a.setCertificateID ("Cert-" + MathHelper.abs (aTLR.nextInt ()));
+      a.setValidCertificate (aTLR.nextBoolean ());
+      a.setIssuingDate (_createT41Date ());
+      a.setExpiryDate (_createT41Date ());
+      a.setNumberOfChildren (aTLR.nextInt (0, 5));
+      p.setLargeFamilyCertificate (a);
+    }
+
+    return eu.de4a.iem.cev.de4a.t41.DE4AT41Marshaller.largeFamily ().getAsDocument (p).getDocumentElement ();
   }
 
   @Nonnull
@@ -247,13 +346,6 @@ public enum EDemoCanonicalEvidence
     return ret;
   }
 
-  @Nonnull
-  private static <T> T _random (final T [] aValues)
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    return aValues[aTLR.nextInt (aValues.length)];
-  }
-
   private static void _fill (@Nonnull final CvaddressType aAddr)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
@@ -268,8 +360,8 @@ public enum EDemoCanonicalEvidence
   private static eu.de4a.iem.jaxb.t43.birth.v1_7.LocationAddressType _createBirthLA ()
   {
     final eu.de4a.iem.jaxb.t43.birth.v1_7.LocationAddressType ret = new eu.de4a.iem.jaxb.t43.birth.v1_7.LocationAddressType ();
-    ret.setAdminUnitL1 (_random (ISO3166CountryType.values ()));
-    ret.setAdminUnitL2 (_random (NUTS2021Type.values ()));
+    ret.setAdminUnitL1 (EDemoDocument.random (ISO3166CountryType.values ()));
+    ret.setAdminUnitL2 (EDemoDocument.random (NUTS2021Type.values ()));
     _fill (ret);
     return ret;
   }
@@ -278,8 +370,8 @@ public enum EDemoCanonicalEvidence
   private static eu.de4a.iem.jaxb.t43.birth.v1_7.ConstrainedLocationAddressType _createBirthCLA ()
   {
     final eu.de4a.iem.jaxb.t43.birth.v1_7.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.birth.v1_7.ConstrainedLocationAddressType ();
-    ret.setAdminUnitL1 (_random (ISO3166CountryType.values ()));
-    ret.setAdminUnitL2 (_random (NUTS2021Type.values ()));
+    ret.setAdminUnitL1 (EDemoDocument.random (ISO3166CountryType.values ()));
+    ret.setAdminUnitL2 (EDemoDocument.random (NUTS2021Type.values ()));
     _fill (ret);
     return ret;
   }
@@ -288,8 +380,8 @@ public enum EDemoCanonicalEvidence
   private static eu.de4a.iem.jaxb.t43.domreg.v1_7.ConstrainedLocationAddressType _createDomRegCLA ()
   {
     final eu.de4a.iem.jaxb.t43.domreg.v1_7.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.domreg.v1_7.ConstrainedLocationAddressType ();
-    ret.setAdminUnitL1 (_random (ISO3166CountryType.values ()));
-    ret.setAdminUnitL2 (_random (NUTS2021Type.values ()));
+    ret.setAdminUnitL1 (EDemoDocument.random (ISO3166CountryType.values ()));
+    ret.setAdminUnitL2 (EDemoDocument.random (NUTS2021Type.values ()));
     _fill (ret);
     return ret;
   }
@@ -298,8 +390,8 @@ public enum EDemoCanonicalEvidence
   private static eu.de4a.iem.jaxb.t43.marriage.v1_7.ConstrainedLocationAddressType _createMarriageCLA ()
   {
     final eu.de4a.iem.jaxb.t43.marriage.v1_7.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.marriage.v1_7.ConstrainedLocationAddressType ();
-    ret.setAdminUnitL1 (_random (ISO3166CountryType.values ()));
-    ret.setAdminUnitL2 (_random (NUTS2021Type.values ()));
+    ret.setAdminUnitL1 (EDemoDocument.random (ISO3166CountryType.values ()));
+    ret.setAdminUnitL2 (EDemoDocument.random (NUTS2021Type.values ()));
     _fill (ret);
     return ret;
   }
@@ -342,7 +434,7 @@ public enum EDemoCanonicalEvidence
 
       ret.setDateOfBirth (a);
     }
-    ret.setGender (_random (GenderType.values ()));
+    ret.setGender (EDemoDocument.random (GenderType.values ()));
     ret.setPlaceOfBirth (_createBirthLA ());
     return ret;
   }
@@ -389,7 +481,7 @@ public enum EDemoCanonicalEvidence
         }
         a.setPersonName (b);
       }
-      a.setGender (_random (GenderType.values ()));
+      a.setGender (EDemoDocument.random (GenderType.values ()));
       ret.setInhabitant (a);
     }
     ret.setDomicile (_createDomRegCLA ());
@@ -434,7 +526,7 @@ public enum EDemoCanonicalEvidence
         }
         a.setPersonName (b);
       }
-      a.setGender (_random (GenderType.values ()));
+      a.setGender (EDemoDocument.random (GenderType.values ()));
       ret.addSpouse (a);
     }
     {
@@ -453,7 +545,7 @@ public enum EDemoCanonicalEvidence
         }
         a.setPersonName (b);
       }
-      a.setGender (_random (GenderType.values ()));
+      a.setGender (EDemoDocument.random (GenderType.values ()));
       ret.addSpouse (a);
     }
     return ret;
