@@ -39,5 +39,6 @@ public final class EDemoCanonicalEvidenceTest
     assertNotNull (EDemoCanonicalEvidence.createMA_Birth_v1_7 ());
     assertNotNull (EDemoCanonicalEvidence.createMA_DomesticRegistration_v1_7 ());
     assertNotNull (EDemoCanonicalEvidence.createMA_Marriage_v1_7 ());
+    assertNotNull (EDemoCanonicalEvidence.createMA_PensionMOL_v0_1 ());
   }
 }

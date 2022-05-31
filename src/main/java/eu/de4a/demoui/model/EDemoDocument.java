@@ -365,6 +365,12 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   }
 
   @Nonnull
+  static <T extends Enum <T>> T random (@Nonnull final Class <T> a)
+  {
+    return random (a.getEnumConstants ());
+  }
+
+  @Nonnull
   private static NaturalPersonIdentifierType _createNP ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
@@ -485,7 +491,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
       final FontSpec r16 = new FontSpec (PreloadFont.REGULAR, 16);
       final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
 
-      aPS1.addElement (new PLText ("Dummy DE4A " + sWhat + " - Current time: " + PDTFactory.getCurrentLocalDateTime ().toString (),
+      aPS1.addElement (new PLText ("Dummy DE4A " +
+                                   sWhat +
+                                   " - Current time: " +
+                                   PDTFactory.getCurrentLocalDateTime ().toString (),
                                    r16).setBorder (Color.BLUE));
 
       final PageLayoutPDF aPageLayout = new PageLayoutPDF ().setCompressPDF (true);
@@ -549,7 +558,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     // Max length 10
     ret.add (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something went wrong"));
     if (aTLR.nextBoolean ())
-      ret.add (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000), "Ooops - something else also went wrong"));
+      ret.add (DE4AResponseDocumentHelper.createError ("Code-" + aTLR.nextInt (100_000),
+                                                       "Ooops - something else also went wrong"));
     return ret;
   }
 
