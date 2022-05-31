@@ -55,7 +55,7 @@ import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
-import eu.de4a.iem.cev.de4a.t42.v0_6.DE4AT42Marshaller;
+import eu.de4a.iem.cev.de4a.t42.DE4AT42Marshaller;
 import eu.de4a.iem.core.jaxb.common.AgentType;
 import eu.de4a.iem.core.jaxb.common.CanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;

@@ -29,10 +29,10 @@ public final class EDemoCanonicalEvidenceTest
   @Test
   public void testBasic ()
   {
-    assertNotNull (EDemoCanonicalEvidence.createT41_UC1_v2021_04_13 ());
-    assertNotNull (EDemoCanonicalEvidence.createDBA_v06 ());
-    assertNotNull (EDemoCanonicalEvidence.createMA_Birth_v16b ());
-    assertNotNull (EDemoCanonicalEvidence.createMA_DomesticRegistration_v16b ());
-    assertNotNull (EDemoCanonicalEvidence.createMA_Marriage_v16b ());
+    assertNotNull (EDemoCanonicalEvidence.createT41_HED_v2021_04_13 ());
+    assertNotNull (EDemoCanonicalEvidence.createDBA_LegalEntity_v06 ());
+    assertNotNull (EDemoCanonicalEvidence.createMA_Birth_v1_7 ());
+    assertNotNull (EDemoCanonicalEvidence.createMA_DomesticRegistration_v1_7 ());
+    assertNotNull (EDemoCanonicalEvidence.createMA_Marriage_v1_7 ());
   }
 }
