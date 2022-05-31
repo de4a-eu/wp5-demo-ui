@@ -32,6 +32,7 @@ import com.helger.servlet.response.ERedirectMode;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.model.RedirectResponseMap;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
@@ -68,6 +69,10 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
 
       LOGGER.debug ("using UnifiedResponse for redirection: " + redirectUserType.getRedirectUrl ());
 
+     // store message
+  	  LOGGER.debug ("storing redirection message");
+      RedirectResponseMap.getInstance ().register (redirectUserType);
+      
       aUnifiedResponse.disableCaching ()
                       .setRedirect (redirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
 
