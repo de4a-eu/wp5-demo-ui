@@ -59,9 +59,7 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
     // TODO handle
     
     //MARSHALLING
-    DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
-    InputStream targetStream = new ByteArrayInputStream(aPayload);
-    ResponseExtractMultiEvidenceType res = marshaller.read(targetStream);
+    DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.dtResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
     ResponseExtractMultiEvidenceType res2 = marshaller.read(aPayload);
     LOGGER.info ("Unmarshalled payload");
     
