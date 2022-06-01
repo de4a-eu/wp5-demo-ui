@@ -15,10 +15,8 @@
  */
 package eu.de4a.demoui.api;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
@@ -37,6 +35,7 @@ import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
+import eu.de4a.demoui.model.EvidenceResponseMap;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
@@ -56,13 +55,9 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
     final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
     LOGGER.info ("Received " + aPayload.length + " bytes");
 
-    // TODO handle
-    
     //MARSHALLING
-    DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
-    InputStream targetStream = new ByteArrayInputStream(aPayload);
-    ResponseExtractMultiEvidenceType res = marshaller.read(targetStream);
-    ResponseExtractMultiEvidenceType res2 = marshaller.read(aPayload);
+    DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.dtResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
+    ResponseExtractMultiEvidenceType response = marshaller.read(aPayload);
     LOGGER.info ("Unmarshalled payload");
     
     //SAVE TO FILE
@@ -71,6 +66,10 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
     OutputStream outStream = new FileOutputStream(targetFile);
     outStream.write(aPayload);
     IOUtils.closeQuietly(outStream);
+    
+    // SAVE INTO MAP
+    LOGGER.debug ("storing evidence message");
+    EvidenceResponseMap.getInstance ().register(response);
     
     aUnifiedResponse.disableCaching ();
     aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);

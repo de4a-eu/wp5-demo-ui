@@ -36,6 +36,7 @@ public final class MenuPublic
   public static final String MENU_DE_USI_GUIDED = "de-usi-guided";
   public static final String MENU_DE_USI_EXPERT = "de-usi-expert";
   public static final String MENU_DE_CHECK_ASYNC_MSGS = "de-usi-received-msgs";
+  public static final String MENU_DE_CHECK_EVIDENCE = "de-usi-evidence";
 
   public static final String MENU_DEMO_UI = "demoui";
   public static final String MENU_SEND_MESSAGE = "sendmessage";
@@ -55,6 +56,7 @@ public final class MenuPublic
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Guided (MENU_DE_USI_GUIDED));
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Expert (MENU_DE_USI_EXPERT));
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Msg (MENU_DE_CHECK_ASYNC_MSGS));
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Evidence (MENU_DE_CHECK_EVIDENCE));
     }
 
     // Demo UI stuff

@@ -27,7 +27,7 @@ public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
   // T4.1
   T41_ES (EPilot.T41_STUDYING_ABROAD, "iso6523-actorid-upis::9999:esq6250003h-it2", "ES", "(UJI) Universitat Jaume I de Castellón"),
   T41_PT (EPilot.T41_STUDYING_ABROAD, "iso6523-actorid-upis::9999:pt990000101-it2", "PT", "Portuguese IST, University of Lisbon"),
-  T41_SI2 (EPilot.T41_STUDYING_ABROAD, "iso6523-actorid-upis::9999:si000000018-it2", "SI", "(JSI) Institut Jozef Stefan"),
+  T41_SI2 (EPilot.T41_STUDYING_ABROAD, "iso6523-actorid-upis::9999:si000000018-mock-it2", "SI", "(JSI) Institut Jozef Stefan"),
   // T4.2
   T42_AT (EPilot.T42_DOING_BUSINESS_ABROAD,
           "iso6523-actorid-upis::9999:at000000271-it2",

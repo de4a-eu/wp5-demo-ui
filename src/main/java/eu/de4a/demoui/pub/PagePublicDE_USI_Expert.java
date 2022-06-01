@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
@@ -35,6 +36,7 @@ import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
+import com.helger.css.property.ECSSProperty;
 import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
@@ -88,6 +90,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
+  private boolean isRequestSent = false;
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
@@ -191,6 +194,8 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
             aPost.setEntity (new StringEntity (sPayload,
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+            isRequestSent = true;
+            
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
           catch (final ExtendedHttpResponseException ex)
@@ -285,23 +290,35 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       
       LOGGER.debug ("getting the request ID, iterate map");
       String sRequestID = "";
+      
+      if(isRequestSent) {
+    	   try {
+    			TimeUnit.SECONDS.sleep(2);
+    		} catch (InterruptedException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+      }
+
       RedirectResponseMap map = RedirectResponseMap.getInstance ();
       
       if (map.getM_aMap().size() >0) {
     	  for (Map.Entry<String, RedirectUserType> entry : map.getM_aMap().entrySet()) {
         	  sRequestID = entry.getKey();
           }
+    	  
           LOGGER.debug ("getting the response for request Id: "+sRequestID);
     	  final RedirectUserType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
           LOGGER.debug ("redirection to: "+ aResponse.getRedirectUrl());
-          aNodeList.addChild(new BootstrapButton().addChild("Manage received redirection messages")
+          aForm.addChild(new BootstrapButton().addChild("Manage received redirection messages")
         		  .setIcon(EDefaultIcon.INFO)
+        		  .addStyle(ECSSProperty.MARGIN_LEFT, "16px")
         		  .setOnClick(new SimpleURL (aResponse.getRedirectUrl())));
+                    
       } else {
     	  LOGGER.debug ("no redirect message found");
       }
-      
-      
+
      /* final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
               DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
                                                                            .addClass (CBootstrapCSS.TEXT_MONOSPACE);

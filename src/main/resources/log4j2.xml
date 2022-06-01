@@ -21,10 +21,24 @@
     <Console name="STDOUT" target="SYSTEM_OUT">
       <PatternLayout pattern="[%date{ISO8601}] [DE4A-WP5-DEMOUI] [%-5level] [%thread] %msg -- %location%n" />
     </Console>
+    <RollingFile name="rollingFile"
+            fileName="${sys:catalina.base}/logs/demo-ui.log"
+            filePattern="${sys:catalina.base}/logs/history/demo-ui.%d{dd-MMM}.log.gz"
+            ignoreExceptions="false">
+            <PatternLayout>
+                <Pattern>>[%date{ISO8601}][%-5level] %msg -- %location [%thread]%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="30 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
   </Appenders>
   <Loggers>
-    <Root level="info">
+    <Root level="DEBUG">
       <AppenderRef ref="STDOUT" />
+      <AppenderRef ref="rollingFile" />
     </Root>
   </Loggers>
 </Configuration>
