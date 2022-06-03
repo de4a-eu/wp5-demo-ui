@@ -83,4 +83,8 @@ public final class EvidenceResponseMap extends AbstractGlobalSingleton
 	public ICommonsMap<String, ResponseExtractMultiEvidenceType> getM_aMap() {
 		return m_aMap;
 	}
+	
+	public void cleanMap() {
+		m_aMap.clear();
+	}
 }

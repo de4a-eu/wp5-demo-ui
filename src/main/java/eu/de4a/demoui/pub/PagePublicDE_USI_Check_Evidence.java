@@ -70,12 +70,16 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
 	  ResponseExtractMultiEvidenceType evidence = null;
     EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
     
+    String requestId = "";
+    
     if (map.getM_aMap().size() >0) {
   	  for (Map.Entry<String, ResponseExtractMultiEvidenceType> entry : map.getM_aMap().entrySet()) {
-  		evidence = entry.getValue();
+  		  requestId = entry.getKey();
         }
   	  
-        //LOGGER.debug ("getting the evidence Id: " + evidence.getRequestId());
+  	  	evidence = map.getAndRemove(requestId);
+  	
+        LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId());
         
         DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
         

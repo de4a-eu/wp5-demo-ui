@@ -69,7 +69,9 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
     
     // SAVE INTO MAP
     LOGGER.debug ("storing evidence message");
-    EvidenceResponseMap.getInstance ().register(response);
+    EvidenceResponseMap map = EvidenceResponseMap.getInstance();
+    map.cleanMap();
+    map.register(response);
     
     aUnifiedResponse.disableCaching ();
     aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
