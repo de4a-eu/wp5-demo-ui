@@ -16,14 +16,25 @@
 package eu.de4a.demoui.pub;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.error.IError;
@@ -61,20 +72,15 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
-import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
-import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.ui.AppCommonUI;
+import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
+import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 //import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
-import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
-import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
-import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
@@ -84,6 +90,7 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
+  private static final String FIELD_RESPONSE = "response";
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
@@ -216,6 +223,22 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
             if (aErrorObj != null)
             {
               DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
+              
+              // if no errors
+              if(aErrorObj.getErrorList() == null && aErrorObj.getCanonicalEvidence() != null) {
+            	  
+            	  String response = new String(aResponseBytes);
+            	  
+            	  HCTextArea a = new HCTextArea (new RequestField (FIELD_RESPONSE, prettyPrintByTransformer(response, 2, true)))
+                  		.setRows (50)
+                  		.setCols(150)
+                  		.addClass (CBootstrapCSS.TEXT_MONOSPACE);
+                  
+                  aNodeList.addChild(a);
+                  return;
+
+                }
+              
               if (aErrorObj.getErrorList().getError().isEmpty())
               {
                 aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
@@ -256,7 +279,7 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
                                                                                                                              .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
       {
-        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+        HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
                                                                  DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
                                                                                                                               .addClass (CBootstrapCSS.TEXT_MONOSPACE);
         final JSAnonymousFunction aJSAppend = new JSAnonymousFunction ();
@@ -280,4 +303,25 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send IM request"));
     }
   }
+  
+  private static String prettyPrintByTransformer(String xmlString, int indent, boolean ignoreDeclaration) {
+
+	    try {
+	        InputSource src = new InputSource(new StringReader(xmlString));
+	        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
+
+	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+	        transformerFactory.setAttribute("indent-number", indent);
+	        Transformer transformer = transformerFactory.newTransformer();
+	        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+	        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
+	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+	        Writer out = new StringWriter();
+	        transformer.transform(new DOMSource(document), new StreamResult(out));
+	        return out.toString();
+	    } catch (Exception e) {
+	        throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
+	    }
+	}
 }
