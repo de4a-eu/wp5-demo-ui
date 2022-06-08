@@ -33,6 +33,7 @@ public final class MenuPublic
   public static final String MENU_DE = "de";
   public static final String MENU_DE_IM_GUIDED = "de-im-guided";
   public static final String MENU_DE_IM_EXPERT = "de-im-expert";
+  public static final String MENU_DE_IM_EXPERT_BACKWARD = "de-im-expert-bw";
   public static final String MENU_DE_USI_GUIDED = "de-usi-guided";
   public static final String MENU_DE_USI_EXPERT = "de-usi-expert";
   public static final String MENU_DE_CHECK_EVIDENCE = "de-usi-evidence";
@@ -52,6 +53,7 @@ public final class MenuPublic
       final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE, "Data Evaluator", aMenuTree));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Guided (MENU_DE_IM_GUIDED));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert (MENU_DE_IM_EXPERT));
+      aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert_Backwards (MENU_DE_IM_EXPERT_BACKWARD));
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Guided (MENU_DE_USI_GUIDED));
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Expert (MENU_DE_USI_EXPERT));
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Evidence (MENU_DE_CHECK_EVIDENCE));

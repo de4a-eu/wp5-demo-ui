@@ -75,6 +75,8 @@ import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.iem.core.jaxb.eidas.np.GenderType;
+import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
+import eu.de4a.iem.xml.de4a.DE4AMarshaller;
 
 /**
  * Available mock demo documents
@@ -92,6 +94,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                 EDemoDocumentType.REQUEST,
                 EDemoDocument::createDemoRequestExtractMultiEvidenceIM,
                 DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ()),
+//DE-DR request (C1 -> C2)
+ IM_REQ_DE_DR_IT1 ("im-req-de-dr-it1",
+               "IM Request DE to DR (C1 -> C2) it1",
+               "/requestTransferEvidenceIM",
+               EDemoDocumentType.REQUEST,
+               EDemoDocument::createDemoRequestEvidenceIM,
+               DE4AMarshaller.drImRequestMarshaller ()),
   // DT-DO request (C3 -> C4)
   IM_REQ_DT_DO ("im-req-dt-do",
                 "IM Request DT to DO (C3 -> C4)",
@@ -323,7 +332,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   private final EDemoDocumentType m_eDocType;
   private final Supplier <Object> m_aDemoRequestCreator;
   private final Function <Object, String> m_aToString;
-  private final DE4ACoreMarshaller <Object> m_aMarshaller;
+  private DE4ACoreMarshaller <Object> m_aMarshaller;
+  private DE4AMarshaller <Object> m_aMarshaller_backward;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sIDPrefix,
                      @Nonnull @Nonempty final String sDisplayNamePrefix,
@@ -357,6 +367,23 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     m_aToString = GenericReflection.uncheckedCast (aToString);
     m_aMarshaller = GenericReflection.uncheckedCast (aMarshaller);
   }
+  
+  <T> EDemoDocument (@Nonnull @Nonempty final String sID,
+          @Nonnull @Nonempty final String sDisplayName,
+          @Nonnull @Nonempty final String sRelativeURL,
+          @Nonnull final EDemoDocumentType eDocType,
+          @Nonnull final Supplier <T> aDemoRequestCreator,
+          @Nonnull final DE4AMarshaller <T> aMarshaller)
+	{
+	m_sID = sID;
+	m_sDisplayName = sDisplayName;
+	m_sRelativeURL = sRelativeURL;
+	m_eDocType = eDocType;
+	m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
+	final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
+	m_aToString = GenericReflection.uncheckedCast (aToString);
+	m_aMarshaller_backward = GenericReflection.uncheckedCast (aMarshaller);
+	}
 
   @Nonnull
   @Nonempty
@@ -419,11 +446,28 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     m_aMarshaller.setValidationEventHandlerFactory (aOld);
     return ret;
   }
+  
+  @Nonnull
+  public IErrorList validateMessageBackwards (@Nonnull final String sMsg)
+  {
+    final ErrorList ret = new ErrorList ();
+    final IValidationEventHandlerFactory aOld = m_aMarshaller_backward.getValidationEventHandlerFactory ();
+    m_aMarshaller_backward.setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (ret));
+    m_aMarshaller_backward.read (sMsg);
+    m_aMarshaller_backward.setValidationEventHandlerFactory (aOld);
+    return ret;
+  }
 
   @Nonnull
   public Object parseMessage (@Nonnull final String sMsg)
   {
     return m_aMarshaller.read (sMsg);
+  }
+  
+  @Nonnull
+  public Object parseMessageBackwards (@Nonnull final String sMsg)
+  {
+    return m_aMarshaller_backward.read (sMsg);
   }
 
   @Nullable
@@ -467,12 +511,38 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     // Ignore the optional stuff
     return ret;
   }
+  
+  @Nonnull
+  private static eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType _createBackwardsNP ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType ret = new eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType ();
+    ret.setPersonIdentifier ("ID-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setFirstName ("FirstName-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setFamilyName ("FamilyName-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (50)));
+    //ret.setGender (random (GenderType.values ()));
+    ret.setGender (eu.de4a.iem.jaxb.eidas.np.GenderType.UNSPECIFIED);
+    // Ignore the optional stuff
+    return ret;
+  }
 
   @Nonnull
   private static LegalPersonIdentifierType _createLP ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final LegalPersonIdentifierType ret = new LegalPersonIdentifierType ();
+    ret.setLegalPersonIdentifier ("LPI-ID-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setLegalName ("LegalName-" + MathHelper.abs (aTLR.nextInt ()));
+    // Ignore the optional stuff
+    return ret;
+  }
+  
+  @Nonnull
+  private static eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType _createBackwardsLP ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType ret = new eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType ();
     ret.setLegalPersonIdentifier ("LPI-ID-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setLegalName ("LegalName-" + MathHelper.abs (aTLR.nextInt ()));
     // Ignore the optional stuff
@@ -491,6 +561,22 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
       ret.setDataSubjectCompany (_createLP ());
       if (aTLR.nextBoolean ())
         ret.setDataSubjectRepresentative (_createNP ());
+    }
+    return ret;
+  }
+  
+  @Nonnull
+  private static eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType _createBackwardsDRS ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType ret = new eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType ();
+    if (aTLR.nextBoolean ())
+      ret.setDataSubjectPerson (_createBackwardsNP ());
+    else
+    {
+      ret.setDataSubjectCompany (_createBackwardsLP ());
+      if (aTLR.nextBoolean ())
+        ret.setDataSubjectRepresentative (_createBackwardsNP ());
     }
     return ret;
   }
@@ -534,6 +620,25 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
     if (aTLR.nextBoolean ())
       ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
+    return ret;
+  }
+  
+  @Nonnull
+  public static RequestTransferEvidenceUSIIMDRType createDemoRequestEvidenceIM ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestTransferEvidenceUSIIMDRType ret = new RequestTransferEvidenceUSIIMDRType ();
+    ret.setDataRequestSubject(_createBackwardsDRS());
+    ret.setRequestId (UUID.randomUUID ().toString ());
+    ret.setSpecificationId (CIEM.SPECIFICATION_ID);
+    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
+    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
+    //ret.setDataEvaluator (_createAgent ());
+    //ret.setDataOwner (_createAgent ());
+    //ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
+    //if (aTLR.nextBoolean ())
+    //  ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
+    
     return ret;
   }
 
@@ -715,3 +820,4 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     return ret;
   }
 }
+

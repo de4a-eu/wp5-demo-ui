@@ -18,4 +18,9 @@ public interface IDemoDocument
   @Nonnull
   Object parseMessage (@Nonnull String sMsg);
 
+  @Nonnull
+  IErrorList validateMessageBackwards (@Nonnull String sMsg);
+
+  @Nonnull
+  Object parseMessageBackwards (@Nonnull String sMsg);
 }
