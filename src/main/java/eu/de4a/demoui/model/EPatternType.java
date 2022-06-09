@@ -31,7 +31,8 @@ import com.helger.commons.name.IHasDisplayName;
 public enum EPatternType implements IHasID <String>, IHasDisplayName
 {
   IM ("im", "IM"),
-  USI ("usi", "USI");
+  USI ("usi", "USI"),
+  IM_BW ("im_bw" , "IM_BW");
 
   private final String m_sID;
   private final String m_sDisplayName;
