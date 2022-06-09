@@ -61,12 +61,12 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
     LOGGER.info ("Unmarshalled payload");
     
     //SAVE TO FILE
-    LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo () );
+   /* LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo () );
     File targetFile = new File(AppConfig.getDEXmlWriteTo ());
     OutputStream outStream = new FileOutputStream(targetFile);
     outStream.write(aPayload);
     IOUtils.closeQuietly(outStream);
-    
+   */ 
     // SAVE INTO MAP
     LOGGER.debug ("storing evidence message");
     EvidenceResponseMap map = EvidenceResponseMap.getInstance();

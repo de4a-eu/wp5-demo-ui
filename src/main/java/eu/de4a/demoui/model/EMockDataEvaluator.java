@@ -34,7 +34,7 @@ public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
           "AT",
           "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort"),
   T42_SE (EPilot.T42_DOING_BUSINESS_ABROAD,
-          "iso6523-actorid-upis::9999:se000000013-it2",
+          "iso6523-actorid-upis::9999:se000000013-mock-it2",
           "SE",
           "(BVE) BOLAGSVERKET (Companies Registration Office)"),
   T42_RO (EPilot.T42_DOING_BUSINESS_ABROAD,

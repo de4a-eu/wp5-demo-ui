@@ -61,8 +61,11 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
@@ -95,14 +98,13 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
         if (aDemoRequest.getDataRequestSubject ().getDataSubjectCompany () != null)
           break;
       }
-      /*
       aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
       aDemoRequest.getDataRequestSubject ()
                   .getDataSubjectCompany ()
-                  .setLegalPersonIdentifier ("AT/NL/R123T1234");
-      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
-      */
+                  .setLegalPersonIdentifier ("AT/NL/???");
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION_IT1.getDocumentTypeID ().getURIEncoded ());
+      
     }
     return aDemoRequest;
   }

@@ -52,6 +52,7 @@ import com.helger.pdflayout.spec.FontSpec;
 import com.helger.pdflayout.spec.PreloadFont;
 import com.helger.xml.XMLFactory;
 
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.iem.cev.EDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.CIEM;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
@@ -485,6 +486,16 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setAgentName ("Maxi Musterfrau " + MathHelper.abs (aTLR.nextInt ()));
     return ret;
   }
+  
+  @Nonnull
+  private static eu.de4a.iem.jaxb.common.types.AgentType _createAgentBackwards ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.common.types.AgentType ret = new eu.de4a.iem.jaxb.common.types.AgentType ();
+    ret.setAgentUrn ("Urn-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setAgentName ("Maxi Musterfrau " + MathHelper.abs (aTLR.nextInt ()));
+    return ret;
+  }
 
   @Nonnull
   static <T> T random (@Nonnull final T [] a)
@@ -594,6 +605,18 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   }
 
   @Nonnull
+  private static eu.de4a.iem.jaxb.common.types.RequestGroundsType _createRequestGroundsBackwards ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.common.types.RequestGroundsType ret = new eu.de4a.iem.jaxb.common.types.RequestGroundsType ();
+    //if (aTLR.nextBoolean ())
+      ret.setLawELIPermanentLink ("https://example.org/article/" + MathHelper.abs (aTLR.nextInt ()));
+    //else
+    //  ret.setExplicitRequest (random (ExplicitRequestType.values ()));
+    return ret;
+  }
+  
+  @Nonnull
   private static RequestEvidenceItemType _createRequestEvidenceIMItemType ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
@@ -618,7 +641,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
-    if (aTLR.nextBoolean ())
+    if (ret.getRequestEvidenceIMItemCount() == 1)
       ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
     return ret;
   }
@@ -633,11 +656,12 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setSpecificationId (CIEM.SPECIFICATION_ID);
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
-    //ret.setDataEvaluator (_createAgent ());
-    //ret.setDataOwner (_createAgent ());
+    ret.setDataEvaluator (_createAgentBackwards ());
+    ret.setDataOwner (_createAgentBackwards ());
+    ret.setRequestGrounds(_createRequestGroundsBackwards());
     //ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
     //if (aTLR.nextBoolean ())
-    //  ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
+     // ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
     
     return ret;
   }
@@ -652,7 +676,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setRequestGrounds (_createRequestGrounds ());
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     // No additional parameter
-    ret.setDataEvaluatorURL ("https://de.example.org/de4a-" + MathHelper.abs (aTLR.nextLong ()));
+    ret.setDataEvaluatorURL (AppConfig.getPublicURL() + "/public/locale-en_US/menuitem-de-usi-evidence");
     return ret;
   }
 
@@ -668,8 +692,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
-    if (aTLR.nextBoolean ())
-      ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
+    //if (aTLR.nextBoolean ())
+    //  ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
     return ret;
   }
 

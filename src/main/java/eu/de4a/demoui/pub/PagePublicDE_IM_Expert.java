@@ -63,12 +63,14 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
@@ -88,21 +90,25 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
   {
     RequestExtractMultiEvidenceIMType aDemoRequest;
     {
-      // We want a legal person
+      // We want a natural person
       while (true)
       {
         aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectCompany () != null)
+        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson() != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
-                  .getDataRequestSubject ()
-                  .getDataSubjectCompany ()
-                  .setLegalPersonIdentifier ("AT/NL/R123T1234");
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
-                  .setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
+      //aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T43_PT.getParticipantID ());
+      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_SE.getParticipantID ());
+      
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (0).setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (1).setCanonicalEvidenceTypeId (EUseCase.BIRTH.getDocumentTypeID ().getURIEncoded ());
+      for (RequestEvidenceItemType item:  aDemoRequest.getRequestEvidenceIMItem()) {
+	      //item.setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
+	      item.getDataRequestSubject ()
+          .getDataSubjectPerson()
+          .setPersonIdentifier ("PT/SE/12345678");
+      }
     }
     return aDemoRequest;
   }

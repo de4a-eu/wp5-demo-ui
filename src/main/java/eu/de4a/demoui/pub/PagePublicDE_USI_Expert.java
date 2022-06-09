@@ -68,6 +68,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
+import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
@@ -76,6 +77,7 @@ import eu.de4a.demoui.model.RedirectResponseMap;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
+import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
@@ -99,21 +101,22 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
   {
     RequestExtractMultiEvidenceUSIType aDemoRequest;
     {
-      // We want a legal person
+      // We want a subject person
       while (true)
       {
         aDemoRequest = (RequestExtractMultiEvidenceUSIType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceUSIItemAtIndex (0).getDataRequestSubject ().getDataSubjectCompany () != null)
+        if (aDemoRequest.getRequestEvidenceUSIItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
-      aDemoRequest.getRequestEvidenceUSIItemAtIndex (0)
-                  .getDataRequestSubject ()
-                  .getDataSubjectCompany ()
-                  .setLegalPersonIdentifier ("AT/NL/???");
-      aDemoRequest.getRequestEvidenceUSIItemAtIndex (0)
-                  .setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
+      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T41_SI2.getParticipantID());
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_ES.getParticipantID ());
+      
+      for (RequestEvidenceItemType item:  aDemoRequest.getRequestEvidenceUSIItem()) {
+	      item.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
+	      item.getDataRequestSubject ()
+          .getDataSubjectPerson()
+          .setPersonIdentifier("ES/SI/53377873W");
+      }
     }
     return aDemoRequest;
   }
