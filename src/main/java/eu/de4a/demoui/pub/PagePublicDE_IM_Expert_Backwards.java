@@ -16,25 +16,14 @@
 package eu.de4a.demoui.pub;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.error.IError;
@@ -224,17 +213,19 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
             {
               DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
               
-              // if no errors
+              // if no errors and cannonical evidence is received
               if(aErrorObj.getErrorList() == null && aErrorObj.getCanonicalEvidence() != null) {
             	  
             	  String response = new String(aResponseBytes);
             	  
-            	  HCTextArea a = new HCTextArea (new RequestField (FIELD_RESPONSE, prettyPrintByTransformer(response, 2, true)))
-                  		.setRows (50)
+            	  HCTextArea responseXML = new HCTextArea (new RequestField (FIELD_RESPONSE, prettyPrintByTransformer(response, 2, true)))
+                  		.setRows (25)
                   		.setCols(150)
-                  		.addClass (CBootstrapCSS.TEXT_MONOSPACE);
-                  
-                  aNodeList.addChild(a);
+                  		.setReadOnly(true)
+                  		.addClass (CBootstrapCSS.TEXT_MONOSPACE)
+            	  		.addClass (CBootstrapCSS.FORM_CONTROL);
+            	  		
+                  aNodeList.addChild(responseXML);
                   return;
 
                 }
@@ -303,25 +294,4 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send IM request"));
     }
   }
-  
-  private static String prettyPrintByTransformer(String xmlString, int indent, boolean ignoreDeclaration) {
-
-	    try {
-	        InputSource src = new InputSource(new StringReader(xmlString));
-	        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
-
-	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	        transformerFactory.setAttribute("indent-number", indent);
-	        Transformer transformer = transformerFactory.newTransformer();
-	        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-	        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
-	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-	        Writer out = new StringWriter();
-	        transformer.transform(new DOMSource(document), new StreamResult(out));
-	        return out.toString();
-	    } catch (Exception e) {
-	        throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
-	    }
-	}
 }

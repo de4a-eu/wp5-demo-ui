@@ -15,23 +15,12 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.html.hc.html.forms.HCTextArea;
@@ -84,9 +73,11 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
         DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
         
         final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD, prettyPrintByTransformer(marshaller.getAsString(evidence), 2, true)))
-        		.setRows (50)
-        		.setCols(150)
-        		.addClass (CBootstrapCSS.TEXT_MONOSPACE);
+        		.setRows (25)
+          		.setCols(150)
+          		.setReadOnly(true)
+          		.addClass (CBootstrapCSS.TEXT_MONOSPACE)
+    	  		.addClass (CBootstrapCSS.FORM_CONTROL);
         
         aNodeList.addChild(aTA);
                    
@@ -94,25 +85,4 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
   	  LOGGER.debug ("No evidence found");
     }
   }
-  
-  private static String prettyPrintByTransformer(String xmlString, int indent, boolean ignoreDeclaration) {
-
-	    try {
-	        InputSource src = new InputSource(new StringReader(xmlString));
-	        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
-
-	        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	        transformerFactory.setAttribute("indent-number", indent);
-	        Transformer transformer = transformerFactory.newTransformer();
-	        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-	        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
-	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-	        Writer out = new StringWriter();
-	        transformer.transform(new DOMSource(document), new StreamResult(out));
-	        return out.toString();
-	    } catch (Exception e) {
-	        throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
-	    }
-	}
 }
