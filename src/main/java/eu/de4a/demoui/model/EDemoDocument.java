@@ -514,7 +514,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final NaturalPersonIdentifierType ret = new NaturalPersonIdentifierType ();
-    ret.setPersonIdentifier ("ID-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setPersonIdentifier ("ID-12345678");
     ret.setFirstName ("FirstName-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setFamilyName ("FamilyName-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (50)));
@@ -642,7 +642,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataOwner (_createAgent ());
     ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
     if (ret.getRequestEvidenceIMItemCount() == 1)
-      ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
+      ret.addRequestEvidenceIMItem (ret.getRequestEvidenceIMItemAtIndex(0).clone());
     return ret;
   }
   
