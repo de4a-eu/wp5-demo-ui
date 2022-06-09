@@ -127,7 +127,7 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
 
   public PagePublicDE_IM_Expert_Backwards (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "IM (Backward compatibilty)", EPatternType.IM_BW);
+    super (sID, "IM (Backward compatibility)", EPatternType.IM_BW);
   }
 
   @Override
