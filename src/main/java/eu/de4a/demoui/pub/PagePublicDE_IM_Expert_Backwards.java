@@ -66,6 +66,7 @@ import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
+import eu.de4a.demoui.model.EvidenceResponseMap;
 import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
@@ -228,6 +229,11 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
             	  		.addClass (CBootstrapCSS.FORM_CONTROL);
             	  		
                   aNodeList.addChild(responseXML);
+                  
+                  //clean evidence map after showing synchronous response
+                  EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
+                  map.cleanMap();
+                  
                   return;
 
                 }
