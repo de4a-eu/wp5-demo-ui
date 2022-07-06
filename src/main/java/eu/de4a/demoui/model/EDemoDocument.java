@@ -94,14 +94,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                 "/request/im",
                 EDemoDocumentType.REQUEST,
                 EDemoDocument::createDemoRequestExtractMultiEvidenceIM,
-                DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ()),
-//DE-DR request (C1 -> C2)
- IM_REQ_DE_DR_IT1 ("im-req-de-dr-it1",
-               "IM Request DE to DR (C1 -> C2) it1",
-               "/requestTransferEvidenceIM",
-               EDemoDocumentType.REQUEST,
-               EDemoDocument::createDemoRequestEvidenceIM,
-               DE4AMarshaller.drImRequestMarshaller ()),
+                DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ()),
+  // DE-DR request (C1 -> C2)
+  IM_REQ_DE_DR_IT1 ("im-req-de-dr-it1",
+                    "IM Request DE to DR (C1 -> C2) it1",
+                    "/requestTransferEvidenceIM",
+                    EDemoDocumentType.REQUEST,
+                    EDemoDocument::createDemoRequestEvidenceIM,
+                    DE4AMarshaller.drImRequestMarshaller ()),
   // DT-DO request (C3 -> C4)
   IM_REQ_DT_DO ("im-req-dt-do",
                 "IM Request DT to DO (C3 -> C4)",
@@ -116,8 +116,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                          "/response/evidence",
                          EDemoDocumentType.RESPONSE,
                          EDemoCanonicalEvidence.T42_LEGAL_ENTITY_V06,
-                         EDemoDocument::createDemoResponseExtractMultiEvidence,
-                         DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                         EDemoDocument::createDemoResponseTransferEvidence,
+                         DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
 
   // DR-DE response (C2 -> C1)
   IM_RESP_DR_DE_T42_V06 ("im-resp-dr-de",
@@ -125,8 +125,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                          "/response/evidence",
                          EDemoDocumentType.RESPONSE,
                          EDemoCanonicalEvidence.T42_LEGAL_ENTITY_V06,
-                         EDemoDocument::createDemoResponseExtractMultiEvidence,
-                         DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                         EDemoDocument::createDemoResponseTransferEvidence,
+                         DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
 
   /* USI pattern */
 
@@ -138,7 +138,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                  "/request/usi",
                  EDemoDocumentType.REQUEST,
                  EDemoDocument::createDemoRequestExtractMultiEvidenceUSI,
-                 DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ()),
+                 DE4ACoreMarshaller.drRequestTransferEvidenceUSIMarshaller ()),
 
   // DT-DO request (C3 -> C4)
   USI_REQ_DT_DO ("usi-req-dt-do",
@@ -174,79 +174,79 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                                                                "/response/evidence",
                                                                EDemoDocumentType.RESPONSE,
                                                                EDemoCanonicalEvidence.T41_HIGHER_EDUCATION_DIPLOMA_2021_04_13,
-                                                               EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                               DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                                               EDemoDocument::createDemoResponseTransferEvidence,
+                                                               DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T41_SECONDARY_EDUCATION_DIPLOMA_2022_05_22 ("usi-resp-do-dt",
                                                                   "USI Data Response DO to DT (C4 -> C3)",
                                                                   "/response/evidence",
                                                                   EDemoDocumentType.RESPONSE,
                                                                   EDemoCanonicalEvidence.T41_SECONDARY_EDUCATION_DIPLOMA_2022_05_12,
-                                                                  EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                                  DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                                                  EDemoDocument::createDemoResponseTransferEvidence,
+                                                                  DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T41_DISABILITY_2022_05_22 ("usi-resp-do-dt",
                                                  "USI Data Response DO to DT (C4 -> C3)",
                                                  "/response/evidence",
                                                  EDemoDocumentType.RESPONSE,
                                                  EDemoCanonicalEvidence.T41_DISABILITY_2022_05_12,
-                                                 EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                 DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                                 EDemoDocument::createDemoResponseTransferEvidence,
+                                                 DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T41_LARGE_FAMILY_2022_05_22 ("usi-resp-do-dt",
                                                    "USI Data Response DO to DT (C4 -> C3)",
                                                    "/response/evidence",
                                                    EDemoDocumentType.RESPONSE,
                                                    EDemoCanonicalEvidence.T41_LARGE_FAMILY_2022_05_12,
-                                                   EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                   DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                                   EDemoDocument::createDemoResponseTransferEvidence,
+                                                   DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T43_BIRTH_V17 ("usi-resp-do-dt",
                                      "USI Data Response DO to DT (C4 -> C3)",
                                      "/response/evidence",
                                      EDemoDocumentType.RESPONSE,
                                      EDemoCanonicalEvidence.T43_BIRTH_V17,
-                                     EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                     DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                     EDemoDocument::createDemoResponseTransferEvidence,
+                                     DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T43_DOMREG_V17 ("usi-resp-do-dt",
                                       "USI Data Response DO to DT (C4 -> C3)",
                                       "/response/evidence",
                                       EDemoDocumentType.RESPONSE,
                                       EDemoCanonicalEvidence.T43_DOMREG_V17,
-                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                      DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                      EDemoDocument::createDemoResponseTransferEvidence,
+                                      DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T43_MARRIAGE_V17 ("usi-resp-do-dt",
                                         "USI Data Response DO to DT (C4 -> C3)",
                                         "/response/evidence",
                                         EDemoDocumentType.RESPONSE,
                                         EDemoCanonicalEvidence.T43_MARRIAGE_V17,
-                                        EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                        DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                        EDemoDocument::createDemoResponseTransferEvidence,
+                                        DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T43_PENSION_MOL_V01 ("usi-resp-do-dt",
                                            "USI Data Response DO to DT (C4 -> C3)",
                                            "/response/evidence",
                                            EDemoDocumentType.RESPONSE,
                                            EDemoCanonicalEvidence.T43_PENSION_MOL_V01,
-                                           EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                           DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                           EDemoDocument::createDemoResponseTransferEvidence,
+                                           DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T43_UNEMPLOYMENT_MOL_V01 ("usi-resp-do-dt",
                                                 "USI Data Response DO to DT (C4 -> C3)",
                                                 "/response/evidence",
                                                 EDemoDocumentType.RESPONSE,
                                                 EDemoCanonicalEvidence.T43_UNEMPLOYMENT_MOL_V01,
-                                                EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                                EDemoDocument::createDemoResponseTransferEvidence,
+                                                DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DO_DT_T43_WORKING_LIFE_MOL_V01 ("usi-resp-do-dt",
                                                 "USI Data Response DO to DT (C4 -> C3)",
                                                 "/response/evidence",
                                                 EDemoDocumentType.RESPONSE,
                                                 EDemoCanonicalEvidence.T43_WORKING_LIFE_MOL_V01,
-                                                EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                DE4ACoreMarshaller::dtResponseExtractMultiEvidenceMarshaller),
+                                                EDemoDocument::createDemoResponseTransferEvidence,
+                                                DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
 
   // DT-DO (C3 -> C4)
   USI_RESP_DATA_ERROR_DT_DO ("usi-resp-error-dt-do",
                              "USI Data Response Error from DT to DO (C3 -> C4)",
                              null,
                              EDemoDocumentType.RESPONSE,
-                             EDemoDocument::createDemoResponseError,
-                             DE4ACoreMarshaller.defResponseErrorMarshaller ()),
+                             EDemoDocument::createDemoResponse,
+                             DE4ACoreMarshaller.defResponseMarshaller ()),
 
   // DR-DE (C2 -> C1)
   USI_RESP_DATA_DR_DE_T41_HIGHER_EDUCATION_DIPLOMA_2021_04_13 ("usi-resp-dr-de",
@@ -254,78 +254,78 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                                                                "/response/evidence",
                                                                EDemoDocumentType.RESPONSE,
                                                                EDemoCanonicalEvidence.T41_HIGHER_EDUCATION_DIPLOMA_2021_04_13,
-                                                               EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                               DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                                               EDemoDocument::createDemoResponseTransferEvidence,
+                                                               DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T41_SECONDARY_EDUCATION_DIPLOMA_2022_05_12 ("usi-resp-dr-de",
                                                                   "USI Data Response DR to DE (C2 -> C1)",
                                                                   "/response/evidence",
                                                                   EDemoDocumentType.RESPONSE,
                                                                   EDemoCanonicalEvidence.T41_SECONDARY_EDUCATION_DIPLOMA_2022_05_12,
-                                                                  EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                                  DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                                                  EDemoDocument::createDemoResponseTransferEvidence,
+                                                                  DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T41_DISABILITY_2022_05_12 ("usi-resp-dr-de",
                                                  "USI Data Response DR to DE (C2 -> C1)",
                                                  "/response/evidence",
                                                  EDemoDocumentType.RESPONSE,
                                                  EDemoCanonicalEvidence.T41_DISABILITY_2022_05_12,
-                                                 EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                 DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                                 EDemoDocument::createDemoResponseTransferEvidence,
+                                                 DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T41_LARGE_FAMILY_2022_05_12 ("usi-resp-dr-de",
                                                    "USI Data Response DR to DE (C2 -> C1)",
                                                    "/response/evidence",
                                                    EDemoDocumentType.RESPONSE,
                                                    EDemoCanonicalEvidence.T41_LARGE_FAMILY_2022_05_12,
-                                                   EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                   DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                                   EDemoDocument::createDemoResponseTransferEvidence,
+                                                   DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T43_BIRTH_V17 ("usi-resp-dr-de",
                                      "USI Data Response DR to DE (C2 -> C1)",
                                      "/response/evidence",
                                      EDemoDocumentType.RESPONSE,
                                      EDemoCanonicalEvidence.T43_BIRTH_V17,
-                                     EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                     DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                     EDemoDocument::createDemoResponseTransferEvidence,
+                                     DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T43_DOMREG_V17 ("usi-resp-dr-de",
                                       "USI Data Response DR to DE (C2 -> C1)",
                                       "/response/evidence",
                                       EDemoDocumentType.RESPONSE,
                                       EDemoCanonicalEvidence.T43_DOMREG_V17,
-                                      EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                      DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                      EDemoDocument::createDemoResponseTransferEvidence,
+                                      DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T43_MARRIAGE_V17 ("usi-resp-dr-de",
                                         "USI Data Response DR to DE (C2 -> C1)",
                                         "/response/evidence",
                                         EDemoDocumentType.RESPONSE,
                                         EDemoCanonicalEvidence.T43_MARRIAGE_V17,
-                                        EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                        DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                        EDemoDocument::createDemoResponseTransferEvidence,
+                                        DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T43_PENSION_MOL_V01 ("usi-resp-dr-de",
                                            "USI Data Response DR to DE (C2 -> C1)",
                                            "/response/evidence",
                                            EDemoDocumentType.RESPONSE,
                                            EDemoCanonicalEvidence.T43_PENSION_MOL_V01,
-                                           EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                           DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                           EDemoDocument::createDemoResponseTransferEvidence,
+                                           DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T43_UNEMPLOYMENT_MOL_V01 ("usi-resp-dr-de",
                                                 "USI Data Response DR to DE (C2 -> C1)",
                                                 "/response/evidence",
                                                 EDemoDocumentType.RESPONSE,
                                                 EDemoCanonicalEvidence.T43_UNEMPLOYMENT_MOL_V01,
-                                                EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                                EDemoDocument::createDemoResponseTransferEvidence,
+                                                DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   USI_RESP_DATA_DR_DE_T43_WORKING_LIFE_MOL_V01 ("usi-resp-dr-de",
                                                 "USI Data Response DR to DE (C2 -> C1)",
                                                 "/response/evidence",
                                                 EDemoDocumentType.RESPONSE,
                                                 EDemoCanonicalEvidence.T43_WORKING_LIFE_MOL_V01,
-                                                EDemoDocument::createDemoResponseExtractMultiEvidence,
-                                                DE4ACoreMarshaller::deResponseExtractMultiEvidenceMarshaller),
+                                                EDemoDocument::createDemoResponseTransferEvidence,
+                                                DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
   // DE-DR Response (C1->C2)
   USI_RESP_DATA_ERROR_DE_DR ("usi-resp-error-de-dr",
                              "USI Data Response Error from DE to DR (C1 -> C2)",
                              null,
                              EDemoDocumentType.RESPONSE,
-                             EDemoDocument::createDemoResponseError,
-                             DE4ACoreMarshaller.defResponseErrorMarshaller ());
+                             EDemoDocument::createDemoResponse,
+                             DE4ACoreMarshaller.defResponseMarshaller ());
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -368,23 +368,23 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     m_aToString = GenericReflection.uncheckedCast (aToString);
     m_aMarshaller = GenericReflection.uncheckedCast (aMarshaller);
   }
-  
+
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
-          @Nonnull @Nonempty final String sDisplayName,
-          @Nonnull @Nonempty final String sRelativeURL,
-          @Nonnull final EDemoDocumentType eDocType,
-          @Nonnull final Supplier <T> aDemoRequestCreator,
-          @Nonnull final DE4AMarshaller <T> aMarshaller)
-	{
-	m_sID = sID;
-	m_sDisplayName = sDisplayName;
-	m_sRelativeURL = sRelativeURL;
-	m_eDocType = eDocType;
-	m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
-	final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
-	m_aToString = GenericReflection.uncheckedCast (aToString);
-	m_aMarshaller_backward = GenericReflection.uncheckedCast (aMarshaller);
-	}
+                     @Nonnull @Nonempty final String sDisplayName,
+                     @Nonnull @Nonempty final String sRelativeURL,
+                     @Nonnull final EDemoDocumentType eDocType,
+                     @Nonnull final Supplier <T> aDemoRequestCreator,
+                     @Nonnull final DE4AMarshaller <T> aMarshaller)
+  {
+    m_sID = sID;
+    m_sDisplayName = sDisplayName;
+    m_sRelativeURL = sRelativeURL;
+    m_eDocType = eDocType;
+    m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
+    final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
+    m_aToString = GenericReflection.uncheckedCast (aToString);
+    m_aMarshaller_backward = GenericReflection.uncheckedCast (aMarshaller);
+  }
 
   @Nonnull
   @Nonempty
@@ -447,7 +447,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     m_aMarshaller.setValidationEventHandlerFactory (aOld);
     return ret;
   }
-  
+
   @Nonnull
   public IErrorList validateMessageBackwards (@Nonnull final String sMsg)
   {
@@ -464,7 +464,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   {
     return m_aMarshaller.read (sMsg);
   }
-  
+
   @Nonnull
   public Object parseMessageBackwards (@Nonnull final String sMsg)
   {
@@ -486,7 +486,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setAgentName ("Maxi Musterfrau " + MathHelper.abs (aTLR.nextInt ()));
     return ret;
   }
-  
+
   @Nonnull
   private static eu.de4a.iem.jaxb.common.types.AgentType _createAgentBackwards ()
   {
@@ -517,12 +517,12 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setPersonIdentifier ("ID-12345678");
     ret.setFirstName ("FirstName-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setFamilyName ("FamilyName-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (50)));
+    ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextLong (50)));
     ret.setGender (random (GenderType.values ()));
     // Ignore the optional stuff
     return ret;
   }
-  
+
   @Nonnull
   private static eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType _createBackwardsNP ()
   {
@@ -531,9 +531,11 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setPersonIdentifier ("ID-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setFirstName ("FirstName-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setFamilyName ("FamilyName-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (50)));
-    //ret.setGender (random (GenderType.values ()));
-    ret.setGender (eu.de4a.iem.jaxb.eidas.np.GenderType.UNSPECIFIED);
+    ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextLong (50)));
+    if (false)
+      ret.setGender (random (eu.de4a.iem.jaxb.eidas.np.GenderType.values ()));
+    else
+      ret.setGender (eu.de4a.iem.jaxb.eidas.np.GenderType.UNSPECIFIED);
     // Ignore the optional stuff
     return ret;
   }
@@ -548,7 +550,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     // Ignore the optional stuff
     return ret;
   }
-  
+
   @Nonnull
   private static eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType _createBackwardsLP ()
   {
@@ -575,7 +577,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     }
     return ret;
   }
-  
+
   @Nonnull
   private static eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType _createBackwardsDRS ()
   {
@@ -609,13 +611,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final eu.de4a.iem.jaxb.common.types.RequestGroundsType ret = new eu.de4a.iem.jaxb.common.types.RequestGroundsType ();
-    //if (aTLR.nextBoolean ())
-      ret.setLawELIPermanentLink ("https://example.org/article/" + MathHelper.abs (aTLR.nextInt ()));
-    //else
-    //  ret.setExplicitRequest (random (ExplicitRequestType.values ()));
+    // if (aTLR.nextBoolean ())
+    ret.setLawELIPermanentLink ("https://example.org/article/" + MathHelper.abs (aTLR.nextInt ()));
+    // else
+    // ret.setExplicitRequest (random (ExplicitRequestType.values ()));
     return ret;
   }
-  
+
   @Nonnull
   private static RequestEvidenceItemType _createRequestEvidenceIMItemType ()
   {
@@ -641,28 +643,25 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
-    if (ret.getRequestEvidenceIMItemCount() == 1)
-      ret.addRequestEvidenceIMItem (ret.getRequestEvidenceIMItemAtIndex(0).clone());
+    if (ret.getRequestEvidenceIMItemCount () == 1)
+      ret.addRequestEvidenceIMItem (ret.getRequestEvidenceIMItemAtIndex (0).clone ());
     return ret;
   }
-  
+
   @Nonnull
   public static RequestTransferEvidenceUSIIMDRType createDemoRequestEvidenceIM ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final RequestTransferEvidenceUSIIMDRType ret = new RequestTransferEvidenceUSIIMDRType ();
-    ret.setDataRequestSubject(_createBackwardsDRS());
+    ret.setDataRequestSubject (_createBackwardsDRS ());
     ret.setRequestId (UUID.randomUUID ().toString ());
     ret.setSpecificationId (CIEM.SPECIFICATION_ID);
     ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
     ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
     ret.setDataEvaluator (_createAgentBackwards ());
     ret.setDataOwner (_createAgentBackwards ());
-    ret.setRequestGrounds(_createRequestGroundsBackwards());
-    //ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
-    //if (aTLR.nextBoolean ())
-     // ret.addRequestEvidenceIMItem (_createRequestEvidenceIMItemType ());
-    
+    ret.setRequestGrounds (_createRequestGroundsBackwards ());
+    ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     return ret;
   }
 
@@ -676,7 +675,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setRequestGrounds (_createRequestGrounds ());
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
     // No additional parameter
-    ret.setDataEvaluatorURL (AppConfig.getPublicURL() + "/public/locale-en_US/menuitem-de-usi-evidence");
+    ret.setDataEvaluatorURL (AppConfig.getPublicURL () + "/public/locale-en_US/menuitem-de-usi-evidence");
     return ret;
   }
 
@@ -692,8 +691,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
-    //if (aTLR.nextBoolean ())
-    //  ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
+    // if (aTLR.nextBoolean ())
+    // ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
     return ret;
   }
 
@@ -719,7 +718,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     }
     catch (final PDFCreationException ex)
     {
-      throw new RuntimeException (ex);
+      throw new IllegalStateException ("Failed to create PDF", ex);
     }
   }
 
@@ -777,7 +776,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   }
 
   @Nonnull
-  public static ResponseErrorType createDemoResponseError ()
+  public static ResponseErrorType createDemoResponse ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseErrorType ret = new ResponseErrorType ();
@@ -813,7 +812,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   }
 
   @Nonnull
-  public static ResponseExtractMultiEvidenceType createDemoResponseExtractMultiEvidence (@Nonnull final Element aCanonicalEvidence)
+  public static ResponseExtractMultiEvidenceType createDemoResponseTransferEvidence (@Nonnull final Element aCanonicalEvidence)
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final ResponseExtractMultiEvidenceType ret = new ResponseExtractMultiEvidenceType ();
@@ -844,4 +843,3 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     return ret;
   }
 }
-

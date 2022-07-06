@@ -671,7 +671,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
       {
         final IPLRenderableObject <?> aXML;
         if (aState.m_aIMRequest != null)
-          aXML = new PLText (DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ()
+          aXML = new PLText (DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ()
                                                .formatted ()
                                                .getAsString (aState.m_aIMRequest),
                              c10);
@@ -771,7 +771,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
             else
               LOGGER.error ("Got nothing back from IAL");
 
-            LOGGER.info ("IAL response countries: " + aCountries);
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("IAL response countries: " + aCountries);
             if (aCountries == null || aCountries.isEmpty ())
               aFormErrors.addFieldError (FIELD_USE_CASE,
                                          "Found no participant in the IAL yet that supports this Document Type '" +
@@ -1260,7 +1261,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
 
         // Check against XSD
         final ErrorList aErrorList = new ErrorList ();
-        final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ();
+        final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> m = DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ();
         m.setFormattedOutput (true)
          .setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (aErrorList));
 
@@ -1378,7 +1379,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
 
         try
         {
-          final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceIMMarshaller ();
+          final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> m = DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ();
           m.setFormattedOutput (true);
 
           byte [] aResponseBytesRequest1 = null;
@@ -1396,7 +1397,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
             final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
 
             final byte [] aRequestBytes = m.getAsBytes (aState.m_aIMRequest);
-            LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
             aPost.setEntity (new ByteArrayEntity (aRequestBytes,
                                                   ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
@@ -1426,7 +1428,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
           // IM request
           // -> preview on our (DE) side
           // -> we already have the response and can preview it
-          final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseErrorMarshaller ()
+          final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseMarshaller ()
                                                                    .read (aResponseBytesRequest1);
           if (aResponseObj == null)
             throw new IOException ("Failed to parse response XML - see log for details");

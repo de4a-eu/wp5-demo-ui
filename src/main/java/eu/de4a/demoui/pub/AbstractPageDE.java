@@ -15,15 +15,11 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -32,13 +28,13 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 
 import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.builder.IBuilder;
 import com.helger.commons.collection.impl.CommonsArrayList;
 import com.helger.commons.datetime.PDTToString;
+import com.helger.commons.io.stream.NonBlockingStringWriter;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.IHCNode;
 import com.helger.html.hc.ext.HCA_MailTo;
@@ -58,9 +54,11 @@ import com.helger.photon.bootstrap4.form.BootstrapViewForm;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
+import com.helger.xml.serialize.read.DOMReader;
 import com.helger.xml.serialize.write.EXMLSerializeIndent;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
+import com.helger.xml.transform.XMLTransformerFactory;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
@@ -178,7 +176,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       return sBaseUrl + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
     if (ePattern == EPatternType.USI)
       return sBaseUrl + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
-    if (ePattern == EPatternType.IM_BW) {
+    if (ePattern == EPatternType.IM_BW)
+    {
       return sBaseUrl + EDemoDocument.IM_REQ_DE_DR_IT1.getRelativeURL ();
     }
     throw new IllegalStateException ("Unsupported pattern " + ePattern);
@@ -524,25 +523,30 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     }
     return aTable;
   }
-  
-  protected static String prettyPrintByTransformer(String xmlString, int indent, boolean ignoreDeclaration) {
 
-    try {
-        InputSource src = new InputSource(new StringReader(xmlString));
-        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
+  protected static String prettyPrintByTransformer (final String xmlString,
+                                                    final int indent,
+                                                    final boolean ignoreDeclaration)
+  {
 
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        transformerFactory.setAttribute("indent-number", indent);
-        Transformer transformer = transformerFactory.newTransformer();
-        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+    try
+    {
+      final Document document = DOMReader.readXMLDOM (xmlString);
 
-        Writer out = new StringWriter();
-        transformer.transform(new DOMSource(document), new StreamResult(out));
-        return out.toString();
-    } catch (Exception e) {
-        throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
+      final TransformerFactory transformerFactory = XMLTransformerFactory.createTransformerFactory (null, null);
+      transformerFactory.setAttribute ("indent-number", Integer.valueOf (indent));
+      final Transformer transformer = transformerFactory.newTransformer ();
+      transformer.setOutputProperty (OutputKeys.ENCODING, "UTF-8");
+      transformer.setOutputProperty (OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
+      transformer.setOutputProperty (OutputKeys.INDENT, "yes");
+
+      final NonBlockingStringWriter out = new NonBlockingStringWriter ();
+      transformer.transform (new DOMSource (document), new StreamResult (out));
+      return out.getAsString ();
+    }
+    catch (final Exception e)
+    {
+      throw new IllegalStateException ("Error occurs when pretty-printing xml:\n" + xmlString, e);
     }
   }
 }

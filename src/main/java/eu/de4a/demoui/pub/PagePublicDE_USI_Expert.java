@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
@@ -30,11 +29,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.concurrent.ThreadHelper;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
+import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
 import com.helger.css.property.ECSSProperty;
 import com.helger.dcng.core.http.DcngHttpClientSettings;
@@ -66,7 +67,6 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
@@ -81,12 +81,11 @@ import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
-import com.helger.commons.url.SimpleURL;
 
 public class PagePublicDE_USI_Expert extends AbstractPageDE
 {
-	private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Expert.class);
-	
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Expert.class);
+
   // We're doing a DR-IM request
   public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
 
@@ -108,14 +107,13 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
         if (aDemoRequest.getRequestEvidenceUSIItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T41_SI2.getParticipantID());
+      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T41_SI2.getParticipantID ());
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_ES.getParticipantID ());
-      
-      for (RequestEvidenceItemType item:  aDemoRequest.getRequestEvidenceUSIItem()) {
-	      item.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
-	      item.getDataRequestSubject ()
-          .getDataSubjectPerson()
-          .setPersonIdentifier("ES/SI/53377873W");
+
+      for (final RequestEvidenceItemType item : aDemoRequest.getRequestEvidenceUSIItem ())
+      {
+        item.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
+        item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("ES/SI/53377873W");
       }
     }
     return aDemoRequest;
@@ -198,7 +196,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             isRequestSent = true;
-            
+
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
           catch (final ExtendedHttpResponseException ex)
@@ -223,7 +221,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
-            final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponseBytes);
+            final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseMarshaller ().read (aResponseBytes);
             if (aErrorObj != null)
             {
               DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
@@ -289,60 +287,67 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send USI request"));
-      
-      
-      LOGGER.debug ("getting the request ID, iterate map");
+
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("getting the request ID, iterate map");
+
       String sRequestID = "";
-      
-      if(isRequestSent) {
-    	   try {
-    			TimeUnit.SECONDS.sleep(2);
-    		} catch (InterruptedException e) {
-    			// TODO Auto-generated catch block
-    			e.printStackTrace();
-    		}
+      if (isRequestSent)
+      {
+        ThreadHelper.sleepSeconds (2);
       }
 
-      RedirectResponseMap map = RedirectResponseMap.getInstance ();
-      
-      if (map.getM_aMap().size() >0) {
-    	  for (Map.Entry<String, RedirectUserType> entry : map.getM_aMap().entrySet()) {
-        	  sRequestID = entry.getKey();
-          }
-    	  
-          LOGGER.debug ("getting the response for request Id: "+sRequestID);
-    	  final RedirectUserType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
-          LOGGER.debug ("redirection to: "+ aResponse.getRedirectUrl());
-          aForm.addChild(new BootstrapButton().addChild("Manage received redirection messages")
-        		  .setIcon(EDefaultIcon.INFO)
-        		  .addStyle(ECSSProperty.MARGIN_LEFT, "16px")
-        		  .setOnClick(new SimpleURL (aResponse.getRedirectUrl())));
-                    
-      } else {
-    	  LOGGER.debug ("no redirect message found");
+      final RedirectResponseMap map = RedirectResponseMap.getInstance ();
+
+      if (map.getMap ().isNotEmpty ())
+      {
+        for (final Map.Entry <String, RedirectUserType> entry : map.getMap ().entrySet ())
+        {
+          sRequestID = entry.getKey ();
+        }
+
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("getting the response for request Id: " + sRequestID);
+        final RedirectUserType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("redirection to: " + aResponse.getRedirectUrl ());
+        aForm.addChild (new BootstrapButton ().addChild ("Manage received redirection messages")
+                                              .setIcon (EDefaultIcon.INFO)
+                                              .addStyle (ECSSProperty.MARGIN_LEFT, "16px")
+                                              .setOnClick (new SimpleURL (aResponse.getRedirectUrl ())));
+
+      }
+      else
+      {
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("no redirect message found");
       }
 
-     /* final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-              DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
-                                                                           .addClass (CBootstrapCSS.TEXT_MONOSPACE);
-     *//* aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload").setCtrl(aTA, new BootstrapButton().addChild("Manage received redirection messages")
-    		  .setIcon(EDefaultIcon.INFO)
-    		  .setOnClick(new SimpleURL (aResponse.getRedirectUrl()))));*/
-      
-      //https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/do1/preview/index?requestId=860b2e73-1249-4231-9aad-e139115002de
-      //aResponse.getRedirectUrl()
       /*
-       * LOGGER.debug ("getting the request ID, iterate map");
-      String sRequestID = "";
-      RedirectResponseMap map = RedirectResponseMap.getInstance ();
-      for (Map.Entry<String, RedirectUserType> entry : map.getM_aMap().entrySet()) {
-    	  sRequestID = entry.getKey();
-      }
-      //final String sRequestID = aWPEC.params ().getAsString (PARAM_REQUEST_ID);
-      LOGGER.debug ("getting the response for request Id: "+sRequestID);
-      final RedirectUserType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
-      LOGGER.debug ("redirection to: "+ aResponse.getRedirectUrl());
-      aWPEC.postRedirectGetExternal(new SimpleURL (aResponse.getRedirectUrl()));
+       * final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+       * DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows
+       * (10) .addClass (CBootstrapCSS.TEXT_MONOSPACE);
+       *//*
+          * aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory
+          * ("Payload").setCtrl(aTA, new
+          * BootstrapButton().addChild("Manage received redirection messages")
+          * .setIcon(EDefaultIcon.INFO) .setOnClick(new SimpleURL
+          * (aResponse.getRedirectUrl()))));
+          */
+
+      // https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/do1/preview/index?requestId=860b2e73-1249-4231-9aad-e139115002de
+      // aResponse.getRedirectUrl()
+      /*
+       * LOGGER.debug ("getting the request ID, iterate map"); String sRequestID
+       * = ""; RedirectResponseMap map = RedirectResponseMap.getInstance (); for
+       * (Map.Entry<String, RedirectUserType> entry :
+       * map.getM_aMap().entrySet()) { sRequestID = entry.getKey(); } //final
+       * String sRequestID = aWPEC.params ().getAsString (PARAM_REQUEST_ID);
+       * LOGGER.debug ("getting the response for request Id: "+sRequestID);
+       * final RedirectUserType aResponse = RedirectResponseMap.getInstance
+       * ().getAndRemove (sRequestID); LOGGER.debug ("redirection to: "+
+       * aResponse.getRedirectUrl()); aWPEC.postRedirectGetExternal(new
+       * SimpleURL (aResponse.getRedirectUrl()));
        */
     }
   }

@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.ValueEnforcer;
+import com.helger.commons.annotation.ReturnsMutableObject;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.impl.CommonsHashMap;
 import com.helger.commons.collection.impl.ICommonsMap;
@@ -31,8 +32,8 @@ import com.helger.scope.singleton.AbstractGlobalSingleton;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 
 /**
- * This class contains all instances of the {@link RedirectUserType}.
- * This stores the Post-Redirect-Get response for the USI-back-redirection.
+ * This class contains all instances of the {@link RedirectUserType}. This
+ * stores the Post-Redirect-Get response for the USI-back-redirection.
  *
  * @author Philip Helger
  */
@@ -79,7 +80,10 @@ public final class RedirectResponseMap extends AbstractGlobalSingleton
     return m_aRWLock.writeLockedGet ( () -> m_aMap.remove (sID));
   }
 
-	public ICommonsMap<String, RedirectUserType> getM_aMap() {
-		return m_aMap;
-	}
+  @Nonnull
+  @ReturnsMutableObject
+  public ICommonsMap <String, RedirectUserType> getMap ()
+  {
+    return m_aMap;
+  }
 }

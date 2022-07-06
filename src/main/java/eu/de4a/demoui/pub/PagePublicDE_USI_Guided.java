@@ -674,7 +674,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
       {
         final IPLRenderableObject <?> aXML;
         if (aState.m_aUSIRequest != null)
-          aXML = new PLText (DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ()
+          aXML = new PLText (DE4ACoreMarshaller.drRequestTransferEvidenceUSIMarshaller ()
                                                .formatted ()
                                                .getAsString (aState.m_aUSIRequest),
                              c10);
@@ -1263,7 +1263,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
 
         // Check against XSD
         final ErrorList aErrorList = new ErrorList ();
-        final DE4ACoreMarshaller <RequestExtractMultiEvidenceUSIType> m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ();
+        final DE4ACoreMarshaller <RequestExtractMultiEvidenceUSIType> m = DE4ACoreMarshaller.drRequestTransferEvidenceUSIMarshaller ();
         m.setFormattedOutput (true)
          .setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (aErrorList));
 
@@ -1381,7 +1381,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
 
         try
         {
-          final DE4ACoreMarshaller <RequestExtractMultiEvidenceUSIType> m = DE4ACoreMarshaller.drRequestExtractMultiEvidenceUSIMarshaller ();
+          final DE4ACoreMarshaller <RequestExtractMultiEvidenceUSIType> m = DE4ACoreMarshaller.drRequestTransferEvidenceUSIMarshaller ();
           m.setFormattedOutput (true);
 
           byte [] aResponseBytesRequest1 = null;
@@ -1399,7 +1399,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
 
             final byte [] aRequestBytes = m.getAsBytes (aState.m_aUSIRequest);
-            LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
             aPost.setEntity (new ByteArrayEntity (aRequestBytes,
                                                   ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
@@ -1415,8 +1416,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             {
               DE4AKafkaClient.send (EErrorLevel.INFO,
                                     "DemoUI received response content (" + aResponseBytesRequest1.length + " bytes)");
-              LOGGER.info ("Response received (in UTF-8):\n" +
-                           new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
+              if (LOGGER.isInfoEnabled ())
+                LOGGER.info ("Response received (in UTF-8):\n" +
+                             new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
             }
           }
           catch (final ExtendedHttpResponseException ex)
@@ -1429,7 +1431,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           // IM request
           // -> preview on our (DE) side
           // -> we already have the response and can preview it
-          final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseErrorMarshaller ()
+          final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseMarshaller ()
                                                                    .read (aResponseBytesRequest1);
           if (aResponseObj == null)
             throw new IOException ("Failed to parse response XML - see log for details");

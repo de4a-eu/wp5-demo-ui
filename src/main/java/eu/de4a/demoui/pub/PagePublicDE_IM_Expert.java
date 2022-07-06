@@ -61,7 +61,6 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
@@ -94,20 +93,23 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
       while (true)
       {
         aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson() != null)
+        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      //aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
+      // aDemoRequest.getDataEvaluator ().setAgentUrn
+      // (AppConfig.getDEParticipantID ());
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T43_PT.getParticipantID ());
       aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_SE.getParticipantID ());
-      
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0).setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (1).setCanonicalEvidenceTypeId (EUseCase.BIRTH.getDocumentTypeID ().getURIEncoded ());
-      for (RequestEvidenceItemType item:  aDemoRequest.getRequestEvidenceIMItem()) {
-	      //item.setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-	      item.getDataRequestSubject ()
-          .getDataSubjectPerson()
-          .setPersonIdentifier ("PT/SE/12345678");
+
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
+                  .setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
+      aDemoRequest.getRequestEvidenceIMItemAtIndex (1)
+                  .setCanonicalEvidenceTypeId (EUseCase.BIRTH.getDocumentTypeID ().getURIEncoded ());
+      for (final RequestEvidenceItemType item : aDemoRequest.getRequestEvidenceIMItem ())
+      {
+        // item.setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID
+        // ().getURIEncoded ());
+        item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/SE/12345678");
       }
     }
     return aDemoRequest;
@@ -213,7 +215,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
-            final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseErrorMarshaller ().read (aResponseBytes);
+            final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseMarshaller ().read (aResponseBytes);
             if (aErrorObj != null)
             {
               DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");

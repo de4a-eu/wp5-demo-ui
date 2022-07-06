@@ -85,12 +85,11 @@ public enum EDemoCanonicalEvidence
   T42_LEGAL_ENTITY_V06 (EDE4ACanonicalEvidenceType.T42_LEGAL_ENTITY_V06,
                         EDemoCanonicalEvidence::createDBA_LegalEntity_v06),
 
-  T43_BIRTH_V17 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V17,
-                          EDemoCanonicalEvidence::createMA_Birth_v1_7),
+  T43_BIRTH_V17 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V17, EDemoCanonicalEvidence::createMA_Birth_v1_7),
   T43_DOMREG_V17 (EDE4ACanonicalEvidenceType.T43_DOMREG_EVIDENCE_V17,
-                           EDemoCanonicalEvidence::createMA_DomesticRegistration_v1_7),
+                  EDemoCanonicalEvidence::createMA_DomesticRegistration_v1_7),
   T43_MARRIAGE_V17 (EDE4ACanonicalEvidenceType.T43_MARRIAGE_EVIDENCE_V17,
-                             EDemoCanonicalEvidence::createMA_Marriage_v1_7),
+                    EDemoCanonicalEvidence::createMA_Marriage_v1_7),
   T43_PENSION_MOL_V01 (EDE4ACanonicalEvidenceType.T43_PENSION_MOL_EVIDENCE_V01,
                        EDemoCanonicalEvidence::createMA_PensionMOL_v0_1),
   T43_UNEMPLOYMENT_MOL_V01 (EDE4ACanonicalEvidenceType.T43_UNEMPLOYMENT_MOL_EVIDENCE_V01,
@@ -156,7 +155,7 @@ public enum EDemoCanonicalEvidence
       b.setText (_createT41Text ());
       ret.setFamilyName (b);
     }
-    ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextInt (80)));
+    ret.setDateOfBirth (PDTFactory.getCurrentLocalDate ().minusYears (18 + aTLR.nextLong (80)));
     return ret;
   }
 
@@ -164,7 +163,7 @@ public enum EDemoCanonicalEvidence
   public static Element createSA_HigherEducation_v2021_04_13 ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final eu.de4a.iem.jaxb.t41.higheredu.v2021_04_13.HigherEducationDiplomaType p = new eu.de4a.iem.jaxb.t41.higheredu.v2021_04_13.HigherEducationDiplomaType ();
+    final eu.de4a.iem.jaxb.t41.higheredu.v2022_06_23.HigherEducationDiplomaType p = new eu.de4a.iem.jaxb.t41.higheredu.v2022_06_23.HigherEducationDiplomaType ();
     p.setId ("urn:credential:" + UUID.randomUUID ().toString ());
     {
       final LanguageStringType a = new LanguageStringType ();
@@ -181,12 +180,12 @@ public enum EDemoCanonicalEvidence
       p.setMainFieldOfStudy (a);
     }
     p.setModeOfStudy ("http://data.europa.eu/europass/learningScheduleType/fullTime");
-    p.addDurationOfEducation (XSDDataTypeHelper.getFactory ()
+    p.setDurationOfEducation (XSDDataTypeHelper.getFactory ()
                                                .newDurationYearMonth (true,
                                                                       MathHelper.abs (aTLR.nextInt (10)),
                                                                       MathHelper.abs (aTLR.nextInt (12))));
     p.setScope (MathHelper.toBigDecimal (MathHelper.abs (aTLR.nextInt ())));
-    p.setDateOfIssue (_createDate ());
+    p.setDateOfIssue (_createLocalDate ());
     {
       final LocationType l = new LocationType ();
       {
@@ -603,8 +602,9 @@ public enum EDemoCanonicalEvidence
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
     final MonetaryAmountType ret = new MonetaryAmountType ();
     ret.addCurrency (EDemoDocument.random (CurrencyType.class));
-    ret.setAmount (BigInteger.valueOf (aTLR.nextInt (0, 10_000)));
-    return null;
+    // FIXME currently needs to be a 7-digit number
+    ret.setAmount (BigInteger.valueOf (aTLR.nextInt (1_000_000, 10_000_000)));
+    return ret;
   }
 
   @Nonnull

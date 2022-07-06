@@ -16,18 +16,16 @@
 package eu.de4a.demoui.api;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import org.apache.pdfbox.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.http.CHttp;
+import com.helger.commons.io.file.SimpleFileIO;
 import com.helger.commons.io.stream.StreamHelper;
 import com.helger.photon.api.IAPIDescriptor;
 import com.helger.photon.api.IAPIExecutor;
@@ -53,30 +51,33 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
     LOGGER.info ("Received inbound DE4A message");
 
     final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
-    LOGGER.info ("Received " + aPayload.length + " bytes");
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received " + aPayload.length + " bytes");
 
-    //MARSHALLING
-    DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.dtResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
-    ResponseExtractMultiEvidenceType response = marshaller.read(aPayload);
+    // MARSHALLING
+    final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.dtResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
+    final ResponseExtractMultiEvidenceType response = marshaller.read (aPayload);
     LOGGER.info ("Unmarshalled payload");
-    
-    //SAVE TO FILE
-   /* LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo () );
-    File targetFile = new File(AppConfig.getDEXmlWriteTo ());
-    OutputStream outStream = new FileOutputStream(targetFile);
-    outStream.write(aPayload);
-    IOUtils.closeQuietly(outStream);
-   */ 
+
+    // SAVE TO FILE
+    if (false)
+    {
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo ());
+      final File targetFile = new File (AppConfig.getDEXmlWriteTo ());
+      SimpleFileIO.writeFile (targetFile, aPayload);
+    }
+
     // SAVE INTO MAP
     LOGGER.debug ("storing evidence message");
-    EvidenceResponseMap map = EvidenceResponseMap.getInstance();
-    map.cleanMap();
-    map.register(response);
-    
+    final EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
+    map.cleanMap ();
+    map.register (response);
+
     aUnifiedResponse.disableCaching ();
     aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
 
     LOGGER.info ("Finished handling inbound DE4A message");
   }
-  
+
 }

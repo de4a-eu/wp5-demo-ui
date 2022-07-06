@@ -40,10 +40,10 @@ import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Check_Evidence.class);
-  
+
   // We're doing a DR-IM request
   public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
-  
+
   public static final String PARAM_REQUEST_ID = "requestid";
   private static final String FIELD_PAYLOAD = "payload";
 
@@ -55,34 +55,40 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
   @Override
   protected void fillContent (final WebPageExecutionContext aWPEC)
   {
-	  final HCNodeList aNodeList = aWPEC.getNodeList ();
-	  ResponseExtractMultiEvidenceType evidence = null;
-    EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
-    
+    final HCNodeList aNodeList = aWPEC.getNodeList ();
+    ResponseExtractMultiEvidenceType evidence = null;
+    final EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
+
     String requestId = "";
-    
-    if (map.getM_aMap().size() >0) {
-  	  for (Map.Entry<String, ResponseExtractMultiEvidenceType> entry : map.getM_aMap().entrySet()) {
-  		  requestId = entry.getKey();
-        }
-  	  
-  	  	evidence = map.getAndRemove(requestId);
-  	
-        LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId());
-        
-        DE4ACoreMarshaller<ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseExtractMultiEvidenceMarshaller(IDE4ACanonicalEvidenceType.NONE);
-        
-        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD, prettyPrintByTransformer(marshaller.getAsString(evidence), 2, true)))
-        		.setRows (25)
-          		.setCols(150)
-          		.setReadOnly(true)
-          		.addClass (CBootstrapCSS.TEXT_MONOSPACE)
-    	  		.addClass (CBootstrapCSS.FORM_CONTROL);
-        
-        aNodeList.addChild(aTA);
-                   
-    } else {
-  	  LOGGER.debug ("No evidence found");
+
+    if (map.getM_aMap ().size () > 0)
+    {
+      for (final Map.Entry <String, ResponseExtractMultiEvidenceType> entry : map.getM_aMap ().entrySet ())
+      {
+        requestId = entry.getKey ();
+      }
+
+      evidence = map.getAndRemove (requestId);
+
+      LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());
+
+      final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
+
+      final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+                                                               prettyPrintByTransformer (marshaller.getAsString (evidence),
+                                                                                         2,
+                                                                                         true))).setRows (25)
+                                                                                                .setCols (150)
+                                                                                                .setReadOnly (true)
+                                                                                                .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                                .addClass (CBootstrapCSS.FORM_CONTROL);
+
+      aNodeList.addChild (aTA);
+
+    }
+    else
+    {
+      LOGGER.debug ("No evidence found");
     }
   }
 }
