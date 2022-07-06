@@ -30,9 +30,12 @@ import com.helger.commons.name.IHasDisplayName;
  */
 public enum EPatternType implements IHasID <String>, IHasDisplayName
 {
+  /** Intermediation */
   IM ("im", "IM"),
-  USI ("usi", "USI"),
-  IM_BW ("im_bw" , "IM_BW");
+  /** Intermediation for Iteration 1 */
+  IM_IT1 ("im_it1", "IM (Iteration 1)"),
+  /** User supported Intermediation */
+  USI ("usi", "USI");
 
   private final String m_sID;
   private final String m_sDisplayName;

@@ -73,7 +73,8 @@ import oasis.names.specification.ubl.schema.xsd.commonbasiccomponents_23.FamilyN
  */
 public enum EDemoCanonicalEvidence
 {
-  T41_HIGHER_EDUCATION_DIPLOMA_2021_04_13 (EDE4ACanonicalEvidenceType.T41_HIGHER_EDUCATION_EVIDENCE_2021_04_13,
+  // Changed in 0.2.9 of de4a-commons
+  T41_HIGHER_EDUCATION_DIPLOMA_2022_06_23 (EDE4ACanonicalEvidenceType.T41_HIGHER_EDUCATION_EVIDENCE_2021_04_13,
                                            EDemoCanonicalEvidence::createSA_HigherEducation_v2021_04_13),
   T41_SECONDARY_EDUCATION_DIPLOMA_2022_05_12 (EDE4ACanonicalEvidenceType.T41_SECONDARY_EDUCATION_EVIDENCE_2022_05_12,
                                               EDemoCanonicalEvidence::createSA_SecondaryEducation_v2022_05_12),

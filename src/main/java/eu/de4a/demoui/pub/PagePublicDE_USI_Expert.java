@@ -86,7 +86,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Expert.class);
 
-  // We're doing a DR-IM request
+  // We're doing a DR-USI request
   public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
 
   private static final String FIELD_TARGET_URL = "targeturl";
@@ -291,7 +291,6 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("getting the request ID, iterate map");
 
-      String sRequestID = "";
       if (isRequestSent)
       {
         ThreadHelper.sleepSeconds (2);
@@ -301,6 +300,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
       if (map.getMap ().isNotEmpty ())
       {
+        String sRequestID = "";
         for (final Map.Entry <String, RedirectUserType> entry : map.getMap ().entrySet ())
         {
           sRequestID = entry.getKey ();

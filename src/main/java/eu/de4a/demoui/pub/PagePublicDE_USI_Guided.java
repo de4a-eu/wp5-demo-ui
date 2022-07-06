@@ -579,9 +579,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
 
       final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
 
-      final Function <String, PLText> _code = s -> StringHelper.hasNoText (s) ? new PLText ("none",
-                                                                                            r10i).setFillColor (Color.LIGHT_GRAY)
-                                                                              : new PLText (s, c10);
+      final Function <String, PLText> makeCode = s -> StringHelper.hasNoText (s) ? new PLText ("none",
+                                                                                               r10i).setFillColor (Color.LIGHT_GRAY)
+                                                                                 : new PLText (s, c10);
 
       // Headline
       final String sTitle = "Preview of DE4A Iteration 2 request data before sending";
@@ -603,7 +603,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
                             new PLTableCell (new PLText (aState.getDataEvaluatorName (), r10)));
         aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)),
-                            new PLTableCell (_code.apply (aState.getDataEvaluatorPID ())));
+                            new PLTableCell (makeCode.apply (aState.getDataEvaluatorPID ())));
         final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
@@ -620,7 +620,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
                             new PLTableCell (new PLText (aState.getDataOwnerName (), r10)));
         aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)),
-                            new PLTableCell (_code.apply (aState.getDataOwnerPID ())));
+                            new PLTableCell (makeCode.apply (aState.getDataOwnerPID ())));
         final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
@@ -638,7 +638,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         {
           final PLTable aInnerTable = new PLTable (aCol1, aCol2);
           aInnerTable.addRow (new PLTableCell (new PLText ("Person ID:", r10)),
-                              new PLTableCell (_code.apply (aState.m_aDRSPerson.getID ())));
+                              new PLTableCell (makeCode.apply (aState.m_aDRSPerson.getID ())));
           aInnerTable.addRow (new PLTableCell (new PLText ("First Name:", r10)),
                               new PLTableCell (new PLText (aState.m_aDRSPerson.getFirstName (), r10)));
           aInnerTable.addRow (new PLTableCell (new PLText ("Family Name:", r10)),
@@ -657,7 +657,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         {
           final PLTable aInnerTable = new PLTable (aCol1, aCol2);
           aInnerTable.addRow (new PLTableCell (new PLText ("Company ID:", r10)),
-                              new PLTableCell (_code.apply (aState.m_aDRSCompany.getID ())));
+                              new PLTableCell (makeCode.apply (aState.m_aDRSCompany.getID ())));
           aInnerTable.addRow (new PLTableCell (new PLText ("Company Name:", r10)),
                               new PLTableCell (new PLText (aState.m_aDRSCompany.getName (), r10)));
           aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)),
@@ -712,7 +712,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
 
   public PagePublicDE_USI_Guided (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Guided USI exchange", EPatternType.USI);
+    super (sID, "USI Exchange (Guided)", EPatternType.USI);
   }
 
   @Override
@@ -774,7 +774,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             else
               LOGGER.error ("Got nothing back from IAL");
 
-            LOGGER.info ("IAL response countries: " + aCountries);
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("IAL response countries: " + aCountries);
             if (aCountries == null || aCountries.isEmpty ())
               aFormErrors.addFieldError (FIELD_USE_CASE,
                                          "Found no participant in the IAL yet that supports this Document Type '" +
@@ -948,7 +949,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
     final boolean bMoved;
     if (bGoBack && !aState.step ().isFirst ())
     {
-      LOGGER.info ("One step backwards from " + aState.step ());
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("One step backwards from " + aState.step ());
       aState.moveBack ();
       bMoved = true;
     }
@@ -956,7 +958,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
       if (bGoNext && !aState.step ().isLast () && aFormErrors.isEmpty ())
       {
         // Forward moving only if no errors are found
-        LOGGER.info ("One step forward from " + aState.step ());
+        if (LOGGER.isInfoEnabled ())
+          LOGGER.info ("One step forward from " + aState.step ());
         aState.moveForward ();
         bMoved = true;
       }

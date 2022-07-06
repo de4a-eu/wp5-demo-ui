@@ -31,6 +31,7 @@ import com.helger.photon.uicore.page.system.BasePageShowChildren;
 public final class MenuPublic
 {
   public static final String MENU_DE = "de";
+
   public static final String MENU_DE_IM_GUIDED = "de-im-guided";
   public static final String MENU_DE_IM_EXPERT = "de-im-expert";
   public static final String MENU_DE_IM_EXPERT_BACKWARD = "de-im-expert-bw";
@@ -39,8 +40,8 @@ public final class MenuPublic
   public static final String MENU_DE_CHECK_EVIDENCE = "de-usi-evidence";
 
   public static final String MENU_DEMO_UI = "demoui";
+  public static final String MENU_CREATE_RANDOM_MESSAGE = "createrandommsg";
   public static final String MENU_SEND_MESSAGE = "sendmessage";
-  public static final String MENU_EXAMPLE_MESSAGE = "examplemsg";
   public static final String MENU_VALIDATE_MESSAGE = "validatemsg";
 
   private MenuPublic ()
@@ -50,20 +51,26 @@ public final class MenuPublic
   {
     // DE stuff
     {
-      final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE, "Data Evaluator", aMenuTree));
+      final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE,
+                                                                                       "Data Evaluator",
+                                                                                       aMenuTree));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Guided (MENU_DE_IM_GUIDED));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert (MENU_DE_IM_EXPERT));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert_Backwards (MENU_DE_IM_EXPERT_BACKWARD));
+      aMenuTree.createSeparator (aDE);
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Guided (MENU_DE_USI_GUIDED));
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Expert (MENU_DE_USI_EXPERT));
+      aMenuTree.createSeparator (aDE);
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Evidence (MENU_DE_CHECK_EVIDENCE));
     }
 
     // Demo UI stuff
     {
-      final IMenuItemPage aDemoUI = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DEMO_UI, "Supporting Actions", aMenuTree));
+      final IMenuItemPage aDemoUI = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DEMO_UI,
+                                                                                           "Supporting Actions",
+                                                                                           aMenuTree));
+      aMenuTree.createItem (aDemoUI, new PagePublicCreateRandomMessage (MENU_CREATE_RANDOM_MESSAGE));
       aMenuTree.createItem (aDemoUI, new PagePublicSendMessage (MENU_SEND_MESSAGE));
-      aMenuTree.createItem (aDemoUI, new PagePublicCreateRandomMessage (MENU_EXAMPLE_MESSAGE));
       aMenuTree.createItem (aDemoUI, new PagePublicValidateMessage (MENU_VALIDATE_MESSAGE));
     }
 

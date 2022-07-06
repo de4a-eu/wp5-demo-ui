@@ -68,16 +68,16 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
                         DcngConfig.getIdentifierFactory ()
                                   .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
                                                                  "CompanyRegistration:1.0")),
-  
+
   COMPANY_REGISTRATION_IT1 (EPilot.T42_DOING_BUSINESS_ABROAD,
-          "cr",
-          "Starting a business in another Member State",
-          EPatternType.IM_BW,
-          EDataRequestSubjectType.COMPANY,
-          DcngConfig.getIdentifierFactory ()
-                    .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                   "CompanyRegistration")),
-  
+                            "cr",
+                            "Starting a business in another Member State",
+                            EPatternType.IM_IT1,
+                            EDataRequestSubjectType.COMPANY,
+                            DcngConfig.getIdentifierFactory ()
+                                      .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                                     "CompanyRegistration")),
+
   BIRTH (EPilot.T43_MOVING_ABROAD,
          "birth",
          "Birth Certificate",

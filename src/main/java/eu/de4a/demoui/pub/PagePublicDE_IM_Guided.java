@@ -576,9 +576,9 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
 
       final PLPageSet aPS1 = new PLPageSet (PDRectangle.A4);
 
-      final Function <String, PLText> _code = s -> StringHelper.hasNoText (s) ? new PLText ("none",
-                                                                                            r10i).setFillColor (Color.LIGHT_GRAY)
-                                                                              : new PLText (s, c10);
+      final Function <String, PLText> makeCode = s -> StringHelper.hasNoText (s) ? new PLText ("none",
+                                                                                               r10i).setFillColor (Color.LIGHT_GRAY)
+                                                                                 : new PLText (s, c10);
 
       // Headline
       final String sTitle = "Preview of DE4A Iteration 2 request data before sending";
@@ -600,7 +600,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
         aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
                             new PLTableCell (new PLText (aState.getDataEvaluatorName (), r10)));
         aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)),
-                            new PLTableCell (_code.apply (aState.getDataEvaluatorPID ())));
+                            new PLTableCell (makeCode.apply (aState.getDataEvaluatorPID ())));
         final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
@@ -617,7 +617,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
         aInnerTable.addRow (new PLTableCell (new PLText ("Name:", r10)),
                             new PLTableCell (new PLText (aState.getDataOwnerName (), r10)));
         aInnerTable.addRow (new PLTableCell (new PLText ("ID:", r10)),
-                            new PLTableCell (_code.apply (aState.getDataOwnerPID ())));
+                            new PLTableCell (makeCode.apply (aState.getDataOwnerPID ())));
         final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
         aInnerTable.addRow (new PLTableCell (new PLText ("Country:", r10)),
                             new PLTableCell (new PLText (aDOCountry != null ? aDOCountry.getDisplayCountry (aDisplayLocale)
@@ -635,7 +635,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
         {
           final PLTable aInnerTable = new PLTable (aCol1, aCol2);
           aInnerTable.addRow (new PLTableCell (new PLText ("Person ID:", r10)),
-                              new PLTableCell (_code.apply (aState.m_aDRSPerson.getID ())));
+                              new PLTableCell (makeCode.apply (aState.m_aDRSPerson.getID ())));
           aInnerTable.addRow (new PLTableCell (new PLText ("First Name:", r10)),
                               new PLTableCell (new PLText (aState.m_aDRSPerson.getFirstName (), r10)));
           aInnerTable.addRow (new PLTableCell (new PLText ("Family Name:", r10)),
@@ -654,7 +654,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
         {
           final PLTable aInnerTable = new PLTable (aCol1, aCol2);
           aInnerTable.addRow (new PLTableCell (new PLText ("Company ID:", r10)),
-                              new PLTableCell (_code.apply (aState.m_aDRSCompany.getID ())));
+                              new PLTableCell (makeCode.apply (aState.m_aDRSCompany.getID ())));
           aInnerTable.addRow (new PLTableCell (new PLText ("Company Name:", r10)),
                               new PLTableCell (new PLText (aState.m_aDRSCompany.getName (), r10)));
           aTable.addAndReturnRow (new PLTableCell (new PLText ("Data Request Subject:", r10)),
@@ -709,7 +709,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
 
   public PagePublicDE_IM_Guided (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Guided IM exchange", EPatternType.IM);
+    super (sID, "IM Exchange (Guided)", EPatternType.IM);
   }
 
   @Override
@@ -946,7 +946,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
     final boolean bMoved;
     if (bGoBack && !aState.step ().isFirst ())
     {
-      LOGGER.info ("One step backwards from " + aState.step ());
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("One step backwards from " + aState.step ());
       aState.moveBack ();
       bMoved = true;
     }
@@ -954,7 +955,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
       if (bGoNext && !aState.step ().isLast () && aFormErrors.isEmpty ())
       {
         // Forward moving only if no errors are found
-        LOGGER.info ("One step forward from " + aState.step ());
+        if (LOGGER.isInfoEnabled ())
+          LOGGER.info ("One step forward from " + aState.step ());
         aState.moveForward ();
         bMoved = true;
       }
@@ -1414,8 +1416,9 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
             {
               DE4AKafkaClient.send (EErrorLevel.INFO,
                                     "DemoUI received response content (" + aResponseBytesRequest1.length + " bytes)");
-              LOGGER.info ("Response received (in UTF-8):\n" +
-                           new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
+              if (LOGGER.isInfoEnabled ())
+                LOGGER.info ("Response received (in UTF-8):\n" +
+                             new String (aResponseBytesRequest1, StandardCharsets.UTF_8));
             }
           }
           catch (final ExtendedHttpResponseException ex)
