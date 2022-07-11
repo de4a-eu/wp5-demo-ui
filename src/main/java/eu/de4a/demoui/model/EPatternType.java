@@ -35,7 +35,9 @@ public enum EPatternType implements IHasID <String>, IHasDisplayName
   /** Intermediation for Iteration 1 */
   IM_IT1 ("im_it1", "IM (Iteration 1)"),
   /** User supported Intermediation */
-  USI ("usi", "USI");
+  USI ("usi", "USI"),
+  /** Subscription */
+  SUBSCRIPTION ("subscription", "SUBSCRIPTION");
 
   private final String m_sID;
   private final String m_sDisplayName;

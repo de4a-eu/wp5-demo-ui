@@ -16,6 +16,7 @@
 package eu.de4a.demoui.model;
 
 import java.awt.Color;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -62,11 +63,13 @@ import eu.de4a.iem.core.jaxb.common.CanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
 import eu.de4a.iem.core.jaxb.common.DomesticEvidenceType;
 import eu.de4a.iem.core.jaxb.common.ErrorType;
+import eu.de4a.iem.core.jaxb.common.EventSubscripRequestItemType;
 import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
 import eu.de4a.iem.core.jaxb.common.IssuingTypeType;
 import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
+import eu.de4a.iem.core.jaxb.common.RequestEventSubscriptionType;
 import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestEvidenceUSIItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
@@ -75,6 +78,7 @@ import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
+import eu.de4a.iem.core.jaxb.common.TimePeriodType;
 import eu.de4a.iem.core.jaxb.eidas.np.GenderType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
@@ -325,7 +329,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                              null,
                              EDemoDocumentType.RESPONSE,
                              EDemoDocument::createDemoResponse,
-                             DE4ACoreMarshaller.defResponseMarshaller ());
+                             DE4ACoreMarshaller.defResponseMarshaller ()),
+//subscription DE-DR request (C1 -> C2)
+ SUBS_REQ_DE_DR("subs-req-de-dr",
+                "Subscription Request from DE to DR (C1 -> C2)",
+                "/request/subscription",
+                EDemoDocumentType.REQUEST,
+                EDemoDocument::createDemoRequestSubscription,
+                DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),;
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -678,6 +689,22 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluatorURL (AppConfig.getPublicURL () + "/public/locale-en_US/menuitem-de-usi-evidence");
     return ret;
   }
+  
+  @Nonnull
+  private static EventSubscripRequestItemType _createRequestEventSubscriptionItemType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final EventSubscripRequestItemType ret = new EventSubscripRequestItemType ();
+    ret.setRequestItemId (UUID.randomUUID ().toString ());
+    ret.setDataRequestSubject (_createDRS ());
+    //ret.setRequestGrounds (_createRequestGrounds ());
+    ret.setCanonicalEventCatalogUri("EventSubscription-" + MathHelper.abs (aTLR.nextInt ()));
+    TimePeriodType period = new TimePeriodType();
+    period.setStartDate(LocalDateTime.now());
+    period.setEndDate(LocalDateTime.now());
+    ret.setSubscriptionPeriod(period);
+    return ret;
+  }
 
   @Nonnull
   public static RequestExtractMultiEvidenceUSIType createDemoRequestExtractMultiEvidenceUSI ()
@@ -691,6 +718,23 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
+    // if (aTLR.nextBoolean ())
+    // ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
+    return ret;
+  }
+  
+  @Nonnull
+  public static RequestEventSubscriptionType createDemoRequestSubscription ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final RequestEventSubscriptionType ret = new RequestEventSubscriptionType ();
+    ret.setRequestId (UUID.randomUUID ().toString ());
+    ret.setSpecificationId (CIEM.SPECIFICATION_ID);
+    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
+    ret.setProcedureId ("Procedure-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setDataEvaluator (_createAgent ());
+    ret.setDataOwner (_createAgent ());
+    ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
     // if (aTLR.nextBoolean ())
     // ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
     return ret;
