@@ -60,5 +60,12 @@ public final class DemoUIAPI
                                                            new APIExecutorPostDERedirect ()).setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
+    
+    // POST /notification
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-notification"),
+                                                           new APIExecutorPostDENotification ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
   }
 }
