@@ -109,8 +109,8 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
         if (aDemoRequest.getEventSubscripRequestItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T41_SI2.getParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_ES.getParticipantID ());
+      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_NL.getParticipantID ());
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_SE.getParticipantID ());
 
       for (final EventSubscripRequestItemType item : aDemoRequest.getEventSubscripRequestItem())
       {
@@ -130,7 +130,7 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 
   public PagePublicDE_Subscription_Expert (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Subscription Exchange (Expert)", EPatternType.USI);
+    super (sID, "Subscription Exchange (Expert)", EPatternType.SUBSCRIPTION);
   }
 
   @Override
@@ -288,7 +288,7 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
       }
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
-      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send USI request"));
+      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send subscription request"));
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("getting the request ID, iterate map");

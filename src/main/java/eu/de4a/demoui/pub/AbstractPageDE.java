@@ -178,6 +178,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       return sBaseUrl + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
     if (ePattern == EPatternType.IM_IT1)
       return sBaseUrl + EDemoDocument.IM_REQ_DE_DR_IT1.getRelativeURL ();
+    if (ePattern == EPatternType.SUBSCRIPTION)
+        return sBaseUrl + EDemoDocument.SUBS_REQ_DE_DR.getRelativeURL ();
     throw new IllegalStateException ("Unsupported pattern " + ePattern);
   }
 
