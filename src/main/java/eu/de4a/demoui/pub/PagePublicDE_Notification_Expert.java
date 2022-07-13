@@ -78,7 +78,6 @@ import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.EventNotificationItemType;
 import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
-import eu.de4a.iem.core.jaxb.common.RequestEventSubscriptionType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
@@ -170,11 +169,11 @@ public class PagePublicDE_Notification_Expert extends AbstractPageDE
         else
         {
           // Send only valid documents
-          final RequestEventSubscriptionType aParsedRequest = (RequestEventSubscriptionType) DEMO_DOC_TYPE.parseMessage (sPayload);
+          final EventNotificationType aParsedRequest = (EventNotificationType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending Subscription request '" +
-                                                  aParsedRequest.getRequestId () +
+                                "DemoUI sending Event Notification request '" +
+                                                  aParsedRequest.getNotificationId () +
                                                   "' to '" +
                                                   sTargetURL +
                                                   "'");
@@ -284,7 +283,7 @@ public class PagePublicDE_Notification_Expert extends AbstractPageDE
       }
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
-      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send subscription request"));
+      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Event Notification"));
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("getting the request ID, iterate map");

@@ -283,7 +283,7 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
       }
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
-      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send subscription request"));
+      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Subscription request"));
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("getting the request ID, iterate map");
