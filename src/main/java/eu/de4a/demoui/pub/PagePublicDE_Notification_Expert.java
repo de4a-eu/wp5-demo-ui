@@ -24,14 +24,19 @@ import javax.annotation.Nonnull;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.concurrent.ThreadHelper;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
+import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
+import com.helger.css.property.ECSSProperty;
 import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
@@ -61,59 +66,55 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
+import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
-import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
+import eu.de4a.iem.core.jaxb.common.EventNotificationItemType;
+import eu.de4a.iem.core.jaxb.common.EventNotificationType;
+import eu.de4a.iem.core.jaxb.common.RedirectUserType;
+import eu.de4a.iem.core.jaxb.common.RequestEventSubscriptionType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_IM_Expert extends AbstractPageDE
+public class PagePublicDE_Notification_Expert extends AbstractPageDE
 {
-  // We're doing a DR-IM request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR;
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Notification_Expert.class);
+
+  // We're doing a DR-USI request
+  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.NOTIFY_REQ;
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
+  private boolean isRequestSent = false;
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
   @Nonnull
-  private static RequestExtractMultiEvidenceIMType _createDemoRequest ()
+  private static EventNotificationType _createDemoRequest ()
   {
-    RequestExtractMultiEvidenceIMType aDemoRequest;
+    EventNotificationType ret;
     {
-      // We want a natural person
+      // We want a subject person
       while (true)
       {
-        aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
+        ret = (EventNotificationType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (ret.getEventNotificationItemAtIndex (0).getEventSubject ().getDataSubjectPerson () != null)
           break;
       }
-      if (false)
-        aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
+      ret.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_NL.getParticipantID ());
+      ret.getDataOwner ().setAgentUrn (EMockDataOwner.T42_SE.getParticipantID ());
 
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T43_PT.getParticipantID ());
-      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_SE.getParticipantID ());
-
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
-                  .setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (1)
-                  .setCanonicalEvidenceTypeId (EUseCase.BIRTH.getDocumentTypeID ().getURIEncoded ());
-
-      final RequestEvidenceItemType item = aDemoRequest.getRequestEvidenceIMItemAtIndex (0);
-      if (false)
-        item.setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-      item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/SE/12345678");
+      final EventNotificationItemType item = ret.getEventNotificationItemAtIndex (0);
+      item.setCanonicalEventCatalogUri (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
+      item.getEventSubject ().getDataSubjectPerson ().setPersonIdentifier ("NL/SE/90000471");
     }
-    return aDemoRequest;
+    return ret;
   }
 
   static
@@ -123,9 +124,9 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
     });
   }
 
-  public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_Notification_Expert (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "IM Exchange (Expert)", EPatternType.IM);
+    super (sID, "Notification Exchange (Expert)", EPatternType.NOTIFICATION);
   }
 
   @Override
@@ -169,10 +170,10 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         else
         {
           // Send only valid documents
-          final RequestExtractMultiEvidenceIMType aParsedRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.parseMessage (sPayload);
+          final RequestEventSubscriptionType aParsedRequest = (RequestEventSubscriptionType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending IM request '" +
+                                "DemoUI sending Subscription request '" +
                                                   aParsedRequest.getRequestId () +
                                                   "' to '" +
                                                   sTargetURL +
@@ -192,6 +193,8 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
             aPost.setEntity (new StringEntity (sPayload,
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+            isRequestSent = true;
+
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
           catch (final ExtendedHttpResponseException ex)
@@ -249,7 +252,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
 
     if (bShowForm)
     {
-      aNodeList.addChild (info ("This page lets you create arbitrary IM messages and send them to a WP5 Connector. This simulates the DE-DR interface."));
+      aNodeList.addChild (info ("This page lets you create arbitrary Event Notification messages and send them to a WP5 Connector. This simulates the DO-DT and DR-DE interface."));
 
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
@@ -281,7 +284,43 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
       }
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
-      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send IM request"));
+      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send subscription request"));
+
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("getting the request ID, iterate map");
+
+      if (isRequestSent)
+      {
+        ThreadHelper.sleepSeconds (2);
+      }
+
+      final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
+
+      final String sRequestID = map.getFirstRequestID ();
+      if (StringHelper.hasText (sRequestID))
+      {
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("getting the response for request Id: " + sRequestID);
+
+        final RedirectUserType aResponse = map.getAndRemove (sRequestID);
+
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("redirection to: " + aResponse.getRedirectUrl ());
+        aForm.addChild (new BootstrapButton ().addChild ("Manage received redirection messages")
+                                              .setIcon (EDefaultIcon.INFO)
+                                              .addStyle (ECSSProperty.MARGIN_LEFT, "16px")
+                                              .setOnClick (new SimpleURL (aResponse.getRedirectUrl ())));
+
+      }
+      else
+      {
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("no redirect message found");
+
+        // No need for UI
+        if (false)
+          aNodeList.addChild (info ("Currently no received redirect is available"));
+      }
     }
   }
 }

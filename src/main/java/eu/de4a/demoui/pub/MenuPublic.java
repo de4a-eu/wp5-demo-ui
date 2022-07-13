@@ -38,6 +38,7 @@ public final class MenuPublic
   public static final String MENU_DE_USI_GUIDED = "de-usi-guided";
   public static final String MENU_DE_USI_EXPERT = "de-usi-expert";
   public static final String MENU_DE_SUBSCRIPTION_EXPERT = "de-subscription-expert";
+  public static final String MENU_DE_NOTIFICATION_EXPERT = "de-notification-expert";
   public static final String MENU_DE_CHECK_EVIDENCE = "de-usi-evidence";
   public static final String MENU_DE_CHECK_EVENT = "de-evidence";
 
@@ -64,6 +65,7 @@ public final class MenuPublic
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Expert (MENU_DE_USI_EXPERT));
       aMenuTree.createSeparator (aDE);
       aMenuTree.createItem (aDE, new PagePublicDE_Subscription_Expert (MENU_DE_SUBSCRIPTION_EXPERT));
+      aMenuTree.createItem (aDE, new PagePublicDE_Notification_Expert (MENU_DE_NOTIFICATION_EXPERT));
       aMenuTree.createSeparator (aDE);
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Evidence (MENU_DE_CHECK_EVIDENCE));
       aMenuTree.createItem (aDE, new PagePublicDE_Check_Notification (MENU_DE_CHECK_EVENT));

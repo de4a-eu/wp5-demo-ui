@@ -270,8 +270,8 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
                                                    .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
-                                                                                           TARGET_URL_TEST_DR)))
-                                                   .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (TARGET_URL_TEST_DR))
+                                                                                           m_sDefaultTargetURL)))
+                                                   .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (m_sDefaultTargetURL))
                                                                                                                              .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
       {

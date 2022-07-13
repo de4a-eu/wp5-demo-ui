@@ -112,11 +112,9 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       ret.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T41_SI2.getParticipantID ());
       ret.getDataOwner ().setAgentUrn (EMockDataOwner.T41_ES.getParticipantID ());
 
-      for (final RequestEvidenceItemType item : ret.getRequestEvidenceUSIItem ())
-      {
-        item.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
-        item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("ES/SI/53377873W");
-      }
+      final RequestEvidenceItemType item = ret.getRequestEvidenceUSIItemAtIndex (0);
+      item.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
+      item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("ES/SI/53377873W");
     }
     return ret;
   }
@@ -262,8 +260,8 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
                                                    .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
-                                                                                           TARGET_URL_TEST_DR)))
-                                                   .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (TARGET_URL_TEST_DR))
+                                                                                           m_sDefaultTargetURL)))
+                                                   .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (m_sDefaultTargetURL))
                                                                                                                              .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
       {

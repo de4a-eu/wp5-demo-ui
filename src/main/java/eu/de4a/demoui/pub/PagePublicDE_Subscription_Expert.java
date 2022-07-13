@@ -86,7 +86,7 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Subscription_Expert.class);
 
   // We're doing a DR-USI request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.SUBS_REQ_DE_DR;
+  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.SUBS_REQ;
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
@@ -97,27 +97,23 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
   @Nonnull
   private static RequestEventSubscriptionType _createDemoRequest ()
   {
-    RequestEventSubscriptionType aDemoRequest;
+    RequestEventSubscriptionType ret;
     {
       // We want a subject person
       while (true)
       {
-        aDemoRequest = (RequestEventSubscriptionType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getEventSubscripRequestItemAtIndex (0)
-                        .getDataRequestSubject ()
-                        .getDataSubjectPerson () != null)
+        ret = (RequestEventSubscriptionType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (ret.getEventSubscripRequestItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_NL.getParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_SE.getParticipantID ());
+      ret.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_NL.getParticipantID ());
+      ret.getDataOwner ().setAgentUrn (EMockDataOwner.T42_SE.getParticipantID ());
 
-      for (final EventSubscripRequestItemType item : aDemoRequest.getEventSubscripRequestItem ())
-      {
-        item.setCanonicalEventCatalogUri (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
-        item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("NL/SE/90000471");
-      }
+      final EventSubscripRequestItemType item = ret.getEventSubscripRequestItemAtIndex (0);
+      item.setCanonicalEventCatalogUri (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
+      item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("NL/SE/90000471");
     }
-    return aDemoRequest;
+    return ret;
   }
 
   static
@@ -255,14 +251,14 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 
     if (bShowForm)
     {
-      aNodeList.addChild (info ("This page lets you create arbitrary USI messages and send them to a WP5 Connector. This simulates the DE-DR interface."));
+      aNodeList.addChild (info ("This page lets you create arbitrary Event Subscription messages and send them to a WP5 Connector. This simulates the DE-DR and the DT-DO interface."));
 
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
                                                    .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
-                                                                                           TARGET_URL_TEST_DR)))
-                                                   .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (TARGET_URL_TEST_DR))
+                                                                                           m_sDefaultTargetURL)))
+                                                   .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (m_sDefaultTargetURL))
                                                                                                                              .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
       {

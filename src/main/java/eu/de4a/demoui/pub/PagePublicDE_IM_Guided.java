@@ -685,7 +685,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
 
       // Target URL
       aTable.addAndReturnRow (new PLTableCell (new PLText ("Default target URL:", r10)),
-                              new PLTableCell (new PLText (getTargetURLTestDR (ePattern), c10)))
+                              new PLTableCell (new PLText (getDefaultTargetURL (ePattern), c10)))
             .setMarginTop (fMargin)
             .setMarginBottom (fMargin);
 
@@ -1345,8 +1345,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
                                                      .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
-                                                                                             TARGET_URL_TEST_DR)))
-                                                     .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (TARGET_URL_TEST_DR))
+                                                                                             m_sDefaultTargetURL)))
+                                                     .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (m_sDefaultTargetURL))
                                                                                                                                .addChild (" for the test DE4A Connector"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelForCheckBox ("Confirmation to send request")

@@ -16,7 +16,6 @@
 package eu.de4a.demoui.model;
 
 import java.awt.Color;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -269,13 +268,20 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                              EDemoDocumentType.RESPONSE,
                              EDemoDocument::createDemoResponse,
                              DE4ACoreMarshaller.defResponseMarshaller ()),
-  // subscription DE-DR request (C1 -> C2)
-  SUBS_REQ_DE_DR ("subs-req-de-dr",
-                  "Subscription Request from DE to DR (C1 -> C2)",
-                  "/request/subscription",
-                  EDemoDocumentType.REQUEST,
-                  EDemoDocument::createDemoRequestSubscription,
-                  DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),;
+  // subscription request
+  SUBS_REQ ("subs-req",
+            "Event Subscription Request (C1 -> C2 and C3 -> C4)",
+            "/request/subscription",
+            EDemoDocumentType.REQUEST,
+            EDemoDocument::createDemoRequestSubscription,
+            DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),
+  // Notify request
+  NOTIFY_REQ ("notify-req",
+              "Event Notification Request (C1 -> C2 and C3 -> C4)",
+              "/event/notification",
+              EDemoDocumentType.REQUEST,
+              EDemoDocument::createDemoEventNotification,
+              DE4ACoreMarshaller.dtEventNotificationMarshaller ()),;
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -630,22 +636,6 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   }
 
   @Nonnull
-  private static EventSubscripRequestItemType _createRequestEventSubscriptionItemType ()
-  {
-    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final EventSubscripRequestItemType ret = new EventSubscripRequestItemType ();
-    ret.setRequestItemId (UUID.randomUUID ().toString ());
-    ret.setDataRequestSubject (_createDRS ());
-    // ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEventCatalogUri ("EventSubscription-" + MathHelper.abs (aTLR.nextInt ()));
-    final TimePeriodType period = new TimePeriodType ();
-    period.setStartDate (LocalDateTime.now ());
-    period.setEndDate (LocalDateTime.now ());
-    ret.setSubscriptionPeriod (period);
-    return ret;
-  }
-
-  @Nonnull
   public static RequestExtractMultiEvidenceUSIType createDemoRequestExtractMultiEvidenceUSI ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
@@ -663,6 +653,21 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   }
 
   @Nonnull
+  private static EventSubscripRequestItemType _createRequestEventSubscriptionItemType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final EventSubscripRequestItemType ret = new EventSubscripRequestItemType ();
+    ret.setRequestItemId (UUID.randomUUID ().toString ());
+    ret.setDataRequestSubject (_createDRS ());
+    ret.setCanonicalEventCatalogUri ("EventSubscription-" + MathHelper.abs (aTLR.nextInt ()));
+    final TimePeriodType period = new TimePeriodType ();
+    period.setStartDate (PDTFactory.getCurrentLocalDateTime ().minusDays (1));
+    period.setEndDate (PDTFactory.getCurrentLocalDateTime ().plusDays (2));
+    ret.setSubscriptionPeriod (period);
+    return ret;
+  }
+
+  @Nonnull
   public static RequestEventSubscriptionType createDemoRequestSubscription ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
@@ -674,8 +679,40 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
-    // if (aTLR.nextBoolean ())
-    // ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
+    if (aTLR.nextBoolean ())
+      ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
+    return ret;
+  }
+
+  @Nonnull
+  private static EventNotificationItemType _createRequestEventNotificationItemType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final EventNotificationItemType ret = new EventNotificationItemType ();
+    ret.setNotificationItemId (UUID.randomUUID ().toString ());
+    ret.setEventSubject (_createDRS ());
+    ret.setEventId ("EventID-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setCanonicalEventCatalogUri ("urn:event:EventSubscription-" + MathHelper.abs (aTLR.nextInt ()));
+    ret.setEventDate (PDTFactory.getCurrentLocalDateTime ());
+    ret.addRelatedEventSubject (_createDRS ());
+    if (aTLR.nextBoolean ())
+      ret.addRelatedEventSubject (_createDRS ());
+    return ret;
+  }
+
+  @Nonnull
+  public static EventNotificationType createDemoEventNotification ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final EventNotificationType ret = new EventNotificationType ();
+    ret.setNotificationId (UUID.randomUUID ().toString ());
+    ret.setSpecificationId (CIEM.SPECIFICATION_ID);
+    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
+    ret.setDataEvaluator (_createAgent ());
+    ret.setDataOwner (_createAgent ());
+    ret.addEventNotificationItem (_createRequestEventNotificationItemType ());
+    if (aTLR.nextBoolean ())
+      ret.addEventNotificationItem (_createRequestEventNotificationItemType ());
     return ret;
   }
 
