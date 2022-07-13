@@ -57,10 +57,10 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
 
-    final String requestId = map.getFirstRequestID ();
-    if (StringHelper.hasText (requestId))
+    final String sRequestId = map.getFirstRequestID ();
+    if (StringHelper.hasText (sRequestId))
     {
-      final ResponseExtractMultiEvidenceType evidence = map.getAndRemove (requestId);
+      final ResponseExtractMultiEvidenceType evidence = map.getAndRemove (sRequestId);
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());
@@ -68,7 +68,7 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
       final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
 
       final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                               prettyPrintByTransformer (marshaller.getAsString (evidence),
+                                                               prettyPrintByTransformer (marshaller.getAsDocument (evidence),
                                                                                          true))).setRows (25)
                                                                                                 .setCols (150)
                                                                                                 .setReadOnly (true)
@@ -76,11 +76,15 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
                                                                                                 .addClass (CBootstrapCSS.FORM_CONTROL);
 
       aNodeList.addChild (aTA);
+
+      aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
     }
     else
     {
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("No evidence found");
+
+      aNodeList.addChild (info ("Currently no received evidence is available"));
     }
   }
 }

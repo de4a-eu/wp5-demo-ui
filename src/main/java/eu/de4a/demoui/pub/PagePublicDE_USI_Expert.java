@@ -307,8 +307,10 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
           LOGGER.debug ("getting the response for request Id: " + sRequestID);
 
         final RedirectUserType aResponse = ResponseMapRedirect.getInstance ().getAndRemove (sRequestID);
+
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("redirection to: " + aResponse.getRedirectUrl ());
+
         aForm.addChild (new BootstrapButton ().addChild ("Manage received redirection messages")
                                               .setIcon (EDefaultIcon.INFO)
                                               .addStyle (ECSSProperty.MARGIN_LEFT, "16px")
@@ -319,6 +321,10 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       {
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("no redirect message found");
+
+        // No need for UI
+        if (false)
+          aNodeList.addChild (info ("Currently no received redirect is available"));
       }
     }
   }

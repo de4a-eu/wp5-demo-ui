@@ -304,7 +304,9 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
       {
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("getting the response for request Id: " + sRequestID);
+
         final RedirectUserType aResponse = map.getAndRemove (sRequestID);
+
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("redirection to: " + aResponse.getRedirectUrl ());
         aForm.addChild (new BootstrapButton ().addChild ("Manage received redirection messages")
@@ -317,6 +319,10 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
       {
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("no redirect message found");
+
+        // No need for UI
+        if (false)
+          aNodeList.addChild (info ("Currently no received redirect is available"));
       }
     }
   }

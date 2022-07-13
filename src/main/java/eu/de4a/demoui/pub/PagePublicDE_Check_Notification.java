@@ -30,8 +30,8 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
-import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.demoui.model.IDemoDocument;
+import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 
@@ -56,10 +56,10 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final ResponseMapEventNotification map = ResponseMapEventNotification.getInstance ();
 
-    final String requestId = map.getFirstRequestID ();
-    if (StringHelper.hasText (requestId))
+    final String sRequestId = map.getFirstRequestID ();
+    if (StringHelper.hasText (sRequestId))
     {
-      final EventNotificationType event = map.getAndRemove (requestId);
+      final EventNotificationType event = map.getAndRemove (sRequestId);
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("Getting from map the notification Id: " + event.getNotificationId ());
@@ -67,7 +67,7 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
       final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller ();
 
       final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                               prettyPrintByTransformer (marshaller.getAsString (event),
+                                                               prettyPrintByTransformer (marshaller.getAsDocument (event),
                                                                                          true))).setRows (25)
                                                                                                 .setCols (150)
                                                                                                 .setReadOnly (true)
@@ -75,11 +75,15 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
                                                                                                 .addClass (CBootstrapCSS.FORM_CONTROL);
 
       aNodeList.addChild (aTA);
+
+      aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
     }
     else
     {
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("No event found");
+
+      aNodeList.addChild (info ("Currently no received event is available"));
     }
   }
 }

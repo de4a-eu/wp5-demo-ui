@@ -208,20 +208,17 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
-            final ResponseTransferEvidenceType aErrorObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                         .read (aResponseBytes);
-            if (aErrorObj != null)
+            final DE4AMarshaller <ResponseTransferEvidenceType> m = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE);
+            final ResponseTransferEvidenceType aTransferEvidence = m.read (aResponseBytes);
+            if (aTransferEvidence != null)
             {
               DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
 
               // if no errors and cannonical evidence is received
-              if (aErrorObj.getErrorList () == null && aErrorObj.getCanonicalEvidence () != null)
+              if (aTransferEvidence.getErrorList () == null && aTransferEvidence.getCanonicalEvidence () != null)
               {
-
-                final String response = new String (aResponseBytes);
-
                 final HCTextArea responseXML = new HCTextArea (new RequestField (FIELD_RESPONSE,
-                                                                                 prettyPrintByTransformer (response,
+                                                                                 prettyPrintByTransformer (m.getAsDocument (aTransferEvidence),
                                                                                                            true))).setRows (25)
                                                                                                                   .setCols (150)
                                                                                                                   .setReadOnly (true)
@@ -236,16 +233,16 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
                 return;
               }
 
-              if (aErrorObj.getErrorList ().hasNoErrorEntries ())
+              if (aTransferEvidence.getErrorList ().hasNoErrorEntries ())
               {
                 aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
               }
               else
               {
                 final HCUL aUL = new HCUL ();
-                aErrorObj.getErrorList ()
-                         .getError ()
-                         .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                aTransferEvidence.getErrorList ()
+                                 .getError ()
+                                 .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
                 aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
               }
             }

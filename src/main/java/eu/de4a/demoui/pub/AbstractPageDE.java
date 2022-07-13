@@ -55,7 +55,6 @@ import com.helger.photon.bootstrap4.form.BootstrapViewForm;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
-import com.helger.xml.serialize.read.DOMReader;
 import com.helger.xml.serialize.write.EXMLSerializeIndent;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
@@ -525,13 +524,14 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     return aTable;
   }
 
-  protected static String prettyPrintByTransformer (final String xmlString, final boolean ignoreDeclaration)
+  @Nonnull
+  protected static String prettyPrintByTransformer (@Nullable final Document doc, final boolean ignoreDeclaration)
   {
+    if (doc == null)
+      return "Failed to parse XML - cannot pretty print it";
 
     try
     {
-      final Document document = DOMReader.readXMLDOM (xmlString);
-
       final TransformerFactory transformerFactory = XMLTransformerFactory.createTransformerFactory (null, null);
       transformerFactory.setAttribute ("indent-number", Integer.valueOf (2));
       final Transformer transformer = transformerFactory.newTransformer ();
@@ -539,13 +539,15 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       transformer.setOutputProperty (OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
       transformer.setOutputProperty (OutputKeys.INDENT, "yes");
 
-      final NonBlockingStringWriter out = new NonBlockingStringWriter ();
-      transformer.transform (new DOMSource (document), new StreamResult (out));
-      return out.getAsString ();
+      try (final NonBlockingStringWriter out = new NonBlockingStringWriter ())
+      {
+        transformer.transform (new DOMSource (doc), new StreamResult (out));
+        return out.getAsString ();
+      }
     }
     catch (final Exception e)
     {
-      throw new IllegalStateException ("Error occurs when pretty-printing xml:\n" + xmlString, e);
+      throw new IllegalStateException ("Error occurs when pretty-printing xml", e);
     }
   }
 }
