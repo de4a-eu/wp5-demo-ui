@@ -48,7 +48,7 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
                          @Nonnull final UnifiedResponse aUnifiedResponse) throws Exception
   {
     if (LOGGER.isInfoEnabled ())
-      LOGGER.info ("Received redirect DE4A message");
+      LOGGER.info ("Received redirect DE4A Redirect");
 
     final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
 

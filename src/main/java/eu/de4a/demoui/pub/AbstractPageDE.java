@@ -183,7 +183,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       case SUBSCRIPTION:
         return sBaseUrl + EDemoDocument.SUBS_REQ.getRelativeURL ();
       case NOTIFICATION:
-        return sBaseUrl + EDemoDocument.NOTIFY_REQ.getRelativeURL ();
+        return sBaseUrl + EDemoDocument.EVENT_NOTIFY.getRelativeURL ();
       default:
         throw new IllegalStateException ("Unsupported pattern " + ePattern);
     }

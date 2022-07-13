@@ -221,8 +221,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
     private String m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
     // use case
     private EUseCase m_eUseCase;
-    public ResponseLookupRoutingInformationType m_aIALResponse;
-    public ICommonsSet <String> m_aDOCountries;
+    private ResponseLookupRoutingInformationType m_aIALResponse;
+    private ICommonsSet <String> m_aDOCountries;
     // DE
     private Agent m_aDE;
     // DO
@@ -1388,6 +1388,9 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
           final BootstrapErrorBox aErrorBox = aForm.addAndReturnChild (error ());
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + aState.m_sRequestTargetURL + "'");
+
             DE4AKafkaClient.send (EErrorLevel.INFO,
                                   "DemoUI sending " +
                                                     m_ePattern.getDisplayName () +

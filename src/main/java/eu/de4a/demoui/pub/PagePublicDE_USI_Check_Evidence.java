@@ -28,9 +28,7 @@ import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
-import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
-import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.model.ResponseMapEvidence;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
@@ -40,10 +38,7 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Check_Evidence.class);
 
-  // We're doing a DR-IM request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
-
-  public static final String PARAM_REQUEST_ID = "requestid";
+  private static final String PARAM_REQUEST_ID = "requestid";
   private static final String FIELD_PAYLOAD = "payload";
 
   public PagePublicDE_USI_Check_Evidence (@Nonnull @Nonempty final String sID)

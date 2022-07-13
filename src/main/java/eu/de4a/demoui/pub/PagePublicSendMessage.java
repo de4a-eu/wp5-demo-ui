@@ -25,6 +25,8 @@ import javax.annotation.Nonnull;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.helger.commons.annotation.Nonempty;
@@ -79,6 +81,7 @@ import eu.de4a.iem.core.DE4ACoreNamespaceContext;
  */
 public final class PagePublicSendMessage extends AbstractAppWebPage
 {
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicSendMessage.class);
   private static final String FIELD_MODE = "mode";
   private static final String FIELD_DEST_BASE_URL = "destbaseurl";
   private static final String FIELD_PAYLOAD = "payload";
@@ -156,8 +159,12 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
           final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + sFinalURL + "'");
+
             final HttpPost aPost = new HttpPost (sFinalURL);
-            aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setEntity (new StringEntity (sPayload,
+                                               ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             sResponse = aHCM.execute (aPost, new ResponseHandlerString ());
           }
           catch (final IOException ex)
@@ -231,7 +238,8 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
-          aSelect.addOption (e.getID (), e.getDisplayName () + (e.hasRelativeURL () ? " (" + e.getRelativeURL () + ")" : ""));
+          aSelect.addOption (e.getID (),
+                             e.getDisplayName () + (e.hasRelativeURL () ? " (" + e.getRelativeURL () + ")" : ""));
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")
                                                      .setCtrl (aSelect)
@@ -239,7 +247,8 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
       }
 
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, AppConfig.getPublicURL ())))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL,
+                                                                                           AppConfig.getPublicURL ())))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
                                                    .setHelpText (span ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
                                                                        " The suffix of the Interface to test is added to this path." +

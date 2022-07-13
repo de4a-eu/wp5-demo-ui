@@ -276,7 +276,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
             EDemoDocument::createDemoRequestSubscription,
             DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),
   // Notify request
-  NOTIFY_REQ ("notify-req",
+  EVENT_NOTIFY ("notify-req",
               "Event Notification Request (C1 -> C2 and C3 -> C4)",
               "/event/notification",
               EDemoDocumentType.REQUEST,
@@ -679,8 +679,10 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
-    //if (aTLR.nextBoolean ())
-      //ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
+    // The Mock DO doesn't like that
+    if (false)
+      if (aTLR.nextBoolean ())
+        ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
     return ret;
   }
 

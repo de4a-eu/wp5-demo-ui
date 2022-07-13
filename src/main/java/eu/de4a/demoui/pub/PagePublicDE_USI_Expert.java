@@ -190,6 +190,9 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
           final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + sTargetURL + "'");
+
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload,

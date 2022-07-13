@@ -47,21 +47,21 @@ public final class DemoUIAPI
       aAPIRegistry.registerAPI (aDescriptor);
     }
 
-    // POST /inbound
+    // POST /de-inbound
     {
       final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-inbound"),
                                                            new APIExecutorPostDEInbound ()).setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
-    
-    // POST /redirect
+
+    // POST /de-redirect
     {
       final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-redirect"),
                                                            new APIExecutorPostDERedirect ()).setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
-    
-    // POST /notification
+
+    // POST /de-notification
     {
       final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-notification"),
                                                            new APIExecutorPostDENotification ()).setExceptionMapper (aExceptionMapper);

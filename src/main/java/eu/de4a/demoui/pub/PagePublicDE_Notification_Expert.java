@@ -85,8 +85,8 @@ public class PagePublicDE_Notification_Expert extends AbstractPageDE
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Notification_Expert.class);
 
-  // We're doing a DR-USI request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.NOTIFY_REQ;
+  // We're doing a Event Notification
+  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.EVENT_NOTIFY;
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
@@ -187,6 +187,9 @@ public class PagePublicDE_Notification_Expert extends AbstractPageDE
           final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + sTargetURL + "'");
+
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload,

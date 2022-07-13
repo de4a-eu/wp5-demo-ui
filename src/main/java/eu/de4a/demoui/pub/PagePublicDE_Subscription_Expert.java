@@ -84,10 +84,10 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Subscription_Expert.class);
+  // We're doing a Subscription request
+  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.SUBS_REQ;
 
-  // We're doing a DR-USI request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.SUBS_REQ;
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Subscription_Expert.class);
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
@@ -112,10 +112,10 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 
       final EventSubscripRequestItemType item = ret.getEventSubscripRequestItemAtIndex (0);
       item.setCanonicalEventCatalogUri (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
-      item.getDataRequestSubject().setDataSubjectPerson(null);
-      item.getDataRequestSubject().setDataSubjectCompany(new LegalPersonIdentifierType());
-      item.getDataRequestSubject ().getDataSubjectCompany().setLegalPersonIdentifier("NL/SE/5591674170");
-      item.getDataRequestSubject ().getDataSubjectCompany().setLegalName("LegalName-1602842249");
+      item.getDataRequestSubject ().setDataSubjectPerson (null);
+      item.getDataRequestSubject ().setDataSubjectCompany (new LegalPersonIdentifierType ());
+      item.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("NL/SE/5591674170");
+      item.getDataRequestSubject ().getDataSubjectCompany ().setLegalName ("LegalName-1602842249");
 
     }
     return ret;
@@ -192,6 +192,9 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
           final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + sTargetURL + "'");
+
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload,

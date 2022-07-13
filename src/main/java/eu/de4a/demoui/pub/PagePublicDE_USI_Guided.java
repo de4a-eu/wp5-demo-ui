@@ -1391,6 +1391,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           final BootstrapErrorBox aErrorBox = aForm.addAndReturnChild (error ());
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + aState.m_sRequestTargetURL + "'");
+
             DE4AKafkaClient.send (EErrorLevel.INFO,
                                   "DemoUI sending " +
                                                     m_ePattern.getDisplayName () +

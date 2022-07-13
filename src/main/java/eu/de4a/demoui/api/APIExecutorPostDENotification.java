@@ -47,7 +47,7 @@ public class APIExecutorPostDENotification implements IAPIExecutor
                          @Nonnull final UnifiedResponse aUnifiedResponse) throws Exception
   {
     if (LOGGER.isInfoEnabled ())
-      LOGGER.info ("Received inbound DE4A message");
+      LOGGER.info ("Received inbound DE4A Notification");
 
     final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
 

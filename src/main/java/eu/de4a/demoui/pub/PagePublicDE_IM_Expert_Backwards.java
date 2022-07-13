@@ -24,6 +24,8 @@ import javax.annotation.Nonnull;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.error.IError;
@@ -79,8 +81,9 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
 {
   // We're doing a DR-IM request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR_IT1;
+  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR_IT1;
 
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_Expert_Backwards.class);
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
   private static final String FIELD_RESPONSE = "response";
@@ -179,6 +182,9 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
           final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + sTargetURL + "'");
+
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
             aPost.setEntity (new StringEntity (sPayload,
