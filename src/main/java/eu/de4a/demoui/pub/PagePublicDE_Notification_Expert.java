@@ -224,13 +224,13 @@ public class PagePublicDE_Notification_Expert extends AbstractPageDE
               DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
               if (aErrorObj.isAck ())
               {
-                aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
+                aResNL.addChild (success (div ("The request was accepted by the Connector.")));
               }
               else
               {
                 final HCUL aUL = new HCUL ();
                 aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-                aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
+                aErrorBox.addChild (div ("The data could not be fetched from the Connector")).addChild (aUL);
               }
             }
             else
