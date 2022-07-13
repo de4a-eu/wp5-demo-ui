@@ -214,7 +214,8 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
-            final DE4AMarshaller <ResponseTransferEvidenceType> m = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE);
+            final DE4AMarshaller <ResponseTransferEvidenceType> m = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                                  .formatted ();
             final ResponseTransferEvidenceType aTransferEvidence = m.read (aResponseBytes);
             if (aTransferEvidence != null)
             {
@@ -224,12 +225,11 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
               if (aTransferEvidence.getErrorList () == null && aTransferEvidence.getCanonicalEvidence () != null)
               {
                 final HCTextArea responseXML = new HCTextArea (new RequestField (FIELD_RESPONSE,
-                                                                                 prettyPrintByTransformer (m.getAsDocument (aTransferEvidence),
-                                                                                                           true))).setRows (25)
-                                                                                                                  .setCols (150)
-                                                                                                                  .setReadOnly (true)
-                                                                                                                  .addClass (CBootstrapCSS.TEXT_MONOSPACE)
-                                                                                                                  .addClass (CBootstrapCSS.FORM_CONTROL);
+                                                                                 m.getAsString (aTransferEvidence))).setRows (25)
+                                                                                                                    .setCols (150)
+                                                                                                                    .setReadOnly (true)
+                                                                                                                    .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                                                    .addClass (CBootstrapCSS.FORM_CONTROL);
 
                 aNodeList.addChild (responseXML);
 

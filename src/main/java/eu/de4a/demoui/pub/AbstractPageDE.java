@@ -15,19 +15,12 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.helger.commons.ValueEnforcer;
@@ -35,7 +28,6 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.builder.IBuilder;
 import com.helger.commons.collection.impl.CommonsArrayList;
 import com.helger.commons.datetime.PDTToString;
-import com.helger.commons.io.stream.NonBlockingStringWriter;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.IHCNode;
 import com.helger.html.hc.ext.HCA_MailTo;
@@ -58,7 +50,6 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.xml.serialize.write.EXMLSerializeIndent;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
-import com.helger.xml.transform.XMLTransformerFactory;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
@@ -529,32 +520,5 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       }
     }
     return aTable;
-  }
-
-  @Nonnull
-  protected static String prettyPrintByTransformer (@Nullable final Document doc, final boolean ignoreDeclaration)
-  {
-    if (doc == null)
-      return "Failed to parse XML - cannot pretty print it";
-
-    try
-    {
-      final TransformerFactory transformerFactory = XMLTransformerFactory.createTransformerFactory (null, null);
-      transformerFactory.setAttribute ("indent-number", Integer.valueOf (2));
-      final Transformer transformer = transformerFactory.newTransformer ();
-      transformer.setOutputProperty (OutputKeys.ENCODING, StandardCharsets.UTF_8.name ());
-      transformer.setOutputProperty (OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
-      transformer.setOutputProperty (OutputKeys.INDENT, "yes");
-
-      try (final NonBlockingStringWriter out = new NonBlockingStringWriter ())
-      {
-        transformer.transform (new DOMSource (doc), new StreamResult (out));
-        return out.getAsString ();
-      }
-    }
-    catch (final Exception e)
-    {
-      throw new IllegalStateException ("Error occurs when pretty-printing xml", e);
-    }
   }
 }

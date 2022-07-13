@@ -56,17 +56,17 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
       LOGGER.info ("Received " + aPayload.length + " bytes");
 
     final DE4ACoreMarshaller <RedirectUserType> marshaller = DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ();
-    // DE4ACoreMarshaller<RedirectUserType> marshaller =
-    // DE4ACoreMarshaller.deUSIRedirectUserMarshaller();
-
     final RedirectUserType redirectUserType = marshaller.read (aPayload);
     if (redirectUserType == null)
     {
-      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse USI redirect response");
+      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse RedirectUserType response");
       aUnifiedResponse.setStatus (CHttp.HTTP_BAD_REQUEST).disableCaching ();
     }
     else
     {
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("Unmarshalled payload as " + redirectUserType.getClass ().getSimpleName ());
+
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("using UnifiedResponse for redirection: " + redirectUserType.getRedirectUrl ());
 

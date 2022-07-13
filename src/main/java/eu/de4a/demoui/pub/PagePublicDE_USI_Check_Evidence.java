@@ -38,7 +38,6 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Check_Evidence.class);
 
-  private static final String PARAM_REQUEST_ID = "requestid";
   private static final String FIELD_PAYLOAD = "payload";
 
   public PagePublicDE_USI_Check_Evidence (@Nonnull @Nonempty final String sID)
@@ -55,24 +54,24 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
     final String sRequestId = map.getFirstRequestID ();
     if (StringHelper.hasText (sRequestId))
     {
+      aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
+
       final ResponseExtractMultiEvidenceType evidence = map.getAndRemove (sRequestId);
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());
 
-      final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
+      final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                                                 .formatted ();
 
       final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                               prettyPrintByTransformer (marshaller.getAsDocument (evidence),
-                                                                                         true))).setRows (25)
-                                                                                                .setCols (150)
-                                                                                                .setReadOnly (true)
-                                                                                                .addClass (CBootstrapCSS.TEXT_MONOSPACE)
-                                                                                                .addClass (CBootstrapCSS.FORM_CONTROL);
+                                                               marshaller.getAsString (evidence))).setRows (25)
+                                                                                                  .setCols (150)
+                                                                                                  .setReadOnly (true)
+                                                                                                  .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                                  .addClass (CBootstrapCSS.FORM_CONTROL);
 
       aNodeList.addChild (aTA);
-
-      aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
     }
     else
     {

@@ -58,17 +58,17 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
       LOGGER.info ("Received " + aPayload.length + " bytes");
 
     // MARSHALLING
-    final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.dtResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
-    final ResponseExtractMultiEvidenceType response = marshaller.read (aPayload);
+    final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> m = DE4ACoreMarshaller.dtResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
+    final ResponseExtractMultiEvidenceType response = m.read (aPayload);
     if (response == null)
     {
-      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse Event Notification response");
+      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse ResponseExtractMultiEvidenceType response");
       aUnifiedResponse.setStatus (CHttp.HTTP_BAD_REQUEST).disableCaching ();
     }
     else
     {
       if (LOGGER.isInfoEnabled ())
-        LOGGER.info ("Unmarshalled payload");
+        LOGGER.info ("Unmarshalled payload as " + response.getClass ().getSimpleName ());
 
       // SAVE TO FILE
       if (false)

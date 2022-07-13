@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RequestTransferEvidenceUSI xmlns="http://www.de4a.eu/2020/data/requestor/v2" xmlns:eil="http://eidas.europa.eu/attributes/legalperson" xmlns:ein="http://eidas.europa.eu/attributes/naturalperson" xmlns:ct="http://www.de4a.eu/2020/commons/type/v2">
+  <ct:RequestId>d6962a65-89c5-4ffb-a3ef-e5f187a2f57a</ct:RequestId>
+  <ct:SpecificationId>de4a-iem-v2</ct:SpecificationId>
+  <ct:TimeStamp>2022-07-13T19:37:33.569</ct:TimeStamp>
+  <ct:ProcedureId>Procedure-2032958362</ct:ProcedureId>
+  <ct:DataEvaluator>
+    <ct:AgentUrn>iso6523-actorid-upis::9999:demoui-localhost-it2</ct:AgentUrn>
+    <ct:AgentName>Maxi Musterfrau 1469752775</ct:AgentName>
+  </ct:DataEvaluator>
+  <ct:DataOwner>
+    <ct:AgentUrn>iso6523-actorid-upis::9999:mock-do-localhost-it2</ct:AgentUrn>
+    <ct:AgentName>Maxi Musterfrau 1213639354</ct:AgentName>
+  </ct:DataOwner>
+  <ct:RequestEvidenceUSIItem>
+    <ct:RequestItemId>e2a9be9e-abd8-4e31-b5d4-7dfd035e8b01</ct:RequestItemId>
+    <ct:DataRequestSubject>
+      <ct:DataSubjectPerson>
+        <!-- 
+          ES/SI/87654320 - no auto response
+          ES/SI/87654321 - immediate response
+        -->
+        <ct:PersonIdentifier>ES/SI/87654320</ct:PersonIdentifier>
+        <ct:FirstName>FirstName-886820254</ct:FirstName>
+        <ct:FamilyName>FamilyName-1113209844</ct:FamilyName>
+        <ct:DateOfBirth>1971-07-13</ct:DateOfBirth>
+        <ct:Gender>Female</ct:Gender>
+      </ct:DataSubjectPerson>
+    </ct:DataRequestSubject>
+    <ct:CanonicalEvidenceTypeId>urn:de4a-eu:CanonicalEvidenceType::HigherEducationDiploma:1.0</ct:CanonicalEvidenceTypeId>
+    <ct:RequestGrounds>
+      <ct:ExplicitRequest>SDGR14</ct:ExplicitRequest>
+    </ct:RequestGrounds>
+    <ct:DataEvaluatorURL>http://localhost:8090/public/locale-en_US/menuitem-de-usi-evidence</ct:DataEvaluatorURL>
+  </ct:RequestEvidenceUSIItem>
+</RequestTransferEvidenceUSI>

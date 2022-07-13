@@ -59,24 +59,24 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
     final String sRequestId = map.getFirstRequestID ();
     if (StringHelper.hasText (sRequestId))
     {
+      aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
+
       final EventNotificationType event = map.getAndRemove (sRequestId);
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("Getting from map the notification Id: " + event.getNotificationId ());
 
-      final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller ();
+      final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller ()
+                                                                                      .formatted ();
 
       final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                               prettyPrintByTransformer (marshaller.getAsDocument (event),
-                                                                                         true))).setRows (25)
-                                                                                                .setCols (150)
-                                                                                                .setReadOnly (true)
-                                                                                                .addClass (CBootstrapCSS.TEXT_MONOSPACE)
-                                                                                                .addClass (CBootstrapCSS.FORM_CONTROL);
+                                                               marshaller.getAsString (event))).setRows (25)
+                                                                                               .setCols (150)
+                                                                                               .setReadOnly (true)
+                                                                                               .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                               .addClass (CBootstrapCSS.FORM_CONTROL);
 
       aNodeList.addChild (aTA);
-
-      aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
     }
     else
     {
