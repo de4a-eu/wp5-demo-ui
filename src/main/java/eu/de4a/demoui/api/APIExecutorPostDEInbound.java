@@ -33,7 +33,7 @@ import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
-import eu.de4a.demoui.model.EvidenceResponseMap;
+import eu.de4a.demoui.model.ResponseMapEvidence;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
@@ -70,7 +70,7 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
 
     // SAVE INTO MAP
     LOGGER.debug ("storing evidence message");
-    final EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
+    final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
     map.cleanMap ();
     map.register (response);
 

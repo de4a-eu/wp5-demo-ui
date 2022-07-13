@@ -15,6 +15,7 @@
  */
 package eu.de4a.demoui.pub;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import javax.annotation.Nonnull;
@@ -179,7 +180,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     if (ePattern == EPatternType.IM_IT1)
       return sBaseUrl + EDemoDocument.IM_REQ_DE_DR_IT1.getRelativeURL ();
     if (ePattern == EPatternType.SUBSCRIPTION)
-        return sBaseUrl + EDemoDocument.SUBS_REQ_DE_DR.getRelativeURL ();
+      return sBaseUrl + EDemoDocument.SUBS_REQ_DE_DR.getRelativeURL ();
     throw new IllegalStateException ("Unsupported pattern " + ePattern);
   }
 
@@ -524,9 +525,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     return aTable;
   }
 
-  protected static String prettyPrintByTransformer (final String xmlString,
-                                                    final int indent,
-                                                    final boolean ignoreDeclaration)
+  protected static String prettyPrintByTransformer (final String xmlString, final boolean ignoreDeclaration)
   {
 
     try
@@ -534,9 +533,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       final Document document = DOMReader.readXMLDOM (xmlString);
 
       final TransformerFactory transformerFactory = XMLTransformerFactory.createTransformerFactory (null, null);
-      transformerFactory.setAttribute ("indent-number", Integer.valueOf (indent));
+      transformerFactory.setAttribute ("indent-number", Integer.valueOf (2));
       final Transformer transformer = transformerFactory.newTransformer ();
-      transformer.setOutputProperty (OutputKeys.ENCODING, "UTF-8");
+      transformer.setOutputProperty (OutputKeys.ENCODING, StandardCharsets.UTF_8.name ());
       transformer.setOutputProperty (OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
       transformer.setOutputProperty (OutputKeys.INDENT, "yes");
 

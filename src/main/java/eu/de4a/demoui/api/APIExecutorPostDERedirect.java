@@ -32,7 +32,7 @@ import com.helger.servlet.response.ERedirectMode;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.model.RedirectResponseMap;
+import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
@@ -47,18 +47,19 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
                          @Nonnull final IRequestWebScopeWithoutResponse aRequestScope,
                          @Nonnull final UnifiedResponse aUnifiedResponse) throws Exception
   {
-    LOGGER.info ("Received redirect DE4A message");
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received redirect DE4A message");
 
     final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
-    LOGGER.info ("Received " + aPayload.length + " bytes");
+
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received " + aPayload.length + " bytes");
 
     final DE4ACoreMarshaller <RedirectUserType> marshaller = DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ();
     // DE4ACoreMarshaller<RedirectUserType> marshaller =
     // DE4ACoreMarshaller.deUSIRedirectUserMarshaller();
 
     final RedirectUserType redirectUserType = marshaller.read (aPayload);
-    LOGGER.info ("Unmarshalled redirect message URL: " + redirectUserType.getRedirectUrl ());
-
     if (redirectUserType == null)
     {
       DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse USI redirect response");
@@ -66,13 +67,14 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
     }
     else
     {
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("using UnifiedResponse for redirection: " + redirectUserType.getRedirectUrl ());
 
-      LOGGER.debug ("using UnifiedResponse for redirection: " + redirectUserType.getRedirectUrl ());
+      // store message
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("storing redirection message");
+      ResponseMapRedirect.getInstance ().register (redirectUserType);
 
-     // store message
-  	  LOGGER.debug ("storing redirection message");
-      RedirectResponseMap.getInstance ().register (redirectUserType);
-      
       aUnifiedResponse.disableCaching ()
                       .setRedirect (redirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
 
@@ -81,7 +83,7 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
     aUnifiedResponse.disableCaching ();
     aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
 
-    LOGGER.info ("Finished handling redirect DE4A message");
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Finished handling redirect DE4A message");
   }
-
 }

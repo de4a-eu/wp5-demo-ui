@@ -29,43 +29,42 @@ import com.helger.commons.string.StringHelper;
 import com.helger.scope.singleton.AbstractGlobalSingleton;
 
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
-import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 
 /**
- * This class contains all instances of the {@link RedirectUserType}.
- * This stores the Post-Redirect-Get response for the USI-back-redirection.
+ * This class contains all instances of the {@link RedirectUserType}. This
+ * stores the Post-Redirect-Get response for the USI-back-redirection.
  *
  * @author Philip Helger
  */
-public final class EvidenceResponseMap extends AbstractGlobalSingleton
+public final class ResponseMapRedirect extends AbstractGlobalSingleton
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger (EvidenceResponseMap.class);
-  private final ICommonsMap <String, ResponseExtractMultiEvidenceType> m_aMap = new CommonsHashMap <> ();
+  private static final Logger LOGGER = LoggerFactory.getLogger (ResponseMapRedirect.class);
+  private final ICommonsMap <String, RedirectUserType> m_aMap = new CommonsHashMap <> ();
 
   @Deprecated
   @UsedViaReflection
-  public EvidenceResponseMap ()
+  public ResponseMapRedirect ()
   {}
 
   @Nonnull
-  public static EvidenceResponseMap getInstance ()
+  public static ResponseMapRedirect getInstance ()
   {
-    return getGlobalSingleton (EvidenceResponseMap.class);
+    return getGlobalSingleton (ResponseMapRedirect.class);
   }
 
-  public void register (@Nonnull final ResponseExtractMultiEvidenceType aResponse)
+  public void register (@Nonnull final RedirectUserType aResponse)
   {
     ValueEnforcer.notNull (aResponse, "Response");
-    final String sKey = aResponse.getRequestId();
+    final String sKey = aResponse.getRequestId ();
     m_aRWLock.writeLocked ( () -> {
       if (m_aMap.containsKey (sKey))
-        LOGGER.warn ("Overwriting Evidence for '" + sKey + "'");
+        LOGGER.warn ("Overwriting Response Redirect URL for '" + sKey + "'");
       m_aMap.put (sKey, aResponse);
     });
   }
 
   @Nullable
-  public ResponseExtractMultiEvidenceType get (@Nullable final String sID)
+  public RedirectUserType get (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;
@@ -73,18 +72,16 @@ public final class EvidenceResponseMap extends AbstractGlobalSingleton
   }
 
   @Nullable
-  public ResponseExtractMultiEvidenceType getAndRemove (@Nullable final String sID)
+  public RedirectUserType getAndRemove (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;
     return m_aRWLock.writeLockedGet ( () -> m_aMap.remove (sID));
   }
 
-	public ICommonsMap<String, ResponseExtractMultiEvidenceType> getM_aMap() {
-		return m_aMap;
-	}
-	
-	public void cleanMap() {
-		m_aMap.clear();
-	}
+  @Nullable
+  public String getFirstRequestID ()
+  {
+    return m_aRWLock.readLockedGet (m_aMap::getFirstKey);
+  }
 }

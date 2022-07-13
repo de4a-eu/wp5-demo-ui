@@ -18,7 +18,6 @@ package eu.de4a.demoui.pub;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -73,7 +72,7 @@ import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
-import eu.de4a.demoui.model.RedirectResponseMap;
+import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
@@ -84,39 +83,42 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_USI_Expert extends AbstractPageDE
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Expert.class);
-
   // We're doing a DR-USI request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
+  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Expert.class);
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
-  private boolean isRequestSent = false;
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
+
+  private boolean m_bRequestSent = false;
 
   @Nonnull
   private static RequestExtractMultiEvidenceUSIType _createDemoRequest ()
   {
-    RequestExtractMultiEvidenceUSIType aDemoRequest;
+    RequestExtractMultiEvidenceUSIType ret;
     {
       // We want a subject person
       while (true)
       {
-        aDemoRequest = (RequestExtractMultiEvidenceUSIType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceUSIItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
+        ret = (RequestExtractMultiEvidenceUSIType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (ret.getRequestEvidenceUSIItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
-      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T41_SI2.getParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T41_ES.getParticipantID ());
 
-      for (final RequestEvidenceItemType item : aDemoRequest.getRequestEvidenceUSIItem ())
+      // Set default DE/DO
+      ret.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T41_SI2.getParticipantID ());
+      ret.getDataOwner ().setAgentUrn (EMockDataOwner.T41_ES.getParticipantID ());
+
+      for (final RequestEvidenceItemType item : ret.getRequestEvidenceUSIItem ())
       {
         item.setCanonicalEvidenceTypeId (EUseCase.HIGHER_EDUCATION_DIPLOMA.getDocumentTypeID ().getURIEncoded ());
         item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("ES/SI/53377873W");
       }
     }
-    return aDemoRequest;
+    return ret;
   }
 
   static
@@ -195,7 +197,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
             aPost.setEntity (new StringEntity (sPayload,
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-            isRequestSent = true;
+            m_bRequestSent = true;
 
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
@@ -291,24 +293,20 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("getting the request ID, iterate map");
 
-      if (isRequestSent)
+      if (m_bRequestSent)
       {
         ThreadHelper.sleepSeconds (2);
       }
 
-      final RedirectResponseMap map = RedirectResponseMap.getInstance ();
+      final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
 
-      if (map.getMap ().isNotEmpty ())
+      final String sRequestID = map.getFirstRequestID ();
+      if (StringHelper.hasText (sRequestID))
       {
-        String sRequestID = "";
-        for (final Map.Entry <String, RedirectUserType> entry : map.getMap ().entrySet ())
-        {
-          sRequestID = entry.getKey ();
-        }
-
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("getting the response for request Id: " + sRequestID);
-        final RedirectUserType aResponse = RedirectResponseMap.getInstance ().getAndRemove (sRequestID);
+
+        final RedirectUserType aResponse = ResponseMapRedirect.getInstance ().getAndRemove (sRequestID);
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("redirection to: " + aResponse.getRedirectUrl ());
         aForm.addChild (new BootstrapButton ().addChild ("Manage received redirection messages")
@@ -322,33 +320,6 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
         if (LOGGER.isDebugEnabled ())
           LOGGER.debug ("no redirect message found");
       }
-
-      /*
-       * final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-       * DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows
-       * (10) .addClass (CBootstrapCSS.TEXT_MONOSPACE);
-       *//*
-          * aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory
-          * ("Payload").setCtrl(aTA, new
-          * BootstrapButton().addChild("Manage received redirection messages")
-          * .setIcon(EDefaultIcon.INFO) .setOnClick(new SimpleURL
-          * (aResponse.getRedirectUrl()))));
-          */
-
-      // https://pre-smp-dr-de4a.redsara.es/de4a-mock-connector/do1/preview/index?requestId=860b2e73-1249-4231-9aad-e139115002de
-      // aResponse.getRedirectUrl()
-      /*
-       * LOGGER.debug ("getting the request ID, iterate map"); String sRequestID
-       * = ""; RedirectResponseMap map = RedirectResponseMap.getInstance (); for
-       * (Map.Entry<String, RedirectUserType> entry :
-       * map.getM_aMap().entrySet()) { sRequestID = entry.getKey(); } //final
-       * String sRequestID = aWPEC.params ().getAsString (PARAM_REQUEST_ID);
-       * LOGGER.debug ("getting the response for request Id: "+sRequestID);
-       * final RedirectUserType aResponse = RedirectResponseMap.getInstance
-       * ().getAndRemove (sRequestID); LOGGER.debug ("redirection to: "+
-       * aResponse.getRedirectUrl()); aWPEC.postRedirectGetExternal(new
-       * SimpleURL (aResponse.getRedirectUrl()));
-       */
     }
   }
 }

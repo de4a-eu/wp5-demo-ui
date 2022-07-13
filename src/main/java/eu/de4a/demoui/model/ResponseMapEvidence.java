@@ -28,34 +28,34 @@ import com.helger.commons.collection.impl.ICommonsMap;
 import com.helger.commons.string.StringHelper;
 import com.helger.scope.singleton.AbstractGlobalSingleton;
 
-import eu.de4a.iem.core.jaxb.common.EventNotificationType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 
 /**
- * This class contains all instances of the {@link RedirectUserType}.
- * This stores the Post-Redirect-Get response for the USI-back-redirection.
+ * This class contains all instances of the
+ * {@link ResponseExtractMultiEvidenceType}.
  *
  * @author Philip Helger
  */
-public final class EventNotificationResponseMap extends AbstractGlobalSingleton
+public final class ResponseMapEvidence extends AbstractGlobalSingleton
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger (EventNotificationResponseMap.class);
-  private final ICommonsMap <String, EventNotificationType> m_aMap = new CommonsHashMap <> ();
+  private static final Logger LOGGER = LoggerFactory.getLogger (ResponseMapEvidence.class);
+  private final ICommonsMap <String, ResponseExtractMultiEvidenceType> m_aMap = new CommonsHashMap <> ();
 
   @Deprecated
   @UsedViaReflection
-  public EventNotificationResponseMap ()
+  public ResponseMapEvidence ()
   {}
 
   @Nonnull
-  public static EventNotificationResponseMap getInstance ()
+  public static ResponseMapEvidence getInstance ()
   {
-    return getGlobalSingleton (EventNotificationResponseMap.class);
+    return getGlobalSingleton (ResponseMapEvidence.class);
   }
 
-  public void register (@Nonnull final EventNotificationType aResponse)
+  public void register (@Nonnull final ResponseExtractMultiEvidenceType aResponse)
   {
     ValueEnforcer.notNull (aResponse, "Response");
-    final String sKey = aResponse.getNotificationId();
+    final String sKey = aResponse.getRequestId ();
     m_aRWLock.writeLocked ( () -> {
       if (m_aMap.containsKey (sKey))
         LOGGER.warn ("Overwriting Evidence for '" + sKey + "'");
@@ -64,7 +64,7 @@ public final class EventNotificationResponseMap extends AbstractGlobalSingleton
   }
 
   @Nullable
-  public EventNotificationType get (@Nullable final String sID)
+  public ResponseExtractMultiEvidenceType get (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;
@@ -72,18 +72,21 @@ public final class EventNotificationResponseMap extends AbstractGlobalSingleton
   }
 
   @Nullable
-  public EventNotificationType getAndRemove (@Nullable final String sID)
+  public ResponseExtractMultiEvidenceType getAndRemove (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;
     return m_aRWLock.writeLockedGet ( () -> m_aMap.remove (sID));
   }
 
-	public ICommonsMap<String, EventNotificationType> getM_aMap() {
-		return m_aMap;
-	}
-	
-	public void cleanMap() {
-		m_aMap.clear();
-	}
+  @Nullable
+  public String getFirstRequestID ()
+  {
+    return m_aRWLock.readLockedGet (m_aMap::getFirstKey);
+  }
+
+  public void cleanMap ()
+  {
+    m_aRWLock.writeLocked (m_aMap::clear);
+  }
 }

@@ -15,14 +15,13 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.util.Map;
-
 import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
@@ -31,8 +30,8 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
-import eu.de4a.demoui.model.EvidenceResponseMap;
 import eu.de4a.demoui.model.IDemoDocument;
+import eu.de4a.demoui.model.ResponseMapEvidence;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
@@ -56,27 +55,20 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
   protected void fillContent (final WebPageExecutionContext aWPEC)
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
-    ResponseExtractMultiEvidenceType evidence = null;
-    final EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
+    final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
 
-    String requestId = "";
-
-    if (map.getM_aMap ().size () > 0)
+    final String requestId = map.getFirstRequestID ();
+    if (StringHelper.hasText (requestId))
     {
-      for (final Map.Entry <String, ResponseExtractMultiEvidenceType> entry : map.getM_aMap ().entrySet ())
-      {
-        requestId = entry.getKey ();
-      }
+      final ResponseExtractMultiEvidenceType evidence = map.getAndRemove (requestId);
 
-      evidence = map.getAndRemove (requestId);
-
-      LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());
 
       final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
 
       final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
                                                                prettyPrintByTransformer (marshaller.getAsString (evidence),
-                                                                                         2,
                                                                                          true))).setRows (25)
                                                                                                 .setCols (150)
                                                                                                 .setReadOnly (true)
@@ -84,11 +76,11 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
                                                                                                 .addClass (CBootstrapCSS.FORM_CONTROL);
 
       aNodeList.addChild (aTA);
-
     }
     else
     {
-      LOGGER.debug ("No evidence found");
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("No evidence found");
     }
   }
 }

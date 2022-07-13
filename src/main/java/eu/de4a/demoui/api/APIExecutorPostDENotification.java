@@ -15,14 +15,10 @@
  */
 package eu.de4a.demoui.api;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import org.apache.pdfbox.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +30,8 @@ import com.helger.photon.api.IAPIExecutor;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.AppConfig;
-import eu.de4a.demoui.model.EventNotificationResponseMap;
+import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
-import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 
 public class APIExecutorPostDENotification implements IAPIExecutor
@@ -69,7 +63,7 @@ public class APIExecutorPostDENotification implements IAPIExecutor
    */ 
     // SAVE INTO MAP
     LOGGER.debug ("storing evidence message");
-    EventNotificationResponseMap map = EventNotificationResponseMap.getInstance();
+    ResponseMapEventNotification map = ResponseMapEventNotification.getInstance();
     map.cleanMap();
     map.register(response);
     

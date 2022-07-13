@@ -15,14 +15,13 @@
  */
 package eu.de4a.demoui.pub;
 
-import java.util.Map;
-
 import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
@@ -31,19 +30,18 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
-import eu.de4a.demoui.model.EventNotificationResponseMap;
+import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
-import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 
 public class PagePublicDE_Check_Notification extends AbstractPageDE
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Check_Notification.class);
-  
+
   // We're doing a DR-IM request
   public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.USI_REQ_DE_DR;
-  
+
   public static final String PARAM_REQUEST_ID = "requestid";
   private static final String FIELD_PAYLOAD = "payload";
 
@@ -55,34 +53,33 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
   @Override
   protected void fillContent (final WebPageExecutionContext aWPEC)
   {
-	  final HCNodeList aNodeList = aWPEC.getNodeList ();
-	  EventNotificationType event = null;
-	  EventNotificationResponseMap map = EventNotificationResponseMap.getInstance ();
-    
-    String requestId = "";
-    
-    if (map.getM_aMap().size() >0) {
-  	  for (Map.Entry<String, EventNotificationType> entry : map.getM_aMap().entrySet()) {
-  		  requestId = entry.getKey();
-        }
-  	  
-  	  	event = map.getAndRemove(requestId);
-  	
-        LOGGER.debug ("Getting from map the notification Id: " + event.getNotificationId());
-        
-        DE4ACoreMarshaller<EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller();
-        
-        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD, prettyPrintByTransformer(marshaller.getAsString(event), 2, true)))
-        		.setRows (25)
-          		.setCols(150)
-          		.setReadOnly(true)
-          		.addClass (CBootstrapCSS.TEXT_MONOSPACE)
-    	  		.addClass (CBootstrapCSS.FORM_CONTROL);
-        
-        aNodeList.addChild(aTA);
-                   
-    } else {
-  	  LOGGER.debug ("No event found");
+    final HCNodeList aNodeList = aWPEC.getNodeList ();
+    final ResponseMapEventNotification map = ResponseMapEventNotification.getInstance ();
+
+    final String requestId = map.getFirstRequestID ();
+    if (StringHelper.hasText (requestId))
+    {
+      final EventNotificationType event = map.getAndRemove (requestId);
+
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("Getting from map the notification Id: " + event.getNotificationId ());
+
+      final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller ();
+
+      final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+                                                               prettyPrintByTransformer (marshaller.getAsString (event),
+                                                                                         true))).setRows (25)
+                                                                                                .setCols (150)
+                                                                                                .setReadOnly (true)
+                                                                                                .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                                .addClass (CBootstrapCSS.FORM_CONTROL);
+
+      aNodeList.addChild (aTA);
+    }
+    else
+    {
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("No event found");
     }
   }
 }

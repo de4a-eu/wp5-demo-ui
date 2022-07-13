@@ -66,8 +66,8 @@ import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
-import eu.de4a.demoui.model.EvidenceResponseMap;
 import eu.de4a.demoui.model.IDemoDocument;
+import eu.de4a.demoui.model.ResponseMapEvidence;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
@@ -90,7 +90,7 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
   @Nonnull
   private static RequestTransferEvidenceUSIIMDRType _createDemoRequest ()
   {
-	  RequestTransferEvidenceUSIIMDRType aDemoRequest;
+    RequestTransferEvidenceUSIIMDRType aDemoRequest;
     {
       // We want a legal person
       while (true)
@@ -101,11 +101,9 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
       }
       aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
-      aDemoRequest.getDataRequestSubject ()
-                  .getDataSubjectCompany ()
-                  .setLegalPersonIdentifier ("AT/NL/???");
+      aDemoRequest.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("AT/NL/???");
       aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION_IT1.getDocumentTypeID ().getURIEncoded ());
-      
+
     }
     return aDemoRequest;
   }
@@ -210,42 +208,44 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
-        	final ResponseTransferEvidenceType aErrorObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                      .read (aResponseBytes);
+            final ResponseTransferEvidenceType aErrorObj = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                         .read (aResponseBytes);
             if (aErrorObj != null)
             {
               DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
-              
-              // if no errors and cannonical evidence is received
-              if(aErrorObj.getErrorList() == null && aErrorObj.getCanonicalEvidence() != null) {
-            	  
-            	  String response = new String(aResponseBytes);
-            	  
-            	  HCTextArea responseXML = new HCTextArea (new RequestField (FIELD_RESPONSE, prettyPrintByTransformer(response, 2, true)))
-                  		.setRows (25)
-                  		.setCols(150)
-                  		.setReadOnly(true)
-                  		.addClass (CBootstrapCSS.TEXT_MONOSPACE)
-            	  		.addClass (CBootstrapCSS.FORM_CONTROL);
-            	  		
-                  aNodeList.addChild(responseXML);
-                  
-                  //clean evidence map after showing synchronous response
-                  EvidenceResponseMap map = EvidenceResponseMap.getInstance ();
-                  map.cleanMap();
-                  
-                  return;
 
-                }
-              
-              if (aErrorObj.getErrorList().getError().isEmpty())
+              // if no errors and cannonical evidence is received
+              if (aErrorObj.getErrorList () == null && aErrorObj.getCanonicalEvidence () != null)
+              {
+
+                final String response = new String (aResponseBytes);
+
+                final HCTextArea responseXML = new HCTextArea (new RequestField (FIELD_RESPONSE,
+                                                                                 prettyPrintByTransformer (response,
+                                                                                                           true))).setRows (25)
+                                                                                                                  .setCols (150)
+                                                                                                                  .setReadOnly (true)
+                                                                                                                  .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                                                  .addClass (CBootstrapCSS.FORM_CONTROL);
+
+                aNodeList.addChild (responseXML);
+
+                // clean evidence map after showing synchronous response
+                ResponseMapEvidence.getInstance ().cleanMap ();
+
+                return;
+              }
+
+              if (aErrorObj.getErrorList ().hasNoErrorEntries ())
               {
                 aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
               }
               else
               {
                 final HCUL aUL = new HCUL ();
-                aErrorObj.getErrorList ().getError().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                aErrorObj.getErrorList ()
+                         .getError ()
+                         .forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
                 aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
               }
             }
@@ -278,7 +278,7 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
                                                                                                                              .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
       {
-        HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+        final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
                                                                  DEMO_DOC_TYPE.getAnyMessageAsString (_createDemoRequest ()))).setRows (10)
                                                                                                                               .addClass (CBootstrapCSS.TEXT_MONOSPACE);
         final JSAnonymousFunction aJSAppend = new JSAnonymousFunction ();

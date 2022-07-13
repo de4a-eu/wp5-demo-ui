@@ -17,55 +17,56 @@ package eu.de4a.demoui.model;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.ValueEnforcer;
-import com.helger.commons.annotation.ReturnsMutableObject;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.impl.CommonsHashMap;
 import com.helger.commons.collection.impl.ICommonsMap;
 import com.helger.commons.string.StringHelper;
 import com.helger.scope.singleton.AbstractGlobalSingleton;
 
-import eu.de4a.iem.core.jaxb.common.RedirectUserType;
+import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 
 /**
- * This class contains all instances of the {@link RedirectUserType}. This
- * stores the Post-Redirect-Get response for the USI-back-redirection.
+ * This class contains all instances of the {@link EventNotificationType}.
  *
  * @author Philip Helger
  */
-public final class RedirectResponseMap extends AbstractGlobalSingleton
+public final class ResponseMapEventNotification extends AbstractGlobalSingleton
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger (RedirectResponseMap.class);
-  private final ICommonsMap <String, RedirectUserType> m_aMap = new CommonsHashMap <> ();
+  private static final Logger LOGGER = LoggerFactory.getLogger (ResponseMapEventNotification.class);
+
+  @GuardedBy ("m_aRWLock")
+  private final ICommonsMap <String, EventNotificationType> m_aMap = new CommonsHashMap <> ();
 
   @Deprecated
   @UsedViaReflection
-  public RedirectResponseMap ()
+  public ResponseMapEventNotification ()
   {}
 
   @Nonnull
-  public static RedirectResponseMap getInstance ()
+  public static ResponseMapEventNotification getInstance ()
   {
-    return getGlobalSingleton (RedirectResponseMap.class);
+    return getGlobalSingleton (ResponseMapEventNotification.class);
   }
 
-  public void register (@Nonnull final RedirectUserType aResponse)
+  public void register (@Nonnull final EventNotificationType aResponse)
   {
     ValueEnforcer.notNull (aResponse, "Response");
-    final String sKey = aResponse.getRequestId ();
+    final String sKey = aResponse.getNotificationId ();
     m_aRWLock.writeLocked ( () -> {
       if (m_aMap.containsKey (sKey))
-        LOGGER.warn ("Overwriting Response Redirect URL for '" + sKey + "'");
+        LOGGER.warn ("Overwriting Evidence for '" + sKey + "'");
       m_aMap.put (sKey, aResponse);
     });
   }
 
   @Nullable
-  public RedirectUserType get (@Nullable final String sID)
+  public EventNotificationType get (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;
@@ -73,17 +74,21 @@ public final class RedirectResponseMap extends AbstractGlobalSingleton
   }
 
   @Nullable
-  public RedirectUserType getAndRemove (@Nullable final String sID)
+  public EventNotificationType getAndRemove (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;
     return m_aRWLock.writeLockedGet ( () -> m_aMap.remove (sID));
   }
 
-  @Nonnull
-  @ReturnsMutableObject
-  public ICommonsMap <String, RedirectUserType> getMap ()
+  @Nullable
+  public String getFirstRequestID ()
   {
-    return m_aMap;
+    return m_aRWLock.readLockedGet (m_aMap::getFirstKey);
+  }
+
+  public void cleanMap ()
+  {
+    m_aRWLock.writeLocked (m_aMap::clear);
   }
 }

@@ -58,27 +58,7 @@ import eu.de4a.iem.cev.EDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.CIEM;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.DE4AResponseDocumentHelper;
-import eu.de4a.iem.core.jaxb.common.AgentType;
-import eu.de4a.iem.core.jaxb.common.CanonicalEvidenceType;
-import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
-import eu.de4a.iem.core.jaxb.common.DomesticEvidenceType;
-import eu.de4a.iem.core.jaxb.common.ErrorType;
-import eu.de4a.iem.core.jaxb.common.EventSubscripRequestItemType;
-import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
-import eu.de4a.iem.core.jaxb.common.IssuingTypeType;
-import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
-import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
-import eu.de4a.iem.core.jaxb.common.RedirectUserType;
-import eu.de4a.iem.core.jaxb.common.RequestEventSubscriptionType;
-import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
-import eu.de4a.iem.core.jaxb.common.RequestEvidenceUSIItemType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
-import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
-import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
-import eu.de4a.iem.core.jaxb.common.ResponseExtractEvidenceItemType;
-import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
-import eu.de4a.iem.core.jaxb.common.TimePeriodType;
+import eu.de4a.iem.core.jaxb.common.*;
 import eu.de4a.iem.core.jaxb.eidas.np.GenderType;
 import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
 import eu.de4a.iem.xml.de4a.DE4AMarshaller;
@@ -222,27 +202,6 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                                         EDemoCanonicalEvidence.T43_MARRIAGE_V17,
                                         EDemoDocument::createDemoResponseTransferEvidence,
                                         DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
-  USI_RESP_DATA_DO_DT_T43_PENSION_MOL_V01 ("usi-resp-do-dt",
-                                           "USI Data Response DO to DT (C4 -> C3)",
-                                           "/response/evidence",
-                                           EDemoDocumentType.RESPONSE,
-                                           EDemoCanonicalEvidence.T43_PENSION_MOL_V01,
-                                           EDemoDocument::createDemoResponseTransferEvidence,
-                                           DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
-  USI_RESP_DATA_DO_DT_T43_UNEMPLOYMENT_MOL_V01 ("usi-resp-do-dt",
-                                                "USI Data Response DO to DT (C4 -> C3)",
-                                                "/response/evidence",
-                                                EDemoDocumentType.RESPONSE,
-                                                EDemoCanonicalEvidence.T43_UNEMPLOYMENT_MOL_V01,
-                                                EDemoDocument::createDemoResponseTransferEvidence,
-                                                DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
-  USI_RESP_DATA_DO_DT_T43_WORKING_LIFE_MOL_V01 ("usi-resp-do-dt",
-                                                "USI Data Response DO to DT (C4 -> C3)",
-                                                "/response/evidence",
-                                                EDemoDocumentType.RESPONSE,
-                                                EDemoCanonicalEvidence.T43_WORKING_LIFE_MOL_V01,
-                                                EDemoDocument::createDemoResponseTransferEvidence,
-                                                DE4ACoreMarshaller::dtResponseTransferEvidenceMarshaller),
 
   // DT-DO (C3 -> C4)
   USI_RESP_DATA_ERROR_DT_DO ("usi-resp-error-dt-do",
@@ -302,27 +261,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                                         EDemoCanonicalEvidence.T43_MARRIAGE_V17,
                                         EDemoDocument::createDemoResponseTransferEvidence,
                                         DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
-  USI_RESP_DATA_DR_DE_T43_PENSION_MOL_V01 ("usi-resp-dr-de",
-                                           "USI Data Response DR to DE (C2 -> C1)",
-                                           "/response/evidence",
-                                           EDemoDocumentType.RESPONSE,
-                                           EDemoCanonicalEvidence.T43_PENSION_MOL_V01,
-                                           EDemoDocument::createDemoResponseTransferEvidence,
-                                           DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
-  USI_RESP_DATA_DR_DE_T43_UNEMPLOYMENT_MOL_V01 ("usi-resp-dr-de",
-                                                "USI Data Response DR to DE (C2 -> C1)",
-                                                "/response/evidence",
-                                                EDemoDocumentType.RESPONSE,
-                                                EDemoCanonicalEvidence.T43_UNEMPLOYMENT_MOL_V01,
-                                                EDemoDocument::createDemoResponseTransferEvidence,
-                                                DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
-  USI_RESP_DATA_DR_DE_T43_WORKING_LIFE_MOL_V01 ("usi-resp-dr-de",
-                                                "USI Data Response DR to DE (C2 -> C1)",
-                                                "/response/evidence",
-                                                EDemoDocumentType.RESPONSE,
-                                                EDemoCanonicalEvidence.T43_WORKING_LIFE_MOL_V01,
-                                                EDemoDocument::createDemoResponseTransferEvidence,
-                                                DE4ACoreMarshaller::deResponseTransferEvidenceMarshaller),
+
   // DE-DR Response (C1->C2)
   USI_RESP_DATA_ERROR_DE_DR ("usi-resp-error-de-dr",
                              "USI Data Response Error from DE to DR (C1 -> C2)",
@@ -330,13 +269,13 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                              EDemoDocumentType.RESPONSE,
                              EDemoDocument::createDemoResponse,
                              DE4ACoreMarshaller.defResponseMarshaller ()),
-//subscription DE-DR request (C1 -> C2)
- SUBS_REQ_DE_DR("subs-req-de-dr",
-                "Subscription Request from DE to DR (C1 -> C2)",
-                "/request/subscription",
-                EDemoDocumentType.REQUEST,
-                EDemoDocument::createDemoRequestSubscription,
-                DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),;
+  // subscription DE-DR request (C1 -> C2)
+  SUBS_REQ_DE_DR ("subs-req-de-dr",
+                  "Subscription Request from DE to DR (C1 -> C2)",
+                  "/request/subscription",
+                  EDemoDocumentType.REQUEST,
+                  EDemoDocument::createDemoRequestSubscription,
+                  DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),;
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -689,7 +628,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluatorURL (AppConfig.getPublicURL () + "/public/locale-en_US/menuitem-de-usi-evidence");
     return ret;
   }
-  
+
   @Nonnull
   private static EventSubscripRequestItemType _createRequestEventSubscriptionItemType ()
   {
@@ -697,12 +636,12 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     final EventSubscripRequestItemType ret = new EventSubscripRequestItemType ();
     ret.setRequestItemId (UUID.randomUUID ().toString ());
     ret.setDataRequestSubject (_createDRS ());
-    //ret.setRequestGrounds (_createRequestGrounds ());
-    ret.setCanonicalEventCatalogUri("EventSubscription-" + MathHelper.abs (aTLR.nextInt ()));
-    TimePeriodType period = new TimePeriodType();
-    period.setStartDate(LocalDateTime.now());
-    period.setEndDate(LocalDateTime.now());
-    ret.setSubscriptionPeriod(period);
+    // ret.setRequestGrounds (_createRequestGrounds ());
+    ret.setCanonicalEventCatalogUri ("EventSubscription-" + MathHelper.abs (aTLR.nextInt ()));
+    final TimePeriodType period = new TimePeriodType ();
+    period.setStartDate (LocalDateTime.now ());
+    period.setEndDate (LocalDateTime.now ());
+    ret.setSubscriptionPeriod (period);
     return ret;
   }
 
@@ -722,7 +661,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     // ret.addRequestEvidenceUSIItem (_createRequestEvidenceUSIItemType ());
     return ret;
   }
-  
+
   @Nonnull
   public static RequestEventSubscriptionType createDemoRequestSubscription ()
   {
