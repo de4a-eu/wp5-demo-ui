@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.http.CHttp;
 import com.helger.commons.io.file.SimpleFileIO;
 import com.helger.commons.io.stream.StreamHelper;
@@ -37,6 +38,7 @@ import eu.de4a.demoui.model.ResponseMapEvidence;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
+import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class APIExecutorPostDEInbound implements IAPIExecutor
 {
@@ -48,7 +50,8 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
                          @Nonnull final IRequestWebScopeWithoutResponse aRequestScope,
                          @Nonnull final UnifiedResponse aUnifiedResponse) throws Exception
   {
-    LOGGER.info ("Received inbound DE4A message");
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received inbound DE4A message");
 
     final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
     if (LOGGER.isInfoEnabled ())
@@ -57,27 +60,37 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
     // MARSHALLING
     final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.dtResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
     final ResponseExtractMultiEvidenceType response = marshaller.read (aPayload);
-    LOGGER.info ("Unmarshalled payload");
-
-    // SAVE TO FILE
-    if (false)
+    if (response == null)
+    {
+      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse Event Notification response");
+      aUnifiedResponse.setStatus (CHttp.HTTP_BAD_REQUEST).disableCaching ();
+    }
+    else
     {
       if (LOGGER.isInfoEnabled ())
-        LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo ());
-      final File targetFile = new File (AppConfig.getDEXmlWriteTo ());
-      SimpleFileIO.writeFile (targetFile, aPayload);
+        LOGGER.info ("Unmarshalled payload");
+
+      // SAVE TO FILE
+      if (false)
+      {
+        if (LOGGER.isInfoEnabled ())
+          LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo ());
+        final File targetFile = new File (AppConfig.getDEXmlWriteTo ());
+        SimpleFileIO.writeFile (targetFile, aPayload);
+      }
+
+      // SAVE INTO MAP
+      LOGGER.debug ("storing evidence message");
+      final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
+      map.cleanMap ();
+      map.register (response);
+
+      aUnifiedResponse.disableCaching ();
+      aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
     }
 
-    // SAVE INTO MAP
-    LOGGER.debug ("storing evidence message");
-    final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
-    map.cleanMap ();
-    map.register (response);
-
-    aUnifiedResponse.disableCaching ();
-    aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
-
-    LOGGER.info ("Finished handling inbound DE4A message");
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Finished handling inbound DE4A message");
   }
 
 }

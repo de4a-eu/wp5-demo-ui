@@ -101,31 +101,7 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
             EDataRequestSubjectType.PERSON,
             DcngConfig.getIdentifierFactory ()
                       .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                     "MarriageEvidence:1.0")),
-  PENSION_MOL (EPilot.T43_MOVING_ABROAD,
-               "pension",
-               "Something about Pension Means of Living",
-               EPatternType.USI,
-               EDataRequestSubjectType.PERSON,
-               DcngConfig.getIdentifierFactory ()
-                         .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                        "PensionMeansOfLivingEvidence:v0.1")),
-  UNEMPLOYMENT_MOL (EPilot.T43_MOVING_ABROAD,
-                    "unemployment",
-                    "Something about Unemployment Means of Living",
-                    EPatternType.USI,
-                    EDataRequestSubjectType.PERSON,
-                    DcngConfig.getIdentifierFactory ()
-                              .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                             "UnemploymentMeansOfLivingEvidence:v0.1")),
-  WORKING_LIFE_MOL (EPilot.T43_MOVING_ABROAD,
-                    "workinglife",
-                    "Something about Working Life Means of Living",
-                    EPatternType.USI,
-                    EDataRequestSubjectType.PERSON,
-                    DcngConfig.getIdentifierFactory ()
-                              .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                             "WorkingLifeMeansOfLivingEvidence:v0.1")),;
+                                                     "MarriageEvidence:1.0"));
 
   private final EPilot m_ePilot;
   private final String m_sID;

@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.http.CHttp;
 import com.helger.commons.io.stream.StreamHelper;
 import com.helger.photon.api.IAPIDescriptor;
@@ -33,6 +34,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.EventNotificationType;
+import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class APIExecutorPostDENotification implements IAPIExecutor
 {
@@ -44,33 +46,47 @@ public class APIExecutorPostDENotification implements IAPIExecutor
                          @Nonnull final IRequestWebScopeWithoutResponse aRequestScope,
                          @Nonnull final UnifiedResponse aUnifiedResponse) throws Exception
   {
-    LOGGER.info ("Received inbound DE4A message");
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received inbound DE4A message");
 
     final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
-    LOGGER.info ("Received " + aPayload.length + " bytes");
 
-    //MARSHALLING
-    DE4ACoreMarshaller<EventNotificationType> marshaller = DE4ACoreMarshaller.dtEventNotificationMarshaller();
-    EventNotificationType response = marshaller.read(aPayload);
-    LOGGER.info ("Unmarshalled payload");
-    
-    //SAVE TO FILE
-   /* LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo () );
-    File targetFile = new File(AppConfig.getDEXmlWriteTo ());
-    OutputStream outStream = new FileOutputStream(targetFile);
-    outStream.write(aPayload);
-    IOUtils.closeQuietly(outStream);
-   */ 
-    // SAVE INTO MAP
-    LOGGER.debug ("storing evidence message");
-    ResponseMapEventNotification map = ResponseMapEventNotification.getInstance();
-    map.cleanMap();
-    map.register(response);
-    
-    aUnifiedResponse.disableCaching ();
-    aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received " + aPayload.length + " bytes");
 
-    LOGGER.info ("Finished handling inbound DE4A message");
+    // MARSHALLING
+    final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.dtEventNotificationMarshaller ();
+    final EventNotificationType response = marshaller.read (aPayload);
+    if (response == null)
+    {
+      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse Event Notification response");
+      aUnifiedResponse.setStatus (CHttp.HTTP_BAD_REQUEST).disableCaching ();
+    }
+    else
+    {
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("Unmarshalled payload");
+
+      // SAVE TO FILE
+      /*
+       * LOGGER.info ("Saving evidence file  " + AppConfig.getDEXmlWriteTo () );
+       * File targetFile = new File(AppConfig.getDEXmlWriteTo ()); OutputStream
+       * outStream = new FileOutputStream(targetFile);
+       * outStream.write(aPayload); IOUtils.closeQuietly(outStream);
+       */
+      // SAVE INTO MAP
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("storing evidence message");
+
+      final ResponseMapEventNotification map = ResponseMapEventNotification.getInstance ();
+      map.cleanMap ();
+      map.register (response);
+
+      aUnifiedResponse.disableCaching ();
+      aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
+    }
+
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Finished handling inbound DE4A message");
   }
-  
 }

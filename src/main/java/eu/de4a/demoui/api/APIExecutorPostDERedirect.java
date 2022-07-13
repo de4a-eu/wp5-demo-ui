@@ -73,15 +73,15 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
       // store message
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("storing redirection message");
+
       ResponseMapRedirect.getInstance ().register (redirectUserType);
 
       aUnifiedResponse.disableCaching ()
                       .setRedirect (redirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
 
+      aUnifiedResponse.disableCaching ();
+      aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
     }
-
-    aUnifiedResponse.disableCaching ();
-    aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
 
     if (LOGGER.isInfoEnabled ())
       LOGGER.info ("Finished handling redirect DE4A message");
