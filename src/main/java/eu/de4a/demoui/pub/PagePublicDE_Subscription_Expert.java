@@ -76,6 +76,7 @@ import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.EventSubscripRequestItemType;
+import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 import eu.de4a.iem.core.jaxb.common.RequestEventSubscriptionType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
@@ -111,7 +112,11 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 
       final EventSubscripRequestItemType item = ret.getEventSubscripRequestItemAtIndex (0);
       item.setCanonicalEventCatalogUri (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
-      item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("NL/SE/90000471");
+      item.getDataRequestSubject().setDataSubjectPerson(null);
+      item.getDataRequestSubject().setDataSubjectCompany(new LegalPersonIdentifierType());
+      item.getDataRequestSubject ().getDataSubjectCompany().setLegalPersonIdentifier("NL/SE/5591674170");
+      item.getDataRequestSubject ().getDataSubjectCompany().setLegalName("LegalName-1602842249");
+
     }
     return ret;
   }

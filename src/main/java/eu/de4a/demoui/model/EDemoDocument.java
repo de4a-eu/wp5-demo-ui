@@ -679,8 +679,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataEvaluator (_createAgent ());
     ret.setDataOwner (_createAgent ());
     ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
-    if (aTLR.nextBoolean ())
-      ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
+    //if (aTLR.nextBoolean ())
+      //ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
     return ret;
   }
 
