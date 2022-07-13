@@ -222,8 +222,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
     private String m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
     // use case
     private EUseCase m_eUseCase;
-    public ResponseLookupRoutingInformationType m_aIALResponse;
-    public ICommonsSet <String> m_aDOCountries;
+    private ResponseLookupRoutingInformationType m_aIALResponse;
+    private ICommonsSet <String> m_aDOCountries;
     // DE
     private Agent m_aDE;
     // DO
