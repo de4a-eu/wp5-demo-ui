@@ -100,11 +100,12 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
+
       if (false)
         aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
-
+      else
+        aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_SE.getParticipantID ());
       aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T43_PT.getParticipantID ());
-      aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_SE.getParticipantID ());
 
       aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
                   .setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());

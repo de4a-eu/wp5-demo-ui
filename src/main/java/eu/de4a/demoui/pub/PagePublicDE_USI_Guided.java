@@ -105,6 +105,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -470,8 +471,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         aItem.setRequestGrounds (aRG);
       }
       aItem.setCanonicalEvidenceTypeId (m_eUseCase.getDocumentTypeID ().getURIEncoded ());
-      // TODO find correct URL
-      aItem.setDataEvaluatorURL (aWPEC.getSelfHref ().getAsStringWithEncodedParameters ());
+      aItem.setDataEvaluatorURL (EDemoDocument.getDataEvaluatorURL ());
       aRequest.addRequestEvidenceUSIItem (aItem);
       return aRequest;
     }

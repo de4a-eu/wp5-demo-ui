@@ -20,9 +20,14 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 
 import com.helger.commons.annotation.Nonempty;
+import com.helger.html.hc.html.tabular.HCRow;
+import com.helger.html.hc.html.textlevel.HCA;
 import com.helger.html.hc.impl.HCNodeList;
+import com.helger.photon.bootstrap4.button.BootstrapButton;
+import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonToolbar;
 import com.helger.photon.bootstrap4.table.BootstrapTable;
 import com.helger.photon.bootstrap4.uictrls.datatables.BootstrapDataTables;
+import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.photon.uictrls.datatables.column.DTCol;
 
@@ -42,6 +47,13 @@ public class PagePublicDE_ReceivedRedirects extends AbstractAppWebPage
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
 
+    {
+      final BootstrapButtonToolbar aToolbar = aNodeList.addAndReturnChild (new BootstrapButtonToolbar (aWPEC));
+      aToolbar.addChild (new BootstrapButton ().setIcon (EDefaultIcon.REFRESH)
+                                               .setOnClick (aWPEC.getSelfHref ())
+                                               .addChild ("Refresh"));
+    }
+
     final BootstrapTable aTable = new BootstrapTable (new DTCol ("Request ID"),
                                                       new DTCol ("DO"),
                                                       new DTCol ("Redirect URL")).setID (getID ());
@@ -49,8 +61,10 @@ public class PagePublicDE_ReceivedRedirects extends AbstractAppWebPage
     for (final Map.Entry <String, RedirectUserType> aEntry : aMap.getAll ().entrySet ())
     {
       final RedirectUserType aRedirect = aEntry.getValue ();
-      aTable.addBodyRow ()
-            .addCells (aEntry.getKey (), aRedirect.getDataOwner ().getAgentNameValue (), aRedirect.getRedirectUrl ());
+      final HCRow aRow = aTable.addBodyRow ();
+      aRow.addCell (aEntry.getKey ());
+      aRow.addCell (aRedirect.getDataOwner ().getAgentNameValue ());
+      aRow.addCell (HCA.createLinkedWebsite (aRedirect.getRedirectUrl ()));
     }
     if (aTable.hasBodyRows ())
     {
