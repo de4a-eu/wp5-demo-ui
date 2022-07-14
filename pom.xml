@@ -190,7 +190,7 @@
     <dependency>
       <groupId>eu.de4a</groupId>
       <artifactId>de4a-iem</artifactId>
-      <version>0.1.11</version>
+      <version>0.1.12</version>
     </dependency>
 
     <dependency>
@@ -198,6 +198,15 @@
       <artifactId>javax.servlet-api</artifactId>
       <scope>provided</scope>
     </dependency>
+
+<!--
+<dependency>
+  <groupId>org.glassfish.tyrus</groupId>
+  <artifactId>tyrus-container-servlet</artifactId>
+  <version>1.19</version>
+  <type>bundle</type>
+</dependency>
+-->
 
     <dependency>
       <groupId>junit</groupId>
