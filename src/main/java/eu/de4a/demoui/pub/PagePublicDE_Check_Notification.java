@@ -96,7 +96,7 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
         LOGGER.debug ("Getting from map the notification Id: " + event.getNotificationId ());
 
       final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller ()
-              .formatted ();
+                                                                                      .formatted ();
 
       final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
                                                                marshaller.getAsString (event))).setRows (25)
@@ -106,55 +106,57 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
                                                                                                .addClass (CBootstrapCSS.FORM_CONTROL);
 
       // Fill IM Request
-      RequestExtractMultiEvidenceIMType luRequest = new RequestExtractMultiEvidenceIMType();
-      luRequest.setSpecificationId(event.getSpecificationId());
-      luRequest.setDataEvaluator(event.getDataEvaluator());
-      luRequest.setDataOwner(event.getDataOwner());
-      luRequest.setRequestId(event.getNotificationId());
-      luRequest.setTimeStamp(event.getTimeStamp());
-      List<RequestEvidenceItemType> evidences = new ArrayList<RequestEvidenceItemType>();
-      event.getEventNotificationItem().forEach((item)-> {
-    	  RequestEvidenceItemType evidence = new RequestEvidenceItemType();
-    	  evidence.setRequestItemId(item.getEventId());
-    	  evidence.setDataRequestSubject(item.getRelatedEventSubjectAtIndex(0));
-    	  evidence.setCanonicalEvidenceTypeId(item.getCanonicalEventCatalogUri());
-    	  RequestGroundsType rg = new RequestGroundsType();
-    	  rg.setExplicitRequest(ExplicitRequestType.SDGR_14);
-    	  evidence.setRequestGrounds(rg);
-    	  evidences.add(evidence);
-    	  });
-      
-      luRequest.setRequestEvidenceIMItem(evidences);
-      
-      
+      final RequestExtractMultiEvidenceIMType luRequest = new RequestExtractMultiEvidenceIMType ();
+      luRequest.setSpecificationId (event.getSpecificationId ());
+      luRequest.setDataEvaluator (event.getDataEvaluator ());
+      luRequest.setDataOwner (event.getDataOwner ());
+      luRequest.setRequestId (event.getNotificationId ());
+      luRequest.setTimeStamp (event.getTimeStamp ());
+      final List <RequestEvidenceItemType> evidences = new ArrayList <> ();
+      event.getEventNotificationItem ().forEach ( (item) -> {
+        final RequestEvidenceItemType evidence = new RequestEvidenceItemType ();
+        evidence.setRequestItemId (item.getEventId ());
+        evidence.setDataRequestSubject (item.getRelatedEventSubjectAtIndex (0));
+        evidence.setCanonicalEvidenceTypeId (item.getCanonicalEventCatalogUri ());
+        final RequestGroundsType rg = new RequestGroundsType ();
+        rg.setExplicitRequest (ExplicitRequestType.SDGR_14);
+        evidence.setRequestGrounds (rg);
+        evidences.add (evidence);
+      });
+
+      luRequest.setRequestEvidenceIMItem (evidences);
+
       final JSPackage aFunc = new JSPackage ();
       final BootstrapForm aForm = aNodeList.addAndReturnChild (getUIHandler ().createFormSelf (aWPEC).ensureID ());
       aFunc.add (JQuery.idRef (aForm)
                        .append ("<input type='hidden' name='" +
-                    		   CPageParam.PARAM_ACTION + "' value='" +
-                               CPageParam.ACTION_PERFORM + "'></input>")
+                                CPageParam.PARAM_ACTION +
+                                "' value='" +
+                                CPageParam.ACTION_PERFORM +
+                                "'></input>")
                        .submit ());
       aFunc._return (false);
-      
+
       aNodeList.addChild (aTA);
-      
-      if(!aWPEC.hasAction (CPageParam.ACTION_PERFORM)) {
-          aNodeList.addChild (
-        		  new BootstrapSubmitButton ()
-                  .setIcon (EDefaultIcon.YES)
-                  .addChild ("Send Lookup request to check the evidence")
-                  .addStyle (ECSSProperty.MARGIN_TOP, "5px")
-                  .addStyle (ECSSProperty.MARGIN_BOTTOM, "5px")
-                  .setOnClick(aFunc));
+
+      if (!aWPEC.hasAction (CPageParam.ACTION_PERFORM))
+      {
+        aNodeList.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES)
+                                                        .addChild ("Send Lookup request to check the evidence")
+                                                        .addStyle (ECSSProperty.MARGIN_TOP, "5px")
+                                                        .addStyle (ECSSProperty.MARGIN_BOTTOM, "5px")
+                                                        .setOnClick (aFunc));
       }
-      else {
-    	  map.getAndRemove (sRequestId);
-    	  this.SendLURequest(luRequest);
-    	  aNodeList.addChildAt(0, success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
+      else
+      {
+        map.getAndRemove (sRequestId);
+        this.SendLURequest (luRequest);
+        aNodeList.addChildAt (0,
+                              success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
       }
 
       aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
-      
+
     }
     else
     {
@@ -164,86 +166,86 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
       aNodeList.addChild (info ("Currently no received event is available"));
     }
   }
-  
-  
-  protected IHasJSCode SendLURequest(RequestExtractMultiEvidenceIMType request) {
-	  
-      DE4AKafkaClient.send (EErrorLevel.INFO,
-                            "DemoUI sending LU request '" +
-                            		request.getRequestId () +
-                                              "' to '" +
-                                              m_sDefaultTargetURL +
-                                              "'");
 
-      // UNMARSHALLING
-      final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> marshaller = DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller();
-      final String sPayload = marshaller.getAsString(request);
-      
-      final StopWatch aSW = StopWatch.createdStarted ();
-      final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
-      aHCS.setConnectionRequestTimeoutMS (120_000);
-      aHCS.setSocketTimeoutMS (120_000);
+  protected IHasJSCode SendLURequest (final RequestExtractMultiEvidenceIMType request)
+  {
 
-      byte [] aResponseBytes = null;
-      final HCNodeList aResNL = new HCNodeList ();
-      final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
-      try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
-      {
-        // Start HTTP POST
-        final HttpPost aPost = new HttpPost (m_sDefaultTargetURL);
-        aPost.setEntity (new StringEntity (sPayload,
-                                           ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-        aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-        DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
-      }
-      catch (final ExtendedHttpResponseException ex)
-      {
-        aErrorBox.addChild (div ("Error sending HTTP request to ").addChild (code (m_sDefaultTargetURL)))
-                 .addChild (div ("HTTP response: " + ex.getMessagePartStatusLine ()));
-        aResponseBytes = ex.getResponseBody ();
-        if (aResponseBytes != null)
-          DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "Error response content received (" + aResponseBytes.length + " bytes)");
-      }
-      catch (final IOException ex)
-      {
-        aErrorBox.addChild (div ("Error sending request to ").addChild (code (m_sDefaultTargetURL)))
-                 .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true));
-      }
-      finally
-      {
-        aSW.stop ();
-      }
+    DE4AKafkaClient.send (EErrorLevel.INFO,
+                          "DemoUI sending LU request '" +
+                                            request.getRequestId () +
+                                            "' to '" +
+                                            m_sDefaultTargetURL +
+                                            "'");
 
+    // UNMARSHALLING
+    final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> marshaller = DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ();
+    final String sPayload = marshaller.getAsString (request);
+
+    final StopWatch aSW = StopWatch.createdStarted ();
+    final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
+    aHCS.setConnectionRequestTimeoutMS (120_000);
+    aHCS.setSocketTimeoutMS (120_000);
+
+    byte [] aResponseBytes = null;
+    final HCNodeList aResNL = new HCNodeList ();
+    final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
+    try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+    {
+      // Start HTTP POST
+      final HttpPost aPost = new HttpPost (m_sDefaultTargetURL);
+      aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+      aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+      DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
+    }
+    catch (final ExtendedHttpResponseException ex)
+    {
+      aErrorBox.addChild (div ("Error sending HTTP request to ").addChild (code (m_sDefaultTargetURL)))
+               .addChild (div ("HTTP response: " + ex.getMessagePartStatusLine ()));
+      aResponseBytes = ex.getResponseBody ();
       if (aResponseBytes != null)
+        DE4AKafkaClient.send (EErrorLevel.INFO,
+                              "Error response content received (" + aResponseBytes.length + " bytes)");
+    }
+    catch (final IOException ex)
+    {
+      aErrorBox.addChild (div ("Error sending request to ").addChild (code (m_sDefaultTargetURL)))
+               .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true));
+    }
+    finally
+    {
+      aSW.stop ();
+    }
+
+    if (aResponseBytes != null)
+    {
+      // Try reading the data as the default response
+      final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseMarshaller ().read (aResponseBytes);
+      if (aResponseObj != null)
       {
-        // Try reading the data as the default response
-        final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseMarshaller ().read (aResponseBytes);
-        if (aErrorObj != null)
+        if (aResponseObj.isAck ())
         {
-          DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
-          if (aErrorObj.isAck ())
-          {
-            aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
-          }
-          else
-          {
-            final HCUL aUL = new HCUL ();
-            aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-            aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
-          }
+          DE4AKafkaClient.send (EErrorLevel.INFO, "Read response as 'ResponseErrorType' and ACK");
+          aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
         }
         else
         {
-          // Unknown payload.
-          String sFirstBytes = new String (aResponseBytes, StandardCharsets.UTF_8);
-          DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
-          if (sFirstBytes.length () > 100)
-            sFirstBytes = sFirstBytes.substring (0, 100);
-          aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
+          DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType' and FAILURE");
+          final HCUL aUL = new HCUL ();
+          aResponseObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+          aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
         }
       }
-      aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
-      return null;
+      else
+      {
+        // Unknown payload.
+        String sFirstBytes = new String (aResponseBytes, StandardCharsets.UTF_8);
+        DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
+        if (sFirstBytes.length () > 100)
+          sFirstBytes = sFirstBytes.substring (0, 100);
+        aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
+      }
+    }
+    aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
+    return null;
   }
 }

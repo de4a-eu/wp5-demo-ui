@@ -76,11 +76,16 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
 
       ResponseMapRedirect.getInstance ().register (redirectUserType);
 
-      aUnifiedResponse.disableCaching ()
-                      .setRedirect (redirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
-
-      aUnifiedResponse.disableCaching ();
-      aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT);
+      if (true)
+      {
+        // Does this work?
+        aUnifiedResponse.disableCaching ()
+                        .setRedirect (redirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
+      }
+      else
+      {
+        aUnifiedResponse.disableCaching ().setStatus (CHttp.HTTP_NO_CONTENT);
+      }
     }
 
     if (LOGGER.isInfoEnabled ())

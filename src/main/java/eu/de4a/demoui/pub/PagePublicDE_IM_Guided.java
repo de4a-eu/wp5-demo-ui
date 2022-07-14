@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Function;
@@ -121,7 +120,6 @@ import eu.de4a.iem.core.CIEM;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.AgentType;
 import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
-import eu.de4a.iem.core.jaxb.common.ErrorType;
 import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
 import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
@@ -1439,19 +1437,22 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
           if (aResponseObj == null)
             throw new IOException ("Failed to parse response XML - see log for details");
 
-          final List <ErrorType> aErrorList = aResponseObj.getError ();
-          if (aErrorList.isEmpty ())
+          if (aResponseObj.isAck ())
           {
+            DE4AKafkaClient.send (EErrorLevel.INFO, "Read response as 'ResponseErrorType' and ACK");
+
             // Just some fake UI to let the user decide
             aForm.addChild (success ("The data was received by the DR and forwarded to the DT. The response will be received asynchronously."));
           }
           else
           {
+            DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType' and FAILURE");
+
             final HCUL aUL = new HCUL ();
-            aErrorList.forEach (x -> {
+            aResponseObj.getError ().forEach (x -> {
               final String sMsg = "[" + x.getCode () + "] " + x.getText ();
               aUL.addItem (sMsg);
-              LOGGER.info ("Response error: " + sMsg);
+              LOGGER.warn ("Response error: " + sMsg);
             });
             aErrorBox.addChild (div ("The request could not be accepted by the DR because of the following reasons:"))
                      .addChild (aUL);
@@ -1459,6 +1460,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
         }
         catch (final IOException ex)
         {
+          LOGGER.error ("Error executing HTTP request", ex);
           aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sRequestTargetURL)))
                                   .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
         }

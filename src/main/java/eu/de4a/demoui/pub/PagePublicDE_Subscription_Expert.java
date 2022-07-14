@@ -226,18 +226,19 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
-            final ResponseErrorType aErrorObj = DE4ACoreMarshaller.defResponseMarshaller ().read (aResponseBytes);
-            if (aErrorObj != null)
+            final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseMarshaller ().read (aResponseBytes);
+            if (aResponseObj != null)
             {
-              DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
-              if (aErrorObj.isAck ())
+              if (aResponseObj.isAck ())
               {
+                DE4AKafkaClient.send (EErrorLevel.INFO, "Read response as 'ResponseErrorType' and ACK");
                 aResNL.addChild (success (div ("The request was accepted by the Connector.")));
               }
               else
               {
+                DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType' and FAILURE");
                 final HCUL aUL = new HCUL ();
-                aErrorObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                aResponseObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
                 aErrorBox.addChild (div ("The data could not be fetched from the Connector")).addChild (aUL);
               }
             }
