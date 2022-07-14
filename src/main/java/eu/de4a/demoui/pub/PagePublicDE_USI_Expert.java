@@ -18,6 +18,8 @@ package eu.de4a.demoui.pub;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import javax.annotation.Nonnull;
 
@@ -27,8 +29,10 @@ import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.helger.commons.CGlobal;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.concurrent.ThreadHelper;
+import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
@@ -36,7 +40,6 @@ import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
-import com.helger.css.property.ECSSProperty;
 import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
@@ -61,6 +64,7 @@ import com.helger.photon.bootstrap4.form.BootstrapFormGroup;
 import com.helger.photon.bootstrap4.grid.BootstrapGridSpec;
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
+import com.helger.photon.icon.bootstrapicons.EBootstrapIcon;
 import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
@@ -92,8 +96,6 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
   private static final String FIELD_PAYLOAD = "payload";
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
-
-  private boolean m_bRequestSent = false;
 
   @Nonnull
   private static RequestExtractMultiEvidenceUSIType _createDemoRequest ()
@@ -140,6 +142,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
     final FormErrorList aFormErrors = new FormErrorList ();
     final boolean bShowForm = true;
+    CompletableFuture <RedirectUserType> aFutureGetReceivedRedirect = null;
     if (aWPEC.hasAction (CPageParam.ACTION_PERFORM))
     {
       final String sTargetURL = aWPEC.params ().getAsStringTrimmed (FIELD_TARGET_URL);
@@ -198,7 +201,37 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
             aPost.setEntity (new StringEntity (sPayload,
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-            m_bRequestSent = true;
+
+            // Start polling for the result
+            aFutureGetReceivedRedirect = CompletableFuture.supplyAsync ( () -> {
+              final long nStart = PDTFactory.getCurrentMillis ();
+              final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
+
+              final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
+              final String sSentRequestID = aParsedRequest.getRequestId ();
+              while (true)
+              {
+                final long nNow = PDTFactory.getCurrentMillis ();
+                final RedirectUserType aMatch = map.getAndRemove (sSentRequestID);
+                if (aMatch != null)
+                {
+                  LOGGER.info ("Found a redirect URL for request ID '" +
+                               sSentRequestID +
+                               "' after " +
+                               (nNow - nStart) +
+                               " milliseconds");
+                  return aMatch;
+                }
+
+                if (nNow > nEnd)
+                {
+                  LOGGER.warn ("Quit waiting for a redirect URL for request ID '" + sSentRequestID + "'");
+                  return null;
+                }
+
+                ThreadHelper.sleep (50);
+              }
+            });
 
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
@@ -250,9 +283,44 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
               aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
             }
           }
-          aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the result"));
+          aResNL.addChild (info ("It took " + aSW.getMillis () + " milliseconds to get the response"));
         }
         aNodeList.addChild (aResNL);
+
+        // Check for redirect
+        RedirectUserType aReceivedRedirect = null;
+        try
+        {
+          aReceivedRedirect = aFutureGetReceivedRedirect == null ? null : aFutureGetReceivedRedirect.get ();
+        }
+        catch (final InterruptedException ex)
+        {
+          Thread.currentThread ().interrupt ();
+        }
+        catch (final ExecutionException ex)
+        {
+          // Ignore
+        }
+
+        if (aReceivedRedirect != null)
+        {
+          if (LOGGER.isDebugEnabled ())
+            LOGGER.debug ("redirection to: " + aReceivedRedirect.getRedirectUrl ());
+
+          aNodeList.addChild (success ().addChild (div ("Received the redirect URL ").addChild (code (aReceivedRedirect.getRedirectUrl ())))
+                                        .addChild (div (new BootstrapButton ().addChild ("Go to DO Preview")
+                                                                              .setIcon (EBootstrapIcon.PAPERCLIP)
+                                                                              .setOnClick (new SimpleURL (aReceivedRedirect.getRedirectUrl ())))));
+
+        }
+        else
+        {
+          if (LOGGER.isDebugEnabled ())
+            LOGGER.debug ("no redirect message found");
+
+          // No need for UI
+          aNodeList.addChild (warn ("A redirect URL was not returned during a decent time frame. Sorry."));
+        }
       }
     }
 
@@ -294,40 +362,6 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("getting the request ID, iterate map");
-
-      if (m_bRequestSent)
-      {
-        ThreadHelper.sleepSeconds (2);
-      }
-
-      final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
-
-      final String sRequestID = map.getFirstRequestID ();
-      if (StringHelper.hasText (sRequestID))
-      {
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("getting the response for request Id: " + sRequestID);
-
-        final RedirectUserType aResponse = ResponseMapRedirect.getInstance ().getAndRemove (sRequestID);
-
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("redirection to: " + aResponse.getRedirectUrl ());
-
-        aForm.addChild (new BootstrapButton ().addChild ("Manage received redirection messages")
-                                              .setIcon (EDefaultIcon.INFO)
-                                              .addStyle (ECSSProperty.MARGIN_LEFT, "16px")
-                                              .setOnClick (new SimpleURL (aResponse.getRedirectUrl ())));
-
-      }
-      else
-      {
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("no redirect message found");
-
-        // No need for UI
-        if (false)
-          aNodeList.addChild (info ("Currently no received redirect is available"));
-      }
     }
   }
 }

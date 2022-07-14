@@ -56,8 +56,8 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
       LOGGER.info ("Received " + aPayload.length + " bytes");
 
     final DE4ACoreMarshaller <RedirectUserType> marshaller = DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ();
-    final RedirectUserType redirectUserType = marshaller.read (aPayload);
-    if (redirectUserType == null)
+    final RedirectUserType aRedirectUserType = marshaller.read (aPayload);
+    if (aRedirectUserType == null)
     {
       DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse RedirectUserType response");
       aUnifiedResponse.setStatus (CHttp.HTTP_BAD_REQUEST).disableCaching ();
@@ -65,22 +65,23 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
     else
     {
       if (LOGGER.isInfoEnabled ())
-        LOGGER.info ("Unmarshalled payload as " + redirectUserType.getClass ().getSimpleName ());
-
-      if (LOGGER.isDebugEnabled ())
-        LOGGER.debug ("using UnifiedResponse for redirection: " + redirectUserType.getRedirectUrl ());
+        LOGGER.info ("Unmarshalled payload as " + aRedirectUserType.getClass ().getSimpleName ());
 
       // store message
       if (LOGGER.isDebugEnabled ())
-        LOGGER.debug ("storing redirection message");
+        LOGGER.debug ("Storing redirection message");
 
-      ResponseMapRedirect.getInstance ().register (redirectUserType);
+      ResponseMapRedirect.getInstance ().register (aRedirectUserType);
 
-      if (true)
+      if (false)
       {
-        // Does this work?
+        // This doesn't work, because the source request is a data request and
+        // not a user request
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("Using UnifiedResponse for redirection: " + aRedirectUserType.getRedirectUrl ());
+
         aUnifiedResponse.disableCaching ()
-                        .setRedirect (redirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
+                        .setRedirect (aRedirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
       }
       else
       {

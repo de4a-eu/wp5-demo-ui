@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.ValueEnforcer;
+import com.helger.commons.annotation.ReturnsMutableCopy;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.impl.CommonsHashMap;
 import com.helger.commons.collection.impl.ICommonsMap;
@@ -83,5 +84,12 @@ public final class ResponseMapRedirect extends AbstractGlobalSingleton
   public String getFirstRequestID ()
   {
     return m_aRWLock.readLockedGet (m_aMap::getFirstKey);
+  }
+
+  @Nonnull
+  @ReturnsMutableCopy
+  public ICommonsMap <String, RedirectUserType> getAll ()
+  {
+    return m_aRWLock.readLockedGet (m_aMap::getClone);
   }
 }
