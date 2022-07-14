@@ -28,15 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.helger.commons.annotation.Nonempty;
-import com.helger.commons.concurrent.ThreadHelper;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
-import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
-import com.helger.css.property.ECSSProperty;
 import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
@@ -72,12 +69,10 @@ import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
-import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.EventSubscripRequestItemType;
 import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
-import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 import eu.de4a.iem.core.jaxb.common.RequestEventSubscriptionType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
@@ -91,7 +86,6 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
-  private boolean isRequestSent = false;
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
@@ -200,7 +194,6 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
             aPost.setEntity (new StringEntity (sPayload,
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
-            isRequestSent = true;
 
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
@@ -293,42 +286,6 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
       aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Subscription request"));
-
-      if (LOGGER.isDebugEnabled ())
-        LOGGER.debug ("getting the request ID, iterate map");
-
-      if (isRequestSent)
-      {
-        ThreadHelper.sleepSeconds (2);
-      }
-
-      final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
-
-      final String sRequestID = map.getFirstRequestID ();
-      if (StringHelper.hasText (sRequestID))
-      {
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("getting the response for request Id: " + sRequestID);
-
-        final RedirectUserType aResponse = map.getAndRemove (sRequestID);
-
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("redirection to: " + aResponse.getRedirectUrl ());
-        aForm.addChild (new BootstrapButton ().addChild ("Manage received redirection messages")
-                                              .setIcon (EDefaultIcon.INFO)
-                                              .addStyle (ECSSProperty.MARGIN_LEFT, "16px")
-                                              .setOnClick (new SimpleURL (aResponse.getRedirectUrl ())));
-
-      }
-      else
-      {
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("no redirect message found");
-
-        // No need for UI
-        if (false)
-          aNodeList.addChild (info ("Currently no received redirect is available"));
-      }
     }
   }
 }

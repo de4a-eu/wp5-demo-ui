@@ -202,7 +202,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
-            // Start polling for the result
+            // Start polling for the result - wait at max 30 seconds
             aFutureGetReceivedRedirect = CompletableFuture.supplyAsync ( () -> {
               final long nStart = PDTFactory.getCurrentMillis ();
               final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
@@ -212,7 +212,9 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
               while (true)
               {
                 final long nNow = PDTFactory.getCurrentMillis ();
-                final RedirectUserType aMatch = map.getAndRemove (sSentRequestID);
+                // Don't remove here, so that something can be shown on the
+                // received redirects page
+                final RedirectUserType aMatch = map.get (sSentRequestID);
                 if (aMatch != null)
                 {
                   LOGGER.info ("Found a redirect URL for request ID '" +
@@ -225,7 +227,11 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
                 if (nNow > nEnd)
                 {
-                  LOGGER.warn ("Quit waiting for a redirect URL for request ID '" + sSentRequestID + "'");
+                  LOGGER.warn ("Quit waiting for a redirect URL for request ID '" +
+                               sSentRequestID +
+                               "' after " +
+                               (nNow - nStart) +
+                               " milliseconds");
                   return null;
                 }
 
@@ -287,7 +293,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
         }
         aNodeList.addChild (aResNL);
 
-        // Check for redirect
+        // Check for async redirect
         RedirectUserType aReceivedRedirect = null;
         try
         {

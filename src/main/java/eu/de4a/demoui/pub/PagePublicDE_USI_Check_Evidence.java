@@ -28,13 +28,13 @@ import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
-import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.ResponseMapEvidence;
+import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.IDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 
-public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
+public class PagePublicDE_USI_Check_Evidence extends AbstractAppWebPage
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Check_Evidence.class);
 
@@ -42,11 +42,11 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractPageDE
 
   public PagePublicDE_USI_Check_Evidence (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Check received evidence", EPatternType.USI);
+    super (sID, "Check received evidence");
   }
 
   @Override
-  protected void fillContent (final WebPageExecutionContext aWPEC)
+  protected void fillContent (@Nonnull final WebPageExecutionContext aWPEC)
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();

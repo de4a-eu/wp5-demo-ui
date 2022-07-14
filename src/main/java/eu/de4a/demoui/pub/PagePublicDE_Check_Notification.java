@@ -52,9 +52,7 @@ import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
-import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
-import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
@@ -70,10 +68,6 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Check_Notification.class);
 
-  // We're doing a DR-IM request
-  public static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR;
-
-  public static final String PARAM_REQUEST_ID = "requestid";
   private static final String FIELD_PAYLOAD = "payload";
 
   public PagePublicDE_Check_Notification (@Nonnull @Nonempty final String sID)

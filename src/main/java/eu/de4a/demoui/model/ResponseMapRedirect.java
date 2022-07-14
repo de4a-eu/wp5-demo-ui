@@ -80,12 +80,6 @@ public final class ResponseMapRedirect extends AbstractGlobalSingleton
     return m_aRWLock.writeLockedGet ( () -> m_aMap.remove (sID));
   }
 
-  @Nullable
-  public String getFirstRequestID ()
-  {
-    return m_aRWLock.readLockedGet (m_aMap::getFirstKey);
-  }
-
   @Nonnull
   @ReturnsMutableCopy
   public ICommonsMap <String, RedirectUserType> getAll ()
