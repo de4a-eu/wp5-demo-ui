@@ -95,15 +95,16 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("Getting from map the notification Id: " + event.getNotificationId ());
 
-      final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller ();
+      final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.deEventNotificationMarshaller ()
+              .formatted ();
 
       final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                               prettyPrintByTransformer (marshaller.getAsDocument (event),
-                                                                                         true))).setRows (25)
-                                                                                                .setCols (150)
-                                                                                                .setReadOnly (true)
-                                                                                                .addClass (CBootstrapCSS.TEXT_MONOSPACE)
-                                                                                                .addClass (CBootstrapCSS.FORM_CONTROL);
+                                                               marshaller.getAsString (event))).setRows (25)
+                                                                                               .setCols (150)
+                                                                                               .setReadOnly (true)
+                                                                                               .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                               .addClass (CBootstrapCSS.FORM_CONTROL);
+
       // Fill IM Request
       RequestExtractMultiEvidenceIMType luRequest = new RequestExtractMultiEvidenceIMType();
       luRequest.setSpecificationId(event.getSpecificationId());
