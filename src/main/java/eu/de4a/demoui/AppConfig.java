@@ -18,10 +18,13 @@ package eu.de4a.demoui;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.config.ConfigFactory;
 import com.helger.config.IConfig;
 import com.helger.scope.singleton.AbstractGlobalSingleton;
+
+import eu.de4a.demoui.pub.MenuPublic;
 
 /**
  * This class provides access to the settings as contained in the
@@ -115,5 +118,13 @@ public final class AppConfig extends AbstractGlobalSingleton
   public static String getDEXmlWriteTo ()
   {
     return getConfig ().getAsString ("webapp.de.file.xml");
+  }
+
+  @Nonnull
+  @Nonempty
+  public static String getDataEvaluatorURL ()
+  {
+    // No additional parameter
+    return getPublicURL () + "/public/menuitem-" + MenuPublic.MENU_DE_CHECK_USI_EVIDENCE;
   }
 }

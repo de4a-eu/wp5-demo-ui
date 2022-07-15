@@ -5,14 +5,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -104,16 +101,13 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.IWebPageExecutionContext;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.photon.uictrls.famfam.EFamFamIcon;
-import com.helger.scope.singleton.AbstractSessionSingleton;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.CApp;
-import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
-import eu.de4a.demoui.model.EPilot;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.MDSCompany;
 import eu.de4a.demoui.model.MDSPerson;
@@ -136,110 +130,15 @@ import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-public class PagePublicDE_USI_Guided extends AbstractPageDE
+public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
 {
-  /**
-   * Defines the different steps of the wizard
-   *
-   * @author Philip Helger
-   */
-  private enum EStep
-  {
-    // Order matters
-    SELECT_USE_CASE,
-    SELECT_DATA_EVALUATOR,
-    SELECT_DATA_OWNER,
-    SELECT_DATA_REQUEST_SUBJECT,
-    EXPLICIT_CONSENT,
-    SEND_REQUEST;
-
-    public boolean isFirst ()
-    {
-      return ordinal () == 0;
-    }
-
-    public boolean isNextSendRequest ()
-    {
-      return ordinal () == SEND_REQUEST.ordinal () - 1;
-    }
-
-    public boolean isLast ()
-    {
-      return ordinal () == values ().length - 1;
-    }
-
-    public boolean wasRequestSent ()
-    {
-      return ordinal () >= SEND_REQUEST.ordinal ();
-    }
-
-    public boolean isLT (@Nonnull final EStep eOther)
-    {
-      return ordinal () < eOther.ordinal ();
-    }
-
-    public boolean isGT (@Nonnull final EStep eOther)
-    {
-      return ordinal () > eOther.ordinal ();
-    }
-
-    @Nullable
-    public EStep prev ()
-    {
-      if (isFirst ())
-        return null;
-      return values ()[ordinal () - 1];
-    }
-
-    @Nullable
-    public EStep next ()
-    {
-      if (isLast ())
-        return null;
-      return values ()[ordinal () + 1];
-    }
-
-    @Nonnull
-    public static EStep first ()
-    {
-      return values ()[0];
-    }
-
-    @Nonnull
-    public static EStep min (@Nonnull final EStep e1, @Nonnull final EStep e2)
-    {
-      return e1.ordinal () < e2.ordinal () ? e1 : e2;
-    }
-  }
-
   /**
    * Defines the per-session state of this page
    *
    * @author Philip Helger
    */
-  public static final class SessionState extends AbstractSessionSingleton
+  public static final class SessionState extends AbstractSessionState <RequestExtractMultiEvidenceUSIType>
   {
-    private static final Supplier <String> NEW_REQUEST_ID_PROVIDER = () -> UUID.randomUUID ().toString ();
-
-    private EPatternType m_ePattern;
-    private EStep m_eStep = EStep.first ();
-    private String m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
-    // use case
-    private EUseCase m_eUseCase;
-    private ResponseLookupRoutingInformationType m_aIALResponse;
-    private ICommonsSet <String> m_aDOCountries;
-    // DE
-    private Agent m_aDE;
-    // DO
-    private Agent m_aDO;
-    // DRS
-    private MDSCompany m_aDRSCompany;
-    private MDSPerson m_aDRSPerson;
-
-    private RequestExtractMultiEvidenceUSIType m_aUSIRequest;
-    private String m_sRequestTargetURL;
-    private boolean m_bConfirmedToSendRequest;
-
     @Deprecated
     @UsedViaReflection
     public SessionState ()
@@ -249,164 +148,6 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
     public static SessionState getInstance ()
     {
       return getSessionSingleton (SessionState.class);
-    }
-
-    public void validate (@Nonnull final EPatternType eExpectedPattern)
-    {
-      if (m_eStep == null)
-        throw new IllegalStateException ("No step");
-      if (m_ePattern == null)
-      {
-        // First time init
-        m_ePattern = eExpectedPattern;
-      }
-      else
-        if (m_ePattern != eExpectedPattern)
-        {
-          // Switch between IM and USI
-          m_ePattern = eExpectedPattern;
-          reset ();
-        }
-
-      if (m_eUseCase == null)
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_USE_CASE);
-      if (m_aDE == null)
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_EVALUATOR);
-      if (m_aDO == null)
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_OWNER);
-      if (_allDRSNull ())
-        m_eStep = EStep.min (m_eStep, EStep.SELECT_DATA_REQUEST_SUBJECT);
-      if (m_aUSIRequest == null || !m_bConfirmedToSendRequest)
-        m_eStep = EStep.min (m_eStep, EStep.EXPLICIT_CONSENT);
-    }
-
-    private void _onBack ()
-    {
-      if (m_eStep.isLT (EStep.SELECT_USE_CASE))
-      {
-        m_eUseCase = null;
-        m_aIALResponse = null;
-        m_aDOCountries = null;
-      }
-      if (m_eStep.isLT (EStep.SELECT_DATA_EVALUATOR))
-        m_aDE = null;
-      if (m_eStep.isLT (EStep.SELECT_DATA_OWNER))
-        m_aDO = null;
-      if (m_eStep.isLT (EStep.SELECT_DATA_REQUEST_SUBJECT))
-        resetDRS ();
-      if (m_eStep.isLT (EStep.EXPLICIT_CONSENT))
-      {
-        m_aUSIRequest = null;
-        m_sRequestTargetURL = null;
-        m_bConfirmedToSendRequest = false;
-      }
-    }
-
-    @Nonnull
-    protected EStep step ()
-    {
-      return m_eStep;
-    }
-
-    public void moveBack ()
-    {
-      m_eStep = m_eStep.prev ();
-      _onBack ();
-    }
-
-    public void moveForward ()
-    {
-      m_eStep = m_eStep.next ();
-    }
-
-    /**
-     * Restart the whole wizard to the start state
-     */
-    public void reset ()
-    {
-      m_eStep = EStep.first ();
-      m_sRequestID = NEW_REQUEST_ID_PROVIDER.get ();
-      m_eUseCase = null;
-      m_aIALResponse = null;
-      m_aDOCountries = null;
-      _onBack ();
-    }
-
-    @Nonnull
-    public String getRequestID ()
-    {
-      return m_sRequestID;
-    }
-
-    @Nullable
-    public EPilot getPilot ()
-    {
-      return m_eUseCase == null ? null : m_eUseCase.getPilot ();
-    }
-
-    @Nullable
-    public EUseCase getUseCase ()
-    {
-      return m_eUseCase;
-    }
-
-    @Nullable
-    public String getUseCaseID ()
-    {
-      return m_eUseCase == null ? null : m_eUseCase.getID ();
-    }
-
-    @Nullable
-    public String getDataEvaluatorPID ()
-    {
-      return m_aDE == null ? null : m_aDE.getPID ();
-    }
-
-    @Nullable
-    public String getDataEvaluatorName ()
-    {
-      return m_aDE == null ? null : m_aDE.getName ();
-    }
-
-    @Nullable
-    public String getDataEvaluatorCountryCode ()
-    {
-      return m_aDE == null ? null : m_aDE.getCountryCode ();
-    }
-
-    @Nullable
-    public String getDataOwnerPID ()
-    {
-      return m_aDO == null ? null : m_aDO.getPID ();
-    }
-
-    @Nullable
-    public String getDataOwnerName ()
-    {
-      return m_aDO == null ? null : m_aDO.getName ();
-    }
-
-    @Nullable
-    public String getDataOwnerCountryCode ()
-    {
-      return m_aDO == null ? null : m_aDO.getCountryCode ();
-    }
-
-    private boolean _allDRSNull ()
-    {
-      return m_aDRSCompany == null && m_aDRSPerson == null;
-    }
-
-    public void resetDRS ()
-    {
-      m_aDRSCompany = null;
-      m_aDRSPerson = null;
-    }
-
-    @Nullable
-    public LocalDate getBirthDayOr (@Nullable final LocalDate aFallbackDate)
-    {
-      return m_aDRSPerson != null ? m_aDRSPerson.getBirthday () : aFallbackDate;
     }
 
     @Nonnull
@@ -476,7 +217,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         aItem.setRequestGrounds (aRG);
       }
       aItem.setCanonicalEvidenceTypeId (m_eUseCase.getDocumentTypeID ().getURIEncoded ());
-      aItem.setDataEvaluatorURL (EDemoDocument.getDataEvaluatorURL ());
+      aItem.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ());
       aRequest.addRequestEvidenceUSIItem (aItem);
       return aRequest;
     }
@@ -587,7 +328,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                                                                  : new PLText (s, c10);
 
       // Headline
-      final String sTitle = "Preview of DE4A Iteration 2 request data before sending";
+      final String sTitle = "Preview of DE4A Iteration 2 USI request data before sending";
       aPS1.addElement (new PLText (sTitle, r12b).setMarginLeft (fMargin).setMarginTop (fMargin));
       aPS1.addElement (new PLText ("Date and time of creation of this report: " +
                                    PDTFactory.getCurrentZonedDateTimeUTC ().toString (),
@@ -676,10 +417,10 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
       // Created XML
       {
         final IPLRenderableObject <?> aXML;
-        if (aState.m_aUSIRequest != null)
+        if (aState.m_aRequestObj != null)
           aXML = new PLText (DE4ACoreMarshaller.drRequestTransferEvidenceUSIMarshaller ()
                                                .formatted ()
-                                               .getAsString (aState.m_aUSIRequest),
+                                               .getAsString (aState.m_aRequestObj),
                              c10);
         else
           aXML = new PLBox (new PLText ("Failed to create Request Object",
@@ -706,7 +447,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                             .setDocumentCreationDateTime (PDTFactory.getCurrentLocalDateTime ())
                             .setDocumentTitle (sTitle)
                             .renderTo (aBAOS);
-        aAjaxResponse.pdf (aBAOS, "de4a-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
+        aAjaxResponse.pdf (aBAOS, "de4a-usi-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
       }
 
       LOGGER.info ("Finished rendering PDF");
@@ -1278,13 +1019,13 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         final byte [] aRequestBytes = m.getAsBytes (aRequest);
         if (aRequestBytes == null)
         {
-          aState.m_aUSIRequest = null;
+          aState.m_aRequestObj = null;
           for (final IError a : aErrorList)
             aFormErrors.add (SingleError.builder (a).errorFieldName (FIELD_REQUEST_XML).build ());
         }
         else
         {
-          aState.m_aUSIRequest = aRequest;
+          aState.m_aRequestObj = aRequest;
         }
 
         // First column for all nested tables
@@ -1348,9 +1089,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             throw new IllegalStateException ();
         }
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Created XML")
-                                                     .setCtrl (aState.m_aUSIRequest == null ? error ("Failed to create Request Object")
+                                                     .setCtrl (aState.m_aRequestObj == null ? error ("Failed to create Request Object")
                                                                                             : new HCTextArea (new RequestField (FIELD_REQUEST_XML,
-                                                                                                                                m.getAsString (aState.m_aUSIRequest))).setRows (10)
+                                                                                                                                m.getAsString (aState.m_aRequestObj))).setRows (10)
                                                                                                                                                                       .setReadOnly (true)
                                                                                                                                                                       .addClass (CBootstrapCSS.FORM_CONTROL)
                                                                                                                                                                       .addClass (CBootstrapCSS.TEXT_MONOSPACE))
@@ -1409,13 +1150,13 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                   "DemoUI sending " +
                                                     m_ePattern.getDisplayName () +
                                                     " request '" +
-                                                    aState.m_aUSIRequest.getRequestId () +
+                                                    aState.m_aRequestObj.getRequestId () +
                                                     "' to '" +
                                                     aState.m_sRequestTargetURL +
                                                     "'");
             final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
 
-            final byte [] aRequestBytes = m.getAsBytes (aState.m_aUSIRequest);
+            final byte [] aRequestBytes = m.getAsBytes (aState.m_aRequestObj);
             if (LOGGER.isInfoEnabled ())
               LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
@@ -1427,7 +1168,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
             // Start polling for the result - wait at max 30 seconds
-            aFutureGetReceivedRedirect = CompletableFuture.supplyAsync (new USIRedirectSupplier (aState.m_aUSIRequest.getRequestId ()));
+            aFutureGetReceivedRedirect = CompletableFuture.supplyAsync (new USIRedirectSupplier (aState.m_aRequestObj.getRequestId ()));
 
             if (aResponseBytesRequest1 == null)
             {
@@ -1515,6 +1256,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         }
         catch (final IOException ex)
         {
+          LOGGER.error ("Error executing HTTP request", ex);
           aForm.addChild (error ().addChild (div ("Error sending request to ").addChild (code (aState.m_sRequestTargetURL)))
                                   .addChild (AppCommonUI.getTechnicalDetailsUI (ex, true)));
         }

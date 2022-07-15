@@ -53,7 +53,6 @@ import com.helger.pdflayout.spec.PreloadFont;
 import com.helger.xml.XMLFactory;
 
 import eu.de4a.demoui.AppConfig;
-import eu.de4a.demoui.pub.MenuPublic;
 import eu.de4a.iem.cev.EDE4ACanonicalEvidenceType;
 import eu.de4a.iem.core.CIEM;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
@@ -623,14 +622,6 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   }
 
   @Nonnull
-  @Nonempty
-  public static String getDataEvaluatorURL ()
-  {
-    // No additional parameter
-    return AppConfig.getPublicURL () + "/public/menuitem-" + MenuPublic.MENU_DE_CHECK_USI_EVIDENCE;
-  }
-
-  @Nonnull
   private static RequestEvidenceUSIItemType _createRequestEvidenceUSIItemType ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
@@ -639,7 +630,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataRequestSubject (_createDRS ());
     ret.setRequestGrounds (_createRequestGrounds ());
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataEvaluatorURL (getDataEvaluatorURL ());
+    ret.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ());
     return ret;
   }
 
