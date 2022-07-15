@@ -98,7 +98,6 @@ import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
 import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
 import com.helger.photon.uicore.icon.EDefaultIcon;
-import com.helger.photon.uicore.page.IWebPageExecutionContext;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.photon.uictrls.famfam.EFamFamIcon;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
@@ -151,7 +150,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
     }
 
     @Nonnull
-    public RequestExtractMultiEvidenceUSIType buildUSIRequest (@Nonnull final IWebPageExecutionContext aWPEC)
+    public RequestExtractMultiEvidenceUSIType buildUSIRequest ()
     {
       final RequestExtractMultiEvidenceUSIType aRequest = new RequestExtractMultiEvidenceUSIType ();
       aRequest.setRequestId (m_sRequestID);
@@ -447,7 +446,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
                             .setDocumentCreationDateTime (PDTFactory.getCurrentLocalDateTime ())
                             .setDocumentTitle (sTitle)
                             .renderTo (aBAOS);
-        aAjaxResponse.pdf (aBAOS, "de4a-usi-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
+        aAjaxResponse.pdf (aBAOS,
+                           "de4a-usi-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
       }
 
       LOGGER.info ("Finished rendering PDF");
@@ -1008,7 +1008,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
       case EXPLICIT_CONSENT:
       {
         // Create request
-        final RequestExtractMultiEvidenceUSIType aRequest = aState.buildUSIRequest (aWPEC);
+        final RequestExtractMultiEvidenceUSIType aRequest = aState.buildUSIRequest ();
 
         // Check against XSD
         final ErrorList aErrorList = new ErrorList ();
