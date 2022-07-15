@@ -55,6 +55,7 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
     if (LOGGER.isInfoEnabled ())
       LOGGER.info ("Received " + aPayload.length + " bytes");
 
+    // TODO why DT and not DR?
     final DE4ACoreMarshaller <RedirectUserType> marshaller = DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ();
     final RedirectUserType aRedirectUserType = marshaller.read (aPayload);
     if (aRedirectUserType == null)

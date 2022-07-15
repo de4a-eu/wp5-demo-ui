@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
@@ -42,6 +44,7 @@ import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
+import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
 import com.helger.datetime.util.PDTIOHelper;
 import com.helger.dcng.core.http.DcngHttpClientSettings;
@@ -90,6 +93,7 @@ import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePick
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.core.form.RequestFieldBoolean;
+import com.helger.photon.icon.bootstrapicons.EBootstrapIcon;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
 import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
@@ -122,6 +126,7 @@ import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
 import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
@@ -441,7 +446,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
                             .setDocumentCreationDateTime (PDTFactory.getCurrentLocalDateTime ())
                             .setDocumentTitle (sTitle)
                             .renderTo (aBAOS);
-        aAjaxResponse.pdf (aBAOS, "de4a-im-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
+        aAjaxResponse.pdf (aBAOS,
+                           "de4a-im-request-preview-" + PDTIOHelper.getCurrentLocalDateTimeForFilename () + ".pdf");
       }
 
       LOGGER.info ("Finished rendering PDF");
@@ -726,6 +732,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
     // Add some global JS placeholder
     final JSPackage aGlobalJS = new JSPackage ();
     aForm.addChild (new HCScriptInline (aGlobalJS));
+
+    CompletableFuture <ResponseExtractMultiEvidenceType> aFutureGetReceivedEvidence = null;
 
     // Handle current step
     switch (aState.step ())
@@ -1158,6 +1166,10 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
 
             // Main POST to DR
             aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+
+            // Start polling for the result - wait at max 30 seconds
+            aFutureGetReceivedEvidence = CompletableFuture.supplyAsync (new IMEvidenceSupplier (aState.m_aRequestObj.getRequestId ()));
+
             if (aResponseBytesRequest1 == null)
             {
               DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received no response content");
@@ -1205,6 +1217,37 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
             });
             aErrorBox.addChild (div ("The request could not be accepted by the DR because of the following reasons:"))
                      .addChild (aUL);
+          }
+
+          // Check for async redirect
+          ResponseExtractMultiEvidenceType aReceivedRedirect = null;
+          try
+          {
+            aReceivedRedirect = aFutureGetReceivedEvidence == null ? null : aFutureGetReceivedEvidence.get ();
+          }
+          catch (final InterruptedException ex)
+          {
+            Thread.currentThread ().interrupt ();
+          }
+          catch (final ExecutionException ex)
+          {
+            // Ignore
+          }
+
+          if (aReceivedRedirect != null)
+          {
+            aForm.addChild (success ().addChild (div ("Received an Evidence back"))
+                                      .addChild (div (new BootstrapButton ().addChild ("View Evidence")
+                                                                            .setIcon (EBootstrapIcon.PAPERCLIP)
+                                                                            .setOnClick (new SimpleURL (aWPEC.getLinkToMenuItem (MenuPublic.MENU_DE_CHECK_EVIDENCE))))));
+          }
+          else
+          {
+            if (LOGGER.isDebugEnabled ())
+              LOGGER.debug ("No Response Evidence message found");
+
+            // No need for UI
+            aForm.addChild (warn ("No Evidence was returned during a decent time frame. Sorry."));
           }
         }
         catch (final IOException ex)

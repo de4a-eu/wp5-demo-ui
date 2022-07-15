@@ -125,6 +125,6 @@ public final class AppConfig extends AbstractGlobalSingleton
   public static String getDataEvaluatorURL ()
   {
     // No additional parameter
-    return getPublicURL () + "/public/menuitem-" + MenuPublic.MENU_DE_CHECK_USI_EVIDENCE;
+    return getPublicURL () + "/public/menuitem-" + MenuPublic.MENU_DE_CHECK_EVIDENCE;
   }
 }

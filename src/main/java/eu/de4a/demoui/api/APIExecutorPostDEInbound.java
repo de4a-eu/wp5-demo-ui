@@ -58,6 +58,7 @@ public class APIExecutorPostDEInbound implements IAPIExecutor
       LOGGER.info ("Received " + aPayload.length + " bytes");
 
     // MARSHALLING
+    // TODO why DT and not DE?
     final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> m = DE4ACoreMarshaller.dtResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE);
     final ResponseExtractMultiEvidenceType response = m.read (aPayload);
     if (response == null)

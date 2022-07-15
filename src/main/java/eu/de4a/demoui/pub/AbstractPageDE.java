@@ -60,6 +60,7 @@ import com.helger.xml.serialize.write.XMLWriterSettings;
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.ResponseMapEvidence;
 import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.iem.cev.de4a.t42.DE4AT42Marshaller;
@@ -227,6 +228,57 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
         {
           if (LOGGER.isWarnEnabled ())
             LOGGER.warn ("Quit waiting for a redirect URL for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return null;
+        }
+
+        ThreadHelper.sleep (50);
+      }
+    }
+  }
+
+  protected static final class IMEvidenceSupplier implements Supplier <ResponseExtractMultiEvidenceType>
+  {
+    private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE.IMEvidenceSupplier.class);
+    private final String m_sSentRequestID;
+
+    public IMEvidenceSupplier (@Nonnull @Nonempty final String sSentRequestID)
+    {
+      ValueEnforcer.notEmpty (sSentRequestID, "SentRequestID");
+      m_sSentRequestID = sSentRequestID;
+    }
+
+    @Nullable
+    public ResponseExtractMultiEvidenceType get ()
+    {
+      final long nStart = PDTFactory.getCurrentMillis ();
+      final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
+
+      final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
+      while (true)
+      {
+        final long nNow = PDTFactory.getCurrentMillis ();
+        // Don't remove here, so that something can be shown on the
+        // received redirects page
+        final ResponseExtractMultiEvidenceType aMatch = map.get (m_sSentRequestID);
+        if (aMatch != null)
+        {
+          if (LOGGER.isInfoEnabled ())
+            LOGGER.info ("Found a Response Evidence for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return aMatch;
+        }
+
+        if (nNow > nEnd)
+        {
+          if (LOGGER.isWarnEnabled ())
+            LOGGER.warn ("Quit waiting for a Response Evidence for request ID '" +
                          m_sSentRequestID +
                          "' after " +
                          (nNow - nStart) +

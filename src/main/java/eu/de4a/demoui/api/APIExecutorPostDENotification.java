@@ -55,6 +55,7 @@ public class APIExecutorPostDENotification implements IAPIExecutor
       LOGGER.info ("Received " + aPayload.length + " bytes");
 
     // MARSHALLING
+    // TODO why DT and not DR?
     final DE4ACoreMarshaller <EventNotificationType> marshaller = DE4ACoreMarshaller.dtEventNotificationMarshaller ();
     final EventNotificationType response = marshaller.read (aPayload);
     if (response == null)
