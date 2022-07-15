@@ -16,17 +16,23 @@
 package eu.de4a.demoui.pub;
 
 import java.util.Locale;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
+import com.helger.commons.CGlobal;
 import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.builder.IBuilder;
 import com.helger.commons.collection.impl.CommonsArrayList;
+import com.helger.commons.concurrent.ThreadHelper;
+import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.IHCNode;
@@ -54,6 +60,7 @@ import com.helger.xml.serialize.write.XMLWriterSettings;
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.iem.cev.de4a.t42.DE4AT42Marshaller;
 import eu.de4a.iem.core.jaxb.common.AgentType;
@@ -61,6 +68,7 @@ import eu.de4a.iem.core.jaxb.common.CanonicalEvidenceType;
 import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
 import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.iem.jaxb.t42.v0_6.ActivityType;
@@ -177,6 +185,57 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
         return sBaseUrl + EDemoDocument.EVENT_NOTIFY.getRelativeURL ();
       default:
         throw new IllegalStateException ("Unsupported pattern " + ePattern);
+    }
+  }
+
+  protected static final class USIRedirectSupplier implements Supplier <RedirectUserType>
+  {
+    private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE.USIRedirectSupplier.class);
+    private final String m_sSentRequestID;
+
+    public USIRedirectSupplier (@Nonnull @Nonempty final String sSentRequestID)
+    {
+      ValueEnforcer.notEmpty (sSentRequestID, "SentRequestID");
+      m_sSentRequestID = sSentRequestID;
+    }
+
+    @Nullable
+    public RedirectUserType get ()
+    {
+      final long nStart = PDTFactory.getCurrentMillis ();
+      final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
+
+      final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
+      while (true)
+      {
+        final long nNow = PDTFactory.getCurrentMillis ();
+        // Don't remove here, so that something can be shown on the
+        // received redirects page
+        final RedirectUserType aMatch = map.get (m_sSentRequestID);
+        if (aMatch != null)
+        {
+          if (LOGGER.isInfoEnabled ())
+            LOGGER.info ("Found a redirect URL for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return aMatch;
+        }
+
+        if (nNow > nEnd)
+        {
+          if (LOGGER.isWarnEnabled ())
+            LOGGER.warn ("Quit waiting for a redirect URL for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return null;
+        }
+
+        ThreadHelper.sleep (50);
+      }
     }
   }
 

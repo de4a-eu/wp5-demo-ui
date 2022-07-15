@@ -29,10 +29,7 @@ import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.helger.commons.CGlobal;
 import com.helger.commons.annotation.Nonempty;
-import com.helger.commons.concurrent.ThreadHelper;
-import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.error.IError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.IErrorList;
@@ -77,7 +74,6 @@ import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
-import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
 import eu.de4a.iem.core.jaxb.common.RedirectUserType;
@@ -207,41 +203,7 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
 
             // Start polling for the result - wait at max 30 seconds
-            aFutureGetReceivedRedirect = CompletableFuture.supplyAsync ( () -> {
-              final long nStart = PDTFactory.getCurrentMillis ();
-              final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
-
-              final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
-              final String sSentRequestID = aParsedRequest.getRequestId ();
-              while (true)
-              {
-                final long nNow = PDTFactory.getCurrentMillis ();
-                // Don't remove here, so that something can be shown on the
-                // received redirects page
-                final RedirectUserType aMatch = map.get (sSentRequestID);
-                if (aMatch != null)
-                {
-                  LOGGER.info ("Found a redirect URL for request ID '" +
-                               sSentRequestID +
-                               "' after " +
-                               (nNow - nStart) +
-                               " milliseconds");
-                  return aMatch;
-                }
-
-                if (nNow > nEnd)
-                {
-                  LOGGER.warn ("Quit waiting for a redirect URL for request ID '" +
-                               sSentRequestID +
-                               "' after " +
-                               (nNow - nStart) +
-                               " milliseconds");
-                  return null;
-                }
-
-                ThreadHelper.sleep (50);
-              }
-            });
+            aFutureGetReceivedRedirect = CompletableFuture.supplyAsync (new USIRedirectSupplier (aParsedRequest.getRequestId ()));
 
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
@@ -279,7 +241,11 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
               {
                 DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType' and FAILURE");
                 final HCUL aUL = new HCUL ();
-                aResponseObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                aResponseObj.getError ().forEach (x -> {
+                  final String sMsg = "[" + x.getCode () + "] " + x.getText ();
+                  aUL.addItem (sMsg);
+                  LOGGER.warn ("Response error: " + sMsg);
+                });
                 aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
               }
             }

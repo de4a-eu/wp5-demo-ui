@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -45,6 +47,7 @@ import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
+import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
 import com.helger.datetime.util.PDTIOHelper;
 import com.helger.dcng.core.http.DcngHttpClientSettings;
@@ -93,6 +96,7 @@ import com.helger.photon.bootstrap4.uictrls.datetimepicker.BootstrapDateTimePick
 import com.helger.photon.core.form.FormErrorList;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.core.form.RequestFieldBoolean;
+import com.helger.photon.icon.bootstrapicons.EBootstrapIcon;
 import com.helger.photon.icon.fontawesome.EFontAwesome5Icon;
 import com.helger.photon.uicore.html.select.HCCountrySelect;
 import com.helger.photon.uicore.html.select.HCExtSelect;
@@ -125,6 +129,7 @@ import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
 import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
 import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
 import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 import eu.de4a.iem.core.jaxb.common.RequestEvidenceUSIItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
 import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
@@ -987,6 +992,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
     final JSPackage aGlobalJS = new JSPackage ();
     aForm.addChild (new HCScriptInline (aGlobalJS));
 
+    CompletableFuture <RedirectUserType> aFutureGetReceivedRedirect = null;
+
     // Handle current step
     switch (aState.step ())
     {
@@ -1286,11 +1293,15 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
                                                      .setCtrl (aState.getUseCase ().getDisplayName ()));
 
+        // DE
         {
           final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
           final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
           t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataEvaluatorName ());
-          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorPID ()));
+          t.addBodyRow ()
+           .addCell (strong ("ID:"))
+           .addCell (div (code (aState.getDataEvaluatorPID ())),
+                     div (em ("Note: the sender DE Participant ID is different to the one in the request")));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
            .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
@@ -1298,6 +1309,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
         }
 
+        // DO
         {
           final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
           final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
@@ -1342,7 +1354,8 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
                                                                                                                                                                       .setReadOnly (true)
                                                                                                                                                                       .addClass (CBootstrapCSS.FORM_CONTROL)
                                                                                                                                                                       .addClass (CBootstrapCSS.TEXT_MONOSPACE))
-                                                     .setHelpText ("This is the technical request. It is just shown for helping developers")
+                                                     .setHelpText (div ("This is the technical request. It is just shown for helping developers"),
+                                                                   div ("Note: the sender DE Participant ID is hard coded"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
                                                      .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
@@ -1412,6 +1425,10 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
 
             // Main POST to DR
             aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+
+            // Start polling for the result - wait at max 30 seconds
+            aFutureGetReceivedRedirect = CompletableFuture.supplyAsync (new USIRedirectSupplier (aState.m_aUSIRequest.getRequestId ()));
+
             if (aResponseBytesRequest1 == null)
             {
               DE4AKafkaClient.send (EErrorLevel.INFO, "DemoUI received no response content");
@@ -1459,6 +1476,41 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE
             });
             aErrorBox.addChild (div ("The request could not be accepted by the DR because of the following reasons:"))
                      .addChild (aUL);
+          }
+
+          // Check for async redirect
+          RedirectUserType aReceivedRedirect = null;
+          try
+          {
+            aReceivedRedirect = aFutureGetReceivedRedirect == null ? null : aFutureGetReceivedRedirect.get ();
+          }
+          catch (final InterruptedException ex)
+          {
+            Thread.currentThread ().interrupt ();
+          }
+          catch (final ExecutionException ex)
+          {
+            // Ignore
+          }
+
+          if (aReceivedRedirect != null)
+          {
+            if (LOGGER.isDebugEnabled ())
+              LOGGER.debug ("redirection to: " + aReceivedRedirect.getRedirectUrl ());
+
+            aForm.addChild (success ().addChild (div ("Received the redirect URL ").addChild (code (aReceivedRedirect.getRedirectUrl ())))
+                                      .addChild (div (new BootstrapButton ().addChild ("Go to DO Preview")
+                                                                            .setIcon (EBootstrapIcon.PAPERCLIP)
+                                                                            .setOnClick (new SimpleURL (aReceivedRedirect.getRedirectUrl ())))));
+
+          }
+          else
+          {
+            if (LOGGER.isDebugEnabled ())
+              LOGGER.debug ("no redirect message found");
+
+            // No need for UI
+            aForm.addChild (warn ("A redirect URL was not returned during a decent time frame. Sorry."));
           }
         }
         catch (final IOException ex)

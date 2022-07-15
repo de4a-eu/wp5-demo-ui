@@ -297,7 +297,8 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
                                                                new BootstrapButton ().addChild ("Other message")
                                                                                      .setIcon (EDefaultIcon.REFRESH)
                                                                                      .setOnClick (aOnClick))
-                                                     .setHelpText ("The message you want to send. By default a randomly generated message is created")
+                                                     .setHelpText (div ("The message you want to send. By default a randomly generated message is created."),
+                                                                   div ("Note: the sender DE Participant ID is hard coded"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
       }
 

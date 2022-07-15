@@ -1283,11 +1283,15 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
         aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type")
                                                      .setCtrl (aState.getUseCase ().getDisplayName ()));
 
+        // DE
         {
           final Locale aDECountry = CountryCache.getInstance ().getCountry (aState.getDataEvaluatorCountryCode ());
           final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
           t.addBodyRow ().addCell (strong ("Name:")).addCell (aState.getDataEvaluatorName ());
-          t.addBodyRow ().addCell (strong ("ID:")).addCell (code (aState.getDataEvaluatorPID ()));
+          t.addBodyRow ()
+           .addCell (strong ("ID:"))
+           .addCell (div (code (aState.getDataEvaluatorPID ())),
+                     div (em ("Note: the sender DE Participant ID is different to the one in the request")));
           t.addBodyRow ()
            .addCell (strong ("Country:"))
            .addCell (aDECountry != null ? aDECountry.getDisplayCountry (aDisplayLocale)
@@ -1295,6 +1299,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
           aForm.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (t));
         }
 
+        // DO
         {
           final Locale aDOCountry = CountryCache.getInstance ().getCountry (aState.getDataOwnerCountryCode ());
           final BootstrapTable t = new BootstrapTable (aCol1, HCCol.star ());
@@ -1339,7 +1344,8 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE
                                                                                                                                                                     .setReadOnly (true)
                                                                                                                                                                     .addClass (CBootstrapCSS.FORM_CONTROL)
                                                                                                                                                                     .addClass (CBootstrapCSS.TEXT_MONOSPACE))
-                                                     .setHelpText ("This is the technical request. It is just shown for helping developers")
+                                                     .setHelpText (div ("This is the technical request. It is just shown for helping developers"),
+                                                                   div ("Note: the sender DE Participant ID is hard coded"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_REQUEST_XML)));
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
                                                      .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
