@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM tomcat:9-jdk11-adoptopenjdk-hotspot
+FROM tomcat:9-jdk11
 
 ENV JAVA_OPTS="$JAVA_OPTS -Djava.security.egd=file:/dev/urandom" 
 
