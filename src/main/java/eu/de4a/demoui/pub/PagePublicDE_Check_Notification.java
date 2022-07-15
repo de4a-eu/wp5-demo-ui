@@ -110,7 +110,7 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
       event.getEventNotificationItem ().forEach ( (item) -> {
         final RequestEvidenceItemType evidence = new RequestEvidenceItemType ();
         evidence.setRequestItemId (item.getEventId ());
-        evidence.setDataRequestSubject (item.getRelatedEventSubjectAtIndex (0));
+        evidence.setDataRequestSubject (item.getEventSubject()));
         evidence.setCanonicalEvidenceTypeId (item.getCanonicalEventCatalogUri ());
         final RequestGroundsType rg = new RequestGroundsType ();
         rg.setExplicitRequest (ExplicitRequestType.SDGR_14);

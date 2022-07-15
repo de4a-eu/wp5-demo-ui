@@ -108,7 +108,7 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
       item.setCanonicalEventCatalogUri (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
       item.getDataRequestSubject ().setDataSubjectPerson (null);
       item.getDataRequestSubject ().setDataSubjectCompany (new LegalPersonIdentifierType ());
-      item.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("NL/SE/5591674170");
+      item.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("SE/NL/5591674170");
       item.getDataRequestSubject ().getDataSubjectCompany ().setLegalName ("LegalName-1602842249");
 
     }
