@@ -56,10 +56,12 @@ import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.core.jaxb.common.AdditionalParameterType;
+import eu.de4a.iem.core.jaxb.common.AdditionalParameterTypeType;
 import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 import eu.de4a.iem.core.jaxb.common.ExplicitRequestType;
-import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
+import eu.de4a.iem.core.jaxb.common.RequestEvidenceLUItemType;
+import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceLUType;
 import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
@@ -72,7 +74,7 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
 
   public PagePublicDE_Check_Notification (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "Check received event", EPatternType.IM);
+    super (sID, "Check received event", EPatternType.LOOKUP);
   }
 
   @Override
@@ -99,26 +101,34 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
                                                                                                .addClass (CBootstrapCSS.TEXT_MONOSPACE)
                                                                                                .addClass (CBootstrapCSS.FORM_CONTROL);
 
-      // Fill IM Request
-      final RequestExtractMultiEvidenceIMType luRequest = new RequestExtractMultiEvidenceIMType ();
+      // Fill LU Request
+      final RequestExtractMultiEvidenceLUType luRequest = new RequestExtractMultiEvidenceLUType ();
       luRequest.setSpecificationId (event.getSpecificationId ());
       luRequest.setDataEvaluator (event.getDataEvaluator ());
       luRequest.setDataOwner (event.getDataOwner ());
       luRequest.setRequestId (event.getNotificationId ());
       luRequest.setTimeStamp (event.getTimeStamp ());
-      final List <RequestEvidenceItemType> evidences = new ArrayList <> ();
+      final List <RequestEvidenceLUItemType> evidences = new ArrayList <> ();
       event.getEventNotificationItem ().forEach ( (item) -> {
-        final RequestEvidenceItemType evidence = new RequestEvidenceItemType ();
+        final RequestEvidenceLUItemType evidence = new RequestEvidenceLUItemType ();
         evidence.setRequestItemId (item.getEventId ());
         evidence.setDataRequestSubject (item.getEventSubject());
         evidence.setCanonicalEvidenceTypeId (item.getCanonicalEventCatalogUri ());
+        AdditionalParameterType param = new AdditionalParameterType();
+        param.setLabel("lookup");
+        param.setType(AdditionalParameterTypeType.INPUT_TEXT);
+        param.setValue("lookup");
+        List<AdditionalParameterType> listParams = new ArrayList<AdditionalParameterType>();
+        listParams.add(param);
+        evidence.setAdditionalParameter(listParams);
+        evidence.setEventNotificationRef(item.getEventId());
         final RequestGroundsType rg = new RequestGroundsType ();
         rg.setExplicitRequest (ExplicitRequestType.SDGR_14);
         evidence.setRequestGrounds (rg);
         evidences.add (evidence);
       });
 
-      luRequest.setRequestEvidenceIMItem (evidences);
+      luRequest.setRequestEvidenceLUItem (evidences);
 
       final JSPackage aFunc = new JSPackage ();
       final BootstrapForm aForm = aNodeList.addAndReturnChild (getUIHandler ().createFormSelf (aWPEC).ensureID ());
@@ -161,7 +171,7 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
     }
   }
 
-  protected IHasJSCode SendLURequest (final RequestExtractMultiEvidenceIMType request)
+  protected IHasJSCode SendLURequest (final RequestExtractMultiEvidenceLUType request)
   {
 
     DE4AKafkaClient.send (EErrorLevel.INFO,
@@ -172,7 +182,7 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
                                             "'");
 
     // UNMARSHALLING
-    final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> marshaller = DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ();
+    final DE4ACoreMarshaller <RequestExtractMultiEvidenceLUType> marshaller = DE4ACoreMarshaller.drRequestTransferEvidenceLUMarshaller();
     final String sPayload = marshaller.getAsString (request);
 
     final StopWatch aSW = StopWatch.createdStarted ();

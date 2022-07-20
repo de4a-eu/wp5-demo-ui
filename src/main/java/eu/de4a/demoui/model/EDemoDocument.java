@@ -275,13 +275,24 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
             EDemoDocumentType.REQUEST,
             EDemoDocument::createDemoRequestSubscription,
             DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),
+  
   // Notify request
   EVENT_NOTIFY ("notify-req",
                 "Event Notification Request (C1 -> C2 and C3 -> C4)",
                 "/event/notification",
                 EDemoDocumentType.REQUEST,
                 EDemoDocument::createDemoEventNotification,
-                DE4ACoreMarshaller.dtEventNotificationMarshaller ()),;
+                DE4ACoreMarshaller.dtEventNotificationMarshaller ()),
+	
+  // Lookup request
+  LOOKUP_REQ ("lookup-req",
+	                "Lookup Request DE to DR (C1 -> C2)",
+	                "/request/lu",
+	                EDemoDocumentType.REQUEST,
+	                EDemoDocument::createDemoRequestExtractMultiEvidenceIM,
+	                DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller());
+	
+	
 
   private final String m_sID;
   private final String m_sDisplayName;

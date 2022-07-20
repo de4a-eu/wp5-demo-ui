@@ -39,7 +39,9 @@ public enum EPatternType implements IHasID <String>, IHasDisplayName
   /** Event Subscription */
   SUBSCRIPTION ("subscription", "Event Subscription"),
   /** Event Notification */
-  NOTIFICATION ("notification", "Event Notification");
+  NOTIFICATION ("notification", "Event Notification"),
+  /** Lookup **/
+  LOOKUP ("lookup", "Lookup");
 
   private final String m_sID;
   private final String m_sDisplayName;

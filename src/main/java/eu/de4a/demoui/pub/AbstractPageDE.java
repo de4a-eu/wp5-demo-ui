@@ -184,6 +184,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
         return sBaseUrl + EDemoDocument.SUBS_REQ.getRelativeURL ();
       case NOTIFICATION:
         return sBaseUrl + EDemoDocument.EVENT_NOTIFY.getRelativeURL ();
+      case LOOKUP:
+         return sBaseUrl + EDemoDocument.LOOKUP_REQ.getRelativeURL ();
       default:
         throw new IllegalStateException ("Unsupported pattern " + ePattern);
     }
