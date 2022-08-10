@@ -109,19 +109,19 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
       luRequest.setRequestId (event.getNotificationId ());
       luRequest.setTimeStamp (event.getTimeStamp ());
       final List <RequestEvidenceLUItemType> evidences = new ArrayList <> ();
-      event.getEventNotificationItem ().forEach ( (item) -> {
+      event.getEventNotificationItem ().forEach (item -> {
         final RequestEvidenceLUItemType evidence = new RequestEvidenceLUItemType ();
         evidence.setRequestItemId (item.getEventId ());
-        evidence.setDataRequestSubject (item.getEventSubject());
+        evidence.setDataRequestSubject (item.getEventSubject ());
         evidence.setCanonicalEvidenceTypeId (item.getCanonicalEventCatalogUri ());
-        AdditionalParameterType param = new AdditionalParameterType();
-        param.setLabel("lookup");
-        param.setType(AdditionalParameterTypeType.INPUT_TEXT);
-        param.setValue("lookup");
-        List<AdditionalParameterType> listParams = new ArrayList<AdditionalParameterType>();
-        listParams.add(param);
-        evidence.setAdditionalParameter(listParams);
-        evidence.setEventNotificationRef(item.getEventId());
+        final AdditionalParameterType param = new AdditionalParameterType ();
+        param.setLabel ("lookup");
+        param.setType (AdditionalParameterTypeType.INPUT_TEXT);
+        param.setValue ("lookup");
+        final List <AdditionalParameterType> listParams = new ArrayList <> ();
+        listParams.add (param);
+        evidence.setAdditionalParameter (listParams);
+        evidence.setEventNotificationRef (item.getEventId ());
         final RequestGroundsType rg = new RequestGroundsType ();
         rg.setExplicitRequest (ExplicitRequestType.SDGR_14);
         evidence.setRequestGrounds (rg);
@@ -182,7 +182,7 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
                                             "'");
 
     // UNMARSHALLING
-    final DE4ACoreMarshaller <RequestExtractMultiEvidenceLUType> marshaller = DE4ACoreMarshaller.drRequestTransferEvidenceLUMarshaller();
+    final DE4ACoreMarshaller <RequestExtractMultiEvidenceLUType> marshaller = DE4ACoreMarshaller.drRequestTransferEvidenceLUMarshaller ();
     final String sPayload = marshaller.getAsString (request);
 
     final StopWatch aSW = StopWatch.createdStarted ();
