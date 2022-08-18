@@ -22,9 +22,9 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,6 @@ import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.css.property.ECSSProperty;
-import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.html.grouping.HCUL;
 import com.helger.html.hc.impl.HCNodeList;
@@ -52,6 +51,7 @@ import com.helger.photon.uicore.css.CPageParam;
 import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
+import eu.de4a.demoui.AppHttpClientSettings;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.demoui.ui.AppCommonUI;
@@ -186,14 +186,11 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
     final String sPayload = marshaller.getAsString (request);
 
     final StopWatch aSW = StopWatch.createdStarted ();
-    final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
-    aHCS.setConnectionRequestTimeoutMS (120_000);
-    aHCS.setSocketTimeoutMS (120_000);
 
     byte [] aResponseBytes = null;
     final HCNodeList aResNL = new HCNodeList ();
     final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
-    try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+    try (final HttpClientManager aHCM = HttpClientManager.create (new AppHttpClientSettings ()))
     {
       // Start HTTP POST
       final HttpPost aPost = new HttpPost (m_sDefaultTargetURL);

@@ -11,14 +11,13 @@ import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.helger.commons.CGlobal;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
@@ -47,7 +46,6 @@ import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
 import com.helger.datetime.util.PDTIOHelper;
-import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.dcng.core.ial.DcngIALClientRemote;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
@@ -103,6 +101,7 @@ import com.helger.photon.uictrls.famfam.EFamFamIcon;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
+import eu.de4a.demoui.AppHttpClientSettings;
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
@@ -1128,12 +1127,6 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
 
         final StopWatch aSW = StopWatch.createdStarted ();
 
-        // Basic Http client settings
-        final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
-        // Here we need a 2 minute timeout (required for USI)
-        aHCS.setConnectionRequestTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
-        aHCS.setSocketTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
-
         try
         {
           final DE4ACoreMarshaller <RequestExtractMultiEvidenceIMType> m = DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ();
@@ -1141,7 +1134,7 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
 
           byte [] aResponseBytesRequest1 = null;
           final BootstrapErrorBox aErrorBox = aForm.addAndReturnChild (error ());
-          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+          try (final HttpClientManager aHCM = HttpClientManager.create (new AppHttpClientSettings ()))
           {
             if (LOGGER.isInfoEnabled ())
               LOGGER.info ("HTTP POST to '" + aState.m_sRequestTargetURL + "'");
