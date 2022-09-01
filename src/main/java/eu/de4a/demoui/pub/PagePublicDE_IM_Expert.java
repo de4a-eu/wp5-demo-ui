@@ -64,6 +64,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppHttpClientSettings;
+import eu.de4a.demoui.KafkaClientWrapper;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
@@ -76,6 +77,7 @@ import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
+import eu.de4a.kafkaclient.model.ELogMessage;
 
 public class PagePublicDE_IM_Expert extends AbstractPageDE
 {
@@ -254,6 +256,8 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
 
     if (bShowForm)
     {
+      KafkaClientWrapper.send (EErrorLevel.INFO, ELogMessage.LOG_DE_PROCESS_STARTED, "[IM] DE4A pilot process started");
+
       aNodeList.addChild (info ("This page lets you create arbitrary IM messages and send them to a WP5 Connector. This simulates the DE-DR interface."));
 
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));

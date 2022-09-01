@@ -73,12 +73,10 @@ public final class ResponseMapEventNotification extends AbstractGlobalSingleton
     return m_aRWLock.readLockedGet ( () -> m_aMap.get (sID));
   }
 
-  @Nullable
-  public EventNotificationType getAndRemove (@Nullable final String sID)
+  public void remove (@Nullable final String sID)
   {
-    if (StringHelper.hasNoText (sID))
-      return null;
-    return m_aRWLock.writeLockedGet ( () -> m_aMap.remove (sID));
+    if (StringHelper.hasText (sID))
+      m_aRWLock.writeLocked ( () -> m_aMap.remove (sID));
   }
 
   @Nullable

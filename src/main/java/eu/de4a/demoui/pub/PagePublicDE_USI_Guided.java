@@ -35,10 +35,8 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
-import com.helger.commons.http.CHttpHeader;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.locale.country.CountryCache;
-import com.helger.commons.mime.CMimeType;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
@@ -103,6 +101,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppHttpClientSettings;
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.KafkaClientWrapper;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -127,6 +126,7 @@ import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
 import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
+import eu.de4a.kafkaclient.model.ELogMessage;
 
 public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
 {
@@ -215,7 +215,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
         aItem.setRequestGrounds (aRG);
       }
       aItem.setCanonicalEvidenceTypeId (m_eUseCase.getDocumentTypeID ().getURIEncoded ());
-      aItem.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ());
+      aItem.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ().getAsStringWithEncodedParameters ());
       aRequest.addRequestEvidenceUSIItem (aItem);
       return aRequest;
     }
@@ -531,6 +531,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
             // Remember to avoid performing another remote query
             aState.m_aIALResponse = aIALResponse;
             aState.m_aDOCountries = aCountries;
+            KafkaClientWrapper.send (EErrorLevel.INFO,
+                                     ELogMessage.LOG_DE_PROCESS_STARTED,
+                                     "[USI] DE4A pilot process started");
           }
 
           break;
@@ -1147,15 +1150,15 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
                                                     "' to '" +
                                                     aState.m_sRequestTargetURL +
                                                     "'");
-            final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
 
+            // Serialize the DE4A request to bytes and send it
             final byte [] aRequestBytes = m.getAsBytes (aState.m_aRequestObj);
             if (LOGGER.isInfoEnabled ())
               LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
+            final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
             aPost.setEntity (new ByteArrayEntity (aRequestBytes,
                                                   ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
             // Main POST to DR
             aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());

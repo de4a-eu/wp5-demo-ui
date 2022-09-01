@@ -65,19 +65,11 @@ public final class ResponseMapRedirect extends AbstractGlobalSingleton
   }
 
   @Nullable
-  public RedirectUserType get (@Nullable final String sID)
+  public RedirectUserType removeAndGet (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;
-    return m_aRWLock.readLockedGet ( () -> m_aMap.get (sID));
-  }
-
-  @Nullable
-  public RedirectUserType getAndRemove (@Nullable final String sID)
-  {
-    if (StringHelper.hasNoText (sID))
-      return null;
-    return m_aRWLock.writeLockedGet ( () -> m_aMap.remove (sID));
+    return m_aRWLock.readLockedGet ( () -> m_aMap.remove (sID));
   }
 
   @Nonnull

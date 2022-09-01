@@ -72,7 +72,7 @@ public final class ResponseMapEvidence extends AbstractGlobalSingleton
   }
 
   @Nullable
-  public ResponseExtractMultiEvidenceType getAndRemove (@Nullable final String sID)
+  public ResponseExtractMultiEvidenceType removeAndGet (@Nullable final String sID)
   {
     if (StringHelper.hasNoText (sID))
       return null;

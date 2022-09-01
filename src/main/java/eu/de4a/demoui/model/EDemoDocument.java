@@ -275,7 +275,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
             EDemoDocumentType.REQUEST,
             EDemoDocument::createDemoRequestSubscription,
             DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),
-  
+
   // Notify request
   EVENT_NOTIFY ("notify-req",
                 "Event Notification Request (C1 -> C2 and C3 -> C4)",
@@ -283,16 +283,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
                 EDemoDocumentType.REQUEST,
                 EDemoDocument::createDemoEventNotification,
                 DE4ACoreMarshaller.dtEventNotificationMarshaller ()),
-	
+
   // Lookup request
   LOOKUP_REQ ("lookup-req",
-	                "Lookup Request DE to DR (C1 -> C2)",
-	                "/request/lu",
-	                EDemoDocumentType.REQUEST,
-	                EDemoDocument::createDemoRequestExtractMultiEvidenceIM,
-	                DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller());
-	
-	
+              "Lookup Request DE to DR (C1 -> C2)",
+              "/request/lu",
+              EDemoDocumentType.REQUEST,
+              EDemoDocument::createDemoRequestExtractMultiEvidenceIM,
+              DE4ACoreMarshaller.drRequestTransferEvidenceIMMarshaller ());
 
   private final String m_sID;
   private final String m_sDisplayName;
@@ -641,7 +639,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     ret.setDataRequestSubject (_createDRS ());
     ret.setRequestGrounds (_createRequestGrounds ());
     ret.setCanonicalEvidenceTypeId ("CanonicalEvidence-" + MathHelper.abs (aTLR.nextInt ()));
-    ret.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ());
+    ret.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ().getAsStringWithEncodedParameters ());
     return ret;
   }
 

@@ -185,7 +185,7 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       case NOTIFICATION:
         return sBaseUrl + EDemoDocument.EVENT_NOTIFY.getRelativeURL ();
       case LOOKUP:
-         return sBaseUrl + EDemoDocument.LOOKUP_REQ.getRelativeURL ();
+        return sBaseUrl + EDemoDocument.LOOKUP_REQ.getRelativeURL ();
       default:
         throw new IllegalStateException ("Unsupported pattern " + ePattern);
     }
@@ -208,13 +208,13 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       final long nStart = PDTFactory.getCurrentMillis ();
       final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
 
-      final ResponseMapRedirect map = ResponseMapRedirect.getInstance ();
+      final ResponseMapRedirect aMap = ResponseMapRedirect.getInstance ();
       while (true)
       {
         final long nNow = PDTFactory.getCurrentMillis ();
         // Don't remove here, so that something can be shown on the
         // received redirects page
-        final RedirectUserType aMatch = map.get (m_sSentRequestID);
+        final RedirectUserType aMatch = aMap.removeAndGet (m_sSentRequestID);
         if (aMatch != null)
         {
           if (LOGGER.isInfoEnabled ())

@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
+import com.helger.commons.url.SimpleURL;
 import com.helger.config.ConfigFactory;
 import com.helger.config.IConfig;
 import com.helger.scope.singleton.AbstractGlobalSingleton;
@@ -122,9 +123,9 @@ public final class AppConfig extends AbstractGlobalSingleton
 
   @Nonnull
   @Nonempty
-  public static String getDataEvaluatorURL ()
+  public static SimpleURL getDataEvaluatorURL ()
   {
     // No additional parameter
-    return getPublicURL () + "/public/menuitem-" + MenuPublic.MENU_DE_CHECK_EVIDENCE;
+    return new SimpleURL (getPublicURL () + "/public/menuitem-" + MenuPublic.MENU_DE_CHECK_EVIDENCE);
   }
 }

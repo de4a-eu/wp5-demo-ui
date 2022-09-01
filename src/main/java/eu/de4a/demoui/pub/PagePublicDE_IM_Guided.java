@@ -35,10 +35,8 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
-import com.helger.commons.http.CHttpHeader;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.locale.country.CountryCache;
-import com.helger.commons.mime.CMimeType;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
@@ -103,6 +101,7 @@ import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppHttpClientSettings;
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.KafkaClientWrapper;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -127,6 +126,7 @@ import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
+import eu.de4a.kafkaclient.model.ELogMessage;
 
 public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
 {
@@ -531,6 +531,9 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
             // Remember to avoid performing another remote query
             aState.m_aIALResponse = aIALResponse;
             aState.m_aDOCountries = aCountries;
+            KafkaClientWrapper.send (EErrorLevel.INFO,
+                                     ELogMessage.LOG_DE_PROCESS_STARTED,
+                                     "[IM] DE4A pilot process started");
           }
 
           break;
@@ -1155,7 +1158,6 @@ public class PagePublicDE_IM_Guided extends AbstractPageDE_Guided
 
             aPost.setEntity (new ByteArrayEntity (aRequestBytes,
                                                   ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
             // Main POST to DR
             aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());
