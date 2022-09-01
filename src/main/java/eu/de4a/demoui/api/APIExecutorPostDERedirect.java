@@ -28,7 +28,6 @@ import com.helger.commons.http.CHttp;
 import com.helger.commons.io.stream.StreamHelper;
 import com.helger.photon.api.IAPIDescriptor;
 import com.helger.photon.api.IAPIExecutor;
-import com.helger.servlet.response.ERedirectMode;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
@@ -74,20 +73,8 @@ public class APIExecutorPostDERedirect implements IAPIExecutor
 
       ResponseMapRedirect.getInstance ().register (aRedirectUserType);
 
-      if (false)
-      {
-        // This doesn't work, because the source request is a data request and
-        // not a user request
-        if (LOGGER.isDebugEnabled ())
-          LOGGER.debug ("Using UnifiedResponse for redirection: " + aRedirectUserType.getRedirectUrl ());
-
-        aUnifiedResponse.disableCaching ()
-                        .setRedirect (aRedirectUserType.getRedirectUrl (), ERedirectMode.POST_REDIRECT_GET);
-      }
-      else
-      {
-        aUnifiedResponse.disableCaching ().setStatus (CHttp.HTTP_NO_CONTENT);
-      }
+      // Just return 204 for OK no content
+      aUnifiedResponse.disableCaching ().setStatus (CHttp.HTTP_NO_CONTENT);
     }
 
     if (LOGGER.isInfoEnabled ())
