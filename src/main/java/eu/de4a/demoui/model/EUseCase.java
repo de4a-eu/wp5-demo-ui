@@ -35,7 +35,7 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
                             EDataRequestSubjectType.PERSON,
                             DcngConfig.getIdentifierFactory ()
                                       .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                                     "HigherEducationDiploma:1.0")),
+                                                                     "HigherEducationDiploma:2.0")),
   SECONDARY_EDUCATION_DIPLOMA (EPilot.T41_STUDYING_ABROAD,
                                "secondaryedu",
                                "Application to public secondary education",
@@ -43,7 +43,7 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
                                EDataRequestSubjectType.PERSON,
                                DcngConfig.getIdentifierFactory ()
                                          .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                                        "SecondaryEducationEvidence:v1.0")),
+                                                                        "SecondaryEducationDiploma:1.0")),
   DISABILITY (EPilot.T41_STUDYING_ABROAD,
               "disability",
               "Application to something about Disability",
@@ -51,7 +51,7 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
               EDataRequestSubjectType.PERSON,
               DcngConfig.getIdentifierFactory ()
                         .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                       "DisabilityEvidence:v1.0")),
+                                                       "DisabilityEvidence:1.0")),
   LARGE_FAMILY (EPilot.T41_STUDYING_ABROAD,
                 "disability",
                 "Application to something about Large Family",
@@ -59,7 +59,7 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
                 EDataRequestSubjectType.PERSON,
                 DcngConfig.getIdentifierFactory ()
                           .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                         "LargeFamilyEvidence:v1.0")),
+                                                         "LargeFamilyEvidence:1.0")),
   COMPANY_REGISTRATION (EPilot.T42_DOING_BUSINESS_ABROAD,
                         "cr",
                         "Starting a business in another Member State",
@@ -85,7 +85,7 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
          EDataRequestSubjectType.PERSON,
          DcngConfig.getIdentifierFactory ()
                    .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                  "BirthEvidence:1.0")),
+                                                  "BirthCertificate:1.0")),
   DOMICILE_REGISTRATION (EPilot.T43_MOVING_ABROAD,
                          "domreg",
                          "Residence Registration",
@@ -93,7 +93,7 @@ public enum EUseCase implements IHasID <String>, IHasDisplayName
                          EDataRequestSubjectType.PERSON,
                          DcngConfig.getIdentifierFactory ()
                                    .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
-                                                                  "DomicileRegistrationEvidence:v1.7")),
+                                                                  "ResidenceRegistration:1.0")),
   MARRIAGE (EPilot.T43_MOVING_ABROAD,
             "marriage",
             "Marriage Registration",

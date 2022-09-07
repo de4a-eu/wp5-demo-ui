@@ -66,6 +66,7 @@ public class PagePublicDE_ReceivedRedirects extends AbstractAppWebPage
       aRow.addCell (aRedirect.getDataOwner ().getAgentNameValue ());
       aRow.addCell (HCA.createLinkedWebsite (aRedirect.getRedirectUrl ()));
     }
+
     if (aTable.hasBodyRows ())
     {
       aNodeList.addChild (aTable).addChild (BootstrapDataTables.createDefaultDataTables (aWPEC, aTable));

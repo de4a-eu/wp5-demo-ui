@@ -37,7 +37,6 @@ import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 public class PagePublicDE_USI_Check_Evidence extends AbstractAppWebPage
 {
   private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_USI_Check_Evidence.class);
-
   private static final String FIELD_PAYLOAD = "payload";
 
   public PagePublicDE_USI_Check_Evidence (@Nonnull @Nonempty final String sID)
@@ -49,14 +48,14 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractAppWebPage
   protected void fillContent (@Nonnull final WebPageExecutionContext aWPEC)
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
-    final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
+    final ResponseMapEvidence aMap = ResponseMapEvidence.getInstance ();
 
-    final String sRequestId = map.getFirstRequestID ();
+    final String sRequestId = aMap.getFirstRequestID ();
     if (StringHelper.hasText (sRequestId))
     {
       aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
 
-      final ResponseExtractMultiEvidenceType evidence = map.getAndRemove (sRequestId);
+      final ResponseExtractMultiEvidenceType evidence = aMap.removeAndGet (sRequestId);
 
       if (LOGGER.isDebugEnabled ())
         LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());

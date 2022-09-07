@@ -23,9 +23,9 @@ import java.util.concurrent.ExecutionException;
 
 import javax.annotation.Nonnull;
 
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,6 @@ import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
-import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
@@ -68,6 +67,8 @@ import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
+import eu.de4a.demoui.AppHttpClientSettings;
+import eu.de4a.demoui.KafkaClientWrapper;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
@@ -81,6 +82,7 @@ import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
 import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
+import eu.de4a.kafkaclient.model.ELogMessage;
 
 public class PagePublicDE_USI_Expert extends AbstractPageDE
 {
@@ -162,15 +164,15 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
         final HCNodeList aResNL = new HCNodeList ();
 
         // Check if document is valid
-        final IErrorList aEL = DEMO_DOC_TYPE.validateMessage (sPayload);
-        if (aEL.containsAtLeastOneError ())
+        final IErrorList aErrorList = DEMO_DOC_TYPE.validateMessage (sPayload);
+        if (aErrorList.containsAtLeastOneError ())
         {
           aResNL.addChild (error ("The provided document is not XSD compliant"));
-          for (final IError e : aEL)
-            if (e.getErrorLevel ().isError ())
-              aResNL.addChild (error (e.getAsString (aDisplayLocale)));
+          for (final IError aError : aErrorList)
+            if (aError.getErrorLevel ().isError ())
+              aResNL.addChild (error (aError.getAsString (aDisplayLocale)));
             else
-              aResNL.addChild (warn (e.getAsString (aDisplayLocale)));
+              aResNL.addChild (warn (aError.getAsString (aDisplayLocale)));
         }
         else
         {
@@ -185,13 +187,10 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
                                                   "'");
 
           final StopWatch aSW = StopWatch.createdStarted ();
-          final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
-          aHCS.setConnectionRequestTimeoutMS (120_000);
-          aHCS.setSocketTimeoutMS (120_000);
 
           byte [] aResponseBytes = null;
           final BootstrapErrorBox aErrorBox = aResNL.addAndReturnChild (error ());
-          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+          try (final HttpClientManager aHCM = HttpClientManager.create (new AppHttpClientSettings ()))
           {
             if (LOGGER.isInfoEnabled ())
               LOGGER.info ("HTTP POST to '" + sTargetURL + "'");
@@ -302,6 +301,10 @@ public class PagePublicDE_USI_Expert extends AbstractPageDE
 
     if (bShowForm)
     {
+      KafkaClientWrapper.send (EErrorLevel.INFO,
+                               ELogMessage.LOG_DE_PROCESS_STARTED,
+                               "[USI] DE4A pilot process started");
+
       aNodeList.addChild (info ("This page lets you create arbitrary USI messages and send them to a WP5 Connector. This simulates the DE-DR interface."));
 
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));

@@ -11,14 +11,13 @@ import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.helger.commons.CGlobal;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
 import com.helger.commons.collection.CollectionHelper;
@@ -36,10 +35,8 @@ import com.helger.commons.error.IError;
 import com.helger.commons.error.SingleError;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.error.list.ErrorList;
-import com.helger.commons.http.CHttpHeader;
 import com.helger.commons.io.stream.NonBlockingByteArrayOutputStream;
 import com.helger.commons.locale.country.CountryCache;
-import com.helger.commons.mime.CMimeType;
 import com.helger.commons.name.IHasDisplayName;
 import com.helger.commons.regex.RegExHelper;
 import com.helger.commons.string.StringHelper;
@@ -47,7 +44,6 @@ import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.SimpleURL;
 import com.helger.commons.url.URLHelper;
 import com.helger.datetime.util.PDTIOHelper;
-import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.dcng.core.ial.DcngIALClientRemote;
 import com.helger.html.hc.html.forms.HCCheckBox;
 import com.helger.html.hc.html.forms.HCEdit;
@@ -103,7 +99,9 @@ import com.helger.photon.uictrls.famfam.EFamFamIcon;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
 import eu.de4a.demoui.AppConfig;
+import eu.de4a.demoui.AppHttpClientSettings;
 import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.KafkaClientWrapper;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
@@ -128,6 +126,7 @@ import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceUSIType;
 import eu.de4a.iem.core.jaxb.common.RequestGroundsType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
+import eu.de4a.kafkaclient.model.ELogMessage;
 
 public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
 {
@@ -216,7 +215,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
         aItem.setRequestGrounds (aRG);
       }
       aItem.setCanonicalEvidenceTypeId (m_eUseCase.getDocumentTypeID ().getURIEncoded ());
-      aItem.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ());
+      aItem.setDataEvaluatorURL (AppConfig.getDataEvaluatorURL ().getAsStringWithEncodedParameters ());
       aRequest.addRequestEvidenceUSIItem (aItem);
       return aRequest;
     }
@@ -532,6 +531,9 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
             // Remember to avoid performing another remote query
             aState.m_aIALResponse = aIALResponse;
             aState.m_aDOCountries = aCountries;
+            KafkaClientWrapper.send (EErrorLevel.INFO,
+                                     ELogMessage.LOG_DE_PROCESS_STARTED,
+                                     "[USI] DE4A pilot process started");
           }
 
           break;
@@ -1128,12 +1130,6 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
 
         final StopWatch aSW = StopWatch.createdStarted ();
 
-        // Basic Http client settings
-        final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
-        // Here we need a 2 minute timeout (required for USI)
-        aHCS.setConnectionRequestTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
-        aHCS.setSocketTimeoutMS (2 * (int) CGlobal.MILLISECONDS_PER_MINUTE);
-
         try
         {
           final DE4ACoreMarshaller <RequestExtractMultiEvidenceUSIType> m = DE4ACoreMarshaller.drRequestTransferEvidenceUSIMarshaller ();
@@ -1141,7 +1137,7 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
 
           byte [] aResponseBytesRequest1 = null;
           final BootstrapErrorBox aErrorBox = aForm.addAndReturnChild (error ());
-          try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
+          try (final HttpClientManager aHCM = HttpClientManager.create (new AppHttpClientSettings ()))
           {
             if (LOGGER.isInfoEnabled ())
               LOGGER.info ("HTTP POST to '" + aState.m_sRequestTargetURL + "'");
@@ -1154,15 +1150,15 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
                                                     "' to '" +
                                                     aState.m_sRequestTargetURL +
                                                     "'");
-            final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
 
+            // Serialize the DE4A request to bytes and send it
             final byte [] aRequestBytes = m.getAsBytes (aState.m_aRequestObj);
             if (LOGGER.isInfoEnabled ())
               LOGGER.info ("Request to be send (in UTF-8): " + new String (aRequestBytes, StandardCharsets.UTF_8));
 
+            final HttpPost aPost = new HttpPost (aState.m_sRequestTargetURL);
             aPost.setEntity (new ByteArrayEntity (aRequestBytes,
                                                   ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
-            aPost.setHeader (CHttpHeader.CONTENT_TYPE, CMimeType.APPLICATION_XML.getAsString ());
 
             // Main POST to DR
             aResponseBytesRequest1 = aHCM.execute (aPost, new ResponseHandlerByteArray ());
