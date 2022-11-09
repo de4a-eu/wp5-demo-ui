@@ -298,8 +298,8 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   private final EDemoDocumentType m_eDocType;
   private final Supplier <Object> m_aDemoRequestCreator;
   private final Function <Object, String> m_aToString;
-  private DE4ACoreMarshaller <Object> m_aMarshaller;
-  private DE4AMarshaller <Object> m_aMarshaller_backward;
+  private final DE4ACoreMarshaller <Object> m_aMarshaller;
+  private final DE4AMarshaller <Object> m_aMarshaller_backward;
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sIDPrefix,
                      @Nonnull @Nonempty final String sDisplayNamePrefix,
@@ -332,6 +332,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_aToString = GenericReflection.uncheckedCast (aToString);
     m_aMarshaller = GenericReflection.uncheckedCast (aMarshaller);
+    m_aMarshaller_backward = null;
   }
 
   <T> EDemoDocument (@Nonnull @Nonempty final String sID,
@@ -348,6 +349,7 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     m_aDemoRequestCreator = GenericReflection.uncheckedCast (aDemoRequestCreator);
     final Function <T, String> aToString = aMarshaller.formatted ()::getAsString;
     m_aToString = GenericReflection.uncheckedCast (aToString);
+    m_aMarshaller = null;
     m_aMarshaller_backward = GenericReflection.uncheckedCast (aMarshaller);
   }
 
@@ -406,33 +408,28 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
   public IErrorList validateMessage (@Nonnull final String sMsg)
   {
     final ErrorList ret = new ErrorList ();
-    final IValidationEventHandlerFactory aOld = m_aMarshaller.getValidationEventHandlerFactory ();
-    m_aMarshaller.setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (ret));
-    m_aMarshaller.read (sMsg);
-    m_aMarshaller.setValidationEventHandlerFactory (aOld);
-    return ret;
-  }
-
-  @Nonnull
-  public IErrorList validateMessageBackwards (@Nonnull final String sMsg)
-  {
-    final ErrorList ret = new ErrorList ();
-    final IValidationEventHandlerFactory aOld = m_aMarshaller_backward.getValidationEventHandlerFactory ();
-    m_aMarshaller_backward.setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (ret));
-    m_aMarshaller_backward.read (sMsg);
-    m_aMarshaller_backward.setValidationEventHandlerFactory (aOld);
+    if (m_aMarshaller != null)
+    {
+      final IValidationEventHandlerFactory aOld = m_aMarshaller.getValidationEventHandlerFactory ();
+      m_aMarshaller.setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (ret));
+      m_aMarshaller.read (sMsg);
+      m_aMarshaller.setValidationEventHandlerFactory (aOld);
+    }
+    else
+    {
+      final IValidationEventHandlerFactory aOld = m_aMarshaller_backward.getValidationEventHandlerFactory ();
+      m_aMarshaller_backward.setValidationEventHandlerFactory (x -> new WrappedCollectingValidationEventHandler (ret));
+      m_aMarshaller_backward.read (sMsg);
+      m_aMarshaller_backward.setValidationEventHandlerFactory (aOld);
+    }
     return ret;
   }
 
   @Nonnull
   public Object parseMessage (@Nonnull final String sMsg)
   {
-    return m_aMarshaller.read (sMsg);
-  }
-
-  @Nonnull
-  public Object parseMessageBackwards (@Nonnull final String sMsg)
-  {
+    if (m_aMarshaller != null)
+      return m_aMarshaller.read (sMsg);
     return m_aMarshaller_backward.read (sMsg);
   }
 
