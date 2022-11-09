@@ -152,7 +152,7 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
         final HCNodeList aResNL = new HCNodeList ();
 
         // Check if document is valid
-        final IErrorList aEL = DEMO_DOC_TYPE.validateMessageBackwards (sPayload);
+        final IErrorList aEL = DEMO_DOC_TYPE.validateMessage (sPayload);
         if (aEL.containsAtLeastOneError ())
         {
           aResNL.addChild (error ("The provided document is not XSD compliant"));
@@ -165,7 +165,7 @@ public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
         else
         {
           // Send only valid documents
-          final RequestTransferEvidenceUSIIMDRType aParsedRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.parseMessageBackwards (sPayload);
+          final RequestTransferEvidenceUSIIMDRType aParsedRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
                                 "DemoUI sending IM request '" +
