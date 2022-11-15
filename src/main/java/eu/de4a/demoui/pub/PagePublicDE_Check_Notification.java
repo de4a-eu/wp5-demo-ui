@@ -66,7 +66,9 @@ import eu.de4a.kafkaclient.DE4AKafkaClient;
 
 public class PagePublicDE_Check_Notification extends AbstractPageDE
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Check_Notification.class);
+  private static final String CANONICAL_EVIDENCE_TYPE_COMPANY_REGISTRATION = "urn:de4a-eu:CanonicalEvidenceType::CompanyRegistration:1.0";
+
+private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Check_Notification.class);
 
   private static final String FIELD_PAYLOAD = "payload";
 
@@ -113,7 +115,8 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
         final RequestEvidenceLUItemType evidence = new RequestEvidenceLUItemType ();
         evidence.setRequestItemId (item.getEventId ());
         evidence.setDataRequestSubject (item.getEventSubject ());
-        evidence.setCanonicalEvidenceTypeId (item.getCanonicalEventCatalogUri ());
+        //evidence.setCanonicalEvidenceTypeId (item.getCanonicalEventCatalogUri ());
+        evidence.setCanonicalEvidenceTypeId (CANONICAL_EVIDENCE_TYPE_COMPANY_REGISTRATION);
 
         final AdditionalParameterType param = new AdditionalParameterType ();
         param.setLabel ("lookup");
