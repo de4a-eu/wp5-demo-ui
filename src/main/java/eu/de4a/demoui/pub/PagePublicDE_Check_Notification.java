@@ -115,7 +115,6 @@ private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Check
         final RequestEvidenceLUItemType evidence = new RequestEvidenceLUItemType ();
         evidence.setRequestItemId (item.getEventId ());
         evidence.setDataRequestSubject (item.getEventSubject ());
-        //evidence.setCanonicalEvidenceTypeId (item.getCanonicalEventCatalogUri ());
         evidence.setCanonicalEvidenceTypeId (CANONICAL_EVIDENCE_TYPE_COMPANY_REGISTRATION);
 
         final AdditionalParameterType param = new AdditionalParameterType ();
