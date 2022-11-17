@@ -42,9 +42,7 @@ import com.helger.httpclient.response.ExtendedHttpResponseException;
 import com.helger.httpclient.response.ResponseHandlerByteArray;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
 import com.helger.photon.bootstrap4.alert.BootstrapErrorBox;
-import com.helger.photon.bootstrap4.button.BootstrapButton;
 import com.helger.photon.bootstrap4.button.BootstrapSubmitButton;
-import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonToolbar;
 import com.helger.photon.bootstrap4.form.BootstrapForm;
 import com.helger.photon.core.form.RequestField;
 import com.helger.photon.uicore.css.CPageParam;
@@ -84,13 +82,6 @@ public class PagePublicDE_Check_Notification extends AbstractPageDE
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final ResponseMapEventNotification aMap = ResponseMapEventNotification.getInstance ();
-
-    {
-      final BootstrapButtonToolbar aToolbar = aNodeList.addAndReturnChild (new BootstrapButtonToolbar (aWPEC));
-      aToolbar.addChild (new BootstrapButton ().setIcon (EDefaultIcon.REFRESH)
-                                               .setOnClick (aWPEC.getSelfHref ())
-                                               .addChild ("Refresh"));
-    }
 
     final String sRequestId = aMap.getFirstRequestID ();
     if (StringHelper.hasText (sRequestId))

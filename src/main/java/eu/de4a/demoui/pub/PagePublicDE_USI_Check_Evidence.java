@@ -25,10 +25,7 @@ import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.photon.bootstrap4.CBootstrapCSS;
-import com.helger.photon.bootstrap4.button.BootstrapButton;
-import com.helger.photon.bootstrap4.buttongroup.BootstrapButtonToolbar;
 import com.helger.photon.core.form.RequestField;
-import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 
 import eu.de4a.demoui.model.ResponseMapEvidence;
@@ -52,13 +49,6 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractAppWebPage
   {
     final HCNodeList aNodeList = aWPEC.getNodeList ();
     final ResponseMapEvidence aMap = ResponseMapEvidence.getInstance ();
-
-    {
-      final BootstrapButtonToolbar aToolbar = aNodeList.addAndReturnChild (new BootstrapButtonToolbar (aWPEC));
-      aToolbar.addChild (new BootstrapButton ().setIcon (EDefaultIcon.REFRESH)
-                                               .setOnClick (aWPEC.getSelfHref ())
-                                               .addChild ("Refresh"));
-    }
 
     final String sRequestId = aMap.getFirstRequestID ();
     if (StringHelper.hasText (sRequestId))
