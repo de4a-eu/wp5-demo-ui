@@ -232,8 +232,8 @@ public class PagePublicDE_Notification_Expert extends AbstractPageDE
               // Unknown payload.
               String sFirstBytes = new String (aResponseBytes, StandardCharsets.UTF_8);
               DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
-              if (sFirstBytes.length () > 100)
-                sFirstBytes = sFirstBytes.substring (0, 100);
+              if (sFirstBytes.length () > ERROR_SRC_MAX_LEN)
+                sFirstBytes = sFirstBytes.substring (0, ERROR_SRC_MAX_LEN);
               aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
             }
           }

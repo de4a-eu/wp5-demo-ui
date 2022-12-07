@@ -293,6 +293,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     }
   }
 
+  protected static final int ERROR_SRC_MAX_LEN = 500;
+
   protected final EPatternType m_ePattern;
   protected final String m_sDefaultTargetURL;
 
