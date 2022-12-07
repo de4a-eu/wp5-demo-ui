@@ -86,7 +86,7 @@
       <dependency>
         <groupId>com.helger.commons</groupId>
         <artifactId>ph-commons-parent-pom</artifactId>
-        <version>10.2.1</version>
+        <version>10.2.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -119,7 +119,7 @@
       <dependency>
         <groupId>com.helger.dcng</groupId>
         <artifactId>dcng-parent-pom</artifactId>
-        <version>0.2.10</version>
+        <version>0.2.11</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
