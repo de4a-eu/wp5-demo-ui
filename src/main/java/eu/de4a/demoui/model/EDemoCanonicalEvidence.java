@@ -45,7 +45,6 @@ import eu.de4a.iem.jaxb.t43.birth.v1_7.ChildType;
 import eu.de4a.iem.jaxb.t43.codelists.country.ISO3166CountryType;
 import eu.de4a.iem.jaxb.t43.codelists.humansex.GenderType;
 import eu.de4a.iem.jaxb.t43.codelists.nuts2021.NUTS2021Type;
-import eu.de4a.iem.jaxb.t43.domreg.v1_7.DomicileType;
 import eu.de4a.iem.jaxb.t43.marriage.v1_7.MarriageType;
 import eu.de4a.iem.jaxb.w3.cv10.ac.CvaddressType;
 import eu.de4a.iem.jaxb.w3.cv10.ac.CvidentifierType;
@@ -76,6 +75,8 @@ public enum EDemoCanonicalEvidence
                         EDemoCanonicalEvidence::createDBA_LegalEntity_v06),
 
   T43_BIRTH_V17 (EDE4ACanonicalEvidenceType.T43_BIRTH_EVIDENCE_V17, EDemoCanonicalEvidence::createMA_Birth_v1_7),
+  T43_DOMDEREG_V10 (EDE4ACanonicalEvidenceType.T43_DOMDEREG_EVIDENCE_V10,
+                    EDemoCanonicalEvidence::createMA_DomesticDeregistration_v1_0),
   T43_DOMREG_V17 (EDE4ACanonicalEvidenceType.T43_DOMREG_EVIDENCE_V17,
                   EDemoCanonicalEvidence::createMA_DomesticRegistration_v1_7),
   T43_MARRIAGE_V17 (EDE4ACanonicalEvidenceType.T43_MARRIAGE_EVIDENCE_V17,
@@ -327,6 +328,17 @@ public enum EDemoCanonicalEvidence
   }
 
   @Nonnull
+  private static eu.de4a.iem.jaxb.t43.domdereg.v1_0.PublicOrganisationType _createDomDeregPubOrg ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.domdereg.v1_0.PublicOrganisationType ret = new eu.de4a.iem.jaxb.t43.domdereg.v1_0.PublicOrganisationType ();
+    ret.addIdentifier (_createT43CvID ());
+    ret.addPrefLabel (new oasis.names.specification.bdndr.schema.xsd.unqualifieddatatypes_1.TextType ("PrefLabel-" +
+                                                                                                      MathHelper.abs (aTLR.nextInt ())));
+    return ret;
+  }
+
+  @Nonnull
   private static eu.de4a.iem.jaxb.t43.domreg.v1_7.PublicOrganisationType _createDomRegPubOrg ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
@@ -372,6 +384,16 @@ public enum EDemoCanonicalEvidence
   private static eu.de4a.iem.jaxb.t43.birth.v1_7.ConstrainedLocationAddressType _createBirthCLA ()
   {
     final eu.de4a.iem.jaxb.t43.birth.v1_7.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.birth.v1_7.ConstrainedLocationAddressType ();
+    ret.setAdminUnitL1 (EDemoDocument.random (ISO3166CountryType.class));
+    ret.setAdminUnitL2 (EDemoDocument.random (NUTS2021Type.class));
+    _fill (ret);
+    return ret;
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.domdereg.v1_0.ConstrainedLocationAddressType _createDomDeregCLA ()
+  {
+    final eu.de4a.iem.jaxb.t43.domdereg.v1_0.ConstrainedLocationAddressType ret = new eu.de4a.iem.jaxb.t43.domdereg.v1_0.ConstrainedLocationAddressType ();
     ret.setAdminUnitL1 (EDemoDocument.random (ISO3166CountryType.class));
     ret.setAdminUnitL2 (EDemoDocument.random (NUTS2021Type.class));
     _fill (ret);
@@ -480,10 +502,34 @@ public enum EDemoCanonicalEvidence
   }
 
   @Nonnull
-  private static DomicileType _createDomicileType ()
+  private static eu.de4a.iem.jaxb.t43.domdereg.v1_0.DomicileType _createDomDeregDomicileType ()
   {
     final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
-    final DomicileType ret = new DomicileType ();
+    final eu.de4a.iem.jaxb.t43.domdereg.v1_0.DomicileType ret = new eu.de4a.iem.jaxb.t43.domdereg.v1_0.DomicileType ();
+    {
+      final eu.de4a.iem.jaxb.t43.domdereg.v1_0.PersonType a = new eu.de4a.iem.jaxb.t43.domdereg.v1_0.PersonType ();
+      {
+        final eu.de4a.iem.jaxb.t43.domdereg.v1_0.NameType b = new eu.de4a.iem.jaxb.t43.domdereg.v1_0.NameType ();
+        b.addGivenName (_createT43GivenName ());
+        if (aTLR.nextBoolean ())
+          b.addGivenName (_createT43GivenName ());
+        b.addFamilyName (_createT43FamilyName ());
+        if (aTLR.nextBoolean ())
+          b.addFamilyName (_createT43FamilyName ());
+        a.setPersonName (b);
+      }
+      a.setGender (EDemoDocument.random (GenderType.class));
+      ret.setInhabitant (a);
+    }
+    ret.setDomicile (_createDomDeregCLA ());
+    return ret;
+  }
+
+  @Nonnull
+  private static eu.de4a.iem.jaxb.t43.domreg.v1_7.DomicileType _createDomRegDomicileType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final eu.de4a.iem.jaxb.t43.domreg.v1_7.DomicileType ret = new eu.de4a.iem.jaxb.t43.domreg.v1_7.DomicileType ();
     {
       final eu.de4a.iem.jaxb.t43.domreg.v1_7.PersonType a = new eu.de4a.iem.jaxb.t43.domreg.v1_7.PersonType ();
       {
@@ -504,6 +550,20 @@ public enum EDemoCanonicalEvidence
   }
 
   @Nonnull
+  public static Element createMA_DomesticDeregistration_v1_0 ()
+  {
+    final eu.de4a.iem.jaxb.t43.domdereg.v1_0.DomicileDeregistrationEvidenceType p = new eu.de4a.iem.jaxb.t43.domdereg.v1_0.DomicileDeregistrationEvidenceType ();
+    p.setIdentifier (_createT43CvID ());
+    p.setIssueDate (_createDate ());
+    p.setIssuingAuthority (_createDomDeregPubOrg ());
+    p.setIssuingPlace (_createDomDeregCLA ());
+    p.setCertifiesDomicile (_createDomDeregDomicileType ());
+    return eu.de4a.iem.cev.de4a.t43.DE4AT43Marshaller.domicileDeregistrationEvidence ()
+                                                     .getAsDocument (p)
+                                                     .getDocumentElement ();
+  }
+
+  @Nonnull
   public static Element createMA_DomesticRegistration_v1_7 ()
   {
     final eu.de4a.iem.jaxb.t43.domreg.v1_7.DomicileRegistrationEvidenceType p = new eu.de4a.iem.jaxb.t43.domreg.v1_7.DomicileRegistrationEvidenceType ();
@@ -511,7 +571,7 @@ public enum EDemoCanonicalEvidence
     p.setIssueDate (_createDate ());
     p.setIssuingAuthority (_createDomRegPubOrg ());
     p.setIssuingPlace (_createDomRegCLA ());
-    p.setCertifiesDomicile (_createDomicileType ());
+    p.setCertifiesDomicile (_createDomRegDomicileType ());
     return eu.de4a.iem.cev.de4a.t43.DE4AT43Marshaller.domicileRegistrationEvidence ()
                                                      .getAsDocument (p)
                                                      .getDocumentElement ();

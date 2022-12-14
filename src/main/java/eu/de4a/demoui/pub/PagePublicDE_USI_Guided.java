@@ -800,14 +800,14 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
             jMDE.add (new JSAssocArray ().add ("id", e.getParticipantID ())
                                          .add ("n", e.getDisplayName ())
                                          .add ("cc", e.getCountryCode ()));
-          final JSVar jArray = jFuncSetDE.body ().var ("array", jMDE);
+          final JSVar jArray = jFuncSetDE.body ().variable ("array", jMDE);
           final JSVar jCallbackParam = new JSVar ("x");
           final JSVar jFound = jFuncSetDE.body ()
-                                         .var ("f",
-                                               jArray.invoke ("find")
-                                                     .arg (new JSAnonymousFunction (jCallbackParam,
-                                                                                    new JSReturn (jID.invoke ("endsWith")
-                                                                                                     .arg (jCallbackParam.ref ("id"))))));
+                                         .variable ("f",
+                                                    jArray.invoke ("find")
+                                                          .arg (new JSAnonymousFunction (jCallbackParam,
+                                                                                         new JSReturn (jID.invoke ("endsWith")
+                                                                                                          .arg (jCallbackParam.ref ("id"))))));
           final JSBlock jIfFound = jFuncSetDE.body ()._if (jFound)._then ();
           jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
           jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
@@ -884,14 +884,14 @@ public class PagePublicDE_USI_Guided extends AbstractPageDE_Guided
                                          .add ("n", aDO.getDisplayName ())
                                          .add ("cc", aDO.getCountryCode ()));
           }
-          final JSVar jArray = jFuncSetDO.body ().var ("array", jMDO);
+          final JSVar jArray = jFuncSetDO.body ().variable ("array", jMDO);
           final JSVar jCallbackParam = new JSVar ("x");
           final JSVar jFound = jFuncSetDO.body ()
-                                         .var ("f",
-                                               jArray.invoke ("find")
-                                                     .arg (new JSAnonymousFunction (jCallbackParam,
-                                                                                    new JSReturn (jID.invoke ("endsWith")
-                                                                                                     .arg (jCallbackParam.ref ("id"))))));
+                                         .variable ("f",
+                                                    jArray.invoke ("find")
+                                                          .arg (new JSAnonymousFunction (jCallbackParam,
+                                                                                         new JSReturn (jID.invoke ("endsWith")
+                                                                                                          .arg (jCallbackParam.ref ("id"))))));
           final JSBlock jIfFound = jFuncSetDO.body ()._if (jFound)._then ();
           jIfFound.add (JQuery.idRef (jElementID).val (jFound.component ("id")));
           jIfFound.add (JQuery.idRef (jElementName).val (jFound.component ("n")));
