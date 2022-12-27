@@ -41,6 +41,7 @@ public final class MenuPublic
   public static final String MENU_DE_NOTIFICATION_EXPERT = "de-notification-expert";
   public static final String MENU_DE_CHECK_EVIDENCE = "de-check-evidence";
   public static final String MENU_DE_CHECK_EVENT = "de-evidence";
+  public static final String MENU_DE_CHECK_SUBSCRIPTION = "de-subscription";
   public static final String MENU_DE_RECEIVED_REDIRECTS = "de-received-redirects";
 
   public static final String MENU_DEMO_UI = "demoui";
@@ -70,6 +71,7 @@ public final class MenuPublic
       aMenuTree.createSeparator (aDE);
       aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Evidence (MENU_DE_CHECK_EVIDENCE));
       aMenuTree.createItem (aDE, new PagePublicDE_Check_Notification (MENU_DE_CHECK_EVENT));
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Subscription(MENU_DE_CHECK_SUBSCRIPTION));
       aMenuTree.createItem (aDE, new PagePublicDE_ReceivedRedirects (MENU_DE_RECEIVED_REDIRECTS));
     }
 

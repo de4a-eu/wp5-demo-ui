@@ -67,5 +67,12 @@ public final class DemoUIAPI
                                                            new APIExecutorPostDENotification ()).setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
+    
+    // POST /de-subscription
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-subscription"),
+                                                           new APIExecutorPostDESubscription ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
   }
 }
