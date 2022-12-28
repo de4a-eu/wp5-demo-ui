@@ -196,7 +196,7 @@
     <dependency>
       <groupId>eu.de4a</groupId>
       <artifactId>de4a-iem</artifactId>
-      <version>0.1.13</version>
+      <version>0.1.13</version><!--$NO-MVN-MAN-VER$-->
     </dependency>
 
     <dependency>
