@@ -290,6 +290,14 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
             EDemoDocument::createDemoRequestSubscription,
             DE4ACoreMarshaller.drRequestEventSubscriptionMarshaller ()),
 
+  // subscription response
+  SUBS_RESP ("subs-resp",
+             "Event Subscription Response (C4 -> C3 and C2 -> C1)",
+             "/response/subscription",
+             EDemoDocumentType.RESPONSE,
+             EDemoDocument::createDemoResponseSubscription,
+             DE4ACoreMarshaller.dtResponseEventSubscriptionMarshaller ()),
+
   // Notify request
   EVENT_NOTIFY ("notify-req",
                 "Event Notification Request (C1 -> C2 and C3 -> C4)",
@@ -702,6 +710,32 @@ public enum EDemoDocument implements IHasID <String>, IHasDisplayName, IDemoDocu
     if (false)
       if (aTLR.nextBoolean ())
         ret.addEventSubscripRequestItem (_createRequestEventSubscriptionItemType ());
+    return ret;
+  }
+
+  @Nonnull
+  private static ResponseEventSubscriptionItemType _createResponseEventSubscriptionItemType ()
+  {
+    final ThreadLocalRandom aTLR = ThreadLocalRandom.current ();
+    final ResponseEventSubscriptionItemType ret = new ResponseEventSubscriptionItemType ();
+    ret.setRequestItemId (UUID.randomUUID ().toString ());
+    ret.setCanonicalEventCatalogUri ("EventSubscription-" + MathHelper.abs (aTLR.nextInt ()));
+    final TimePeriodType period = new TimePeriodType ();
+    period.setStartDate (PDTFactory.getCurrentLocalDateTime ().minusDays (1));
+    period.setEndDate (PDTFactory.getCurrentLocalDateTime ().plusDays (2));
+    ret.setSubscriptionPeriod (period);
+    return ret;
+  }
+
+  @Nonnull
+  public static ResponseEventSubscriptionType createDemoResponseSubscription ()
+  {
+    final ResponseEventSubscriptionType ret = new ResponseEventSubscriptionType ();
+    ret.setRequestId (UUID.randomUUID ().toString ());
+    ret.setTimeStamp (PDTFactory.getCurrentLocalDateTime ());
+    ret.setDataEvaluator (_createAgent ());
+    ret.setDataOwner (_createAgent ());
+    ret.addResponseEventSubscriptionItem (_createResponseEventSubscriptionItemType ());
     return ret;
   }
 
