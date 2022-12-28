@@ -31,7 +31,6 @@ import com.helger.scope.singleton.AbstractGlobalSingleton;
 
 import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 import eu.de4a.iem.core.jaxb.common.ResponseEventSubscriptionType;
-import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 
 /**
  * This class contains all instances of the {@link EventNotificationType}.
@@ -91,7 +90,7 @@ public final class ResponseMapEventSubscription extends AbstractGlobalSingleton
   {
     m_aRWLock.writeLocked (m_aMap::clear);
   }
-  
+
   @Nullable
   public ResponseEventSubscriptionType removeAndGet (@Nullable final String sID)
   {

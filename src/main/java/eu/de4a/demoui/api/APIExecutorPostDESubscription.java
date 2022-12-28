@@ -31,10 +31,8 @@ import com.helger.photon.api.IAPIExecutor;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.model.ResponseMapEventNotification;
 import eu.de4a.demoui.model.ResponseMapEventSubscription;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
-import eu.de4a.iem.core.jaxb.common.EventNotificationType;
 import eu.de4a.iem.core.jaxb.common.ResponseEventSubscriptionType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
