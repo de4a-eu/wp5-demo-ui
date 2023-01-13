@@ -56,21 +56,31 @@ public class PagePublicDE_USI_Check_Evidence extends AbstractAppWebPage
       aNodeList.addChild (warn ("This data is not persisted - if you need this data, copy it!"));
 
       final ResponseExtractMultiEvidenceType evidence = aMap.removeAndGet (sRequestId);
+      if (evidence != null)
+      {
+        if (LOGGER.isDebugEnabled ())
+          LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());
 
-      if (LOGGER.isDebugEnabled ())
-        LOGGER.debug ("Getting from map the evidence Id: " + evidence.getRequestId ());
+        final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                                                   .formatted ();
+        final String sResponse = marshaller.getAsString (evidence);
 
-      final DE4ACoreMarshaller <ResponseExtractMultiEvidenceType> marshaller = DE4ACoreMarshaller.deResponseTransferEvidenceMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                                                                 .formatted ();
+        if (StringHelper.hasText (sResponse))
+        {
+          final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
+                                                                   sResponse)).setRows (25)
+                                                                              .setCols (150)
+                                                                              .setReadOnly (true)
+                                                                              .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                              .addClass (CBootstrapCSS.FORM_CONTROL);
 
-      final HCTextArea aTA = new HCTextArea (new RequestField (FIELD_PAYLOAD,
-                                                               marshaller.getAsString (evidence))).setRows (25)
-                                                                                                  .setCols (150)
-                                                                                                  .setReadOnly (true)
-                                                                                                  .addClass (CBootstrapCSS.TEXT_MONOSPACE)
-                                                                                                  .addClass (CBootstrapCSS.FORM_CONTROL);
-
-      aNodeList.addChild (aTA);
+          aNodeList.addChild (aTA);
+        }
+        else
+          aNodeList.addChild (error ("Failed to serialize object:\n" + evidence));
+      }
+      else
+        aNodeList.addChild (error ("Failed to get Evidence with ID '" + sRequestId + "' from internal map :("));
     }
     else
     {
