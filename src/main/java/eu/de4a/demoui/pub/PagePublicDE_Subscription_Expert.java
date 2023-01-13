@@ -34,6 +34,7 @@ import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
+import com.helger.dcng.api.DcngIdentifierFactory;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
@@ -105,7 +106,9 @@ public class PagePublicDE_Subscription_Expert extends AbstractPageDE
       ret.getDataOwner ().setAgentUrn (EMockDataOwner.T42_SE.getParticipantID ());
 
       final EventSubscripRequestItemType item = ret.getEventSubscripRequestItemAtIndex (0);
-      item.setCanonicalEventCatalogUri (EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getURIEncoded ());
+      item.setCanonicalEventCatalogUri (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVENT_CATALOGUE +
+                                        "::" +
+                                        EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getValue ());
       item.getDataRequestSubject ().setDataSubjectPerson (null);
       item.getDataRequestSubject ().setDataSubjectCompany (new LegalPersonIdentifierType ());
       item.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("SE/NL/5591674170");
