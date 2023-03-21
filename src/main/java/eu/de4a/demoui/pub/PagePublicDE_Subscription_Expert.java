@@ -34,6 +34,7 @@ import com.helger.commons.error.list.IErrorList;
 import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
+import com.helger.dcng.api.DcngIdentifierFactory;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
@@ -62,9 +63,7 @@ import com.helger.photon.uicore.icon.EDefaultIcon;
 import com.helger.photon.uicore.page.WebPageExecutionContext;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppHttpClientSettings;
-import eu.de4a.demoui.KafkaClientWrapper;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
@@ -73,53 +72,50 @@ import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
 import eu.de4a.demoui.ui.AppCommonUI;
 import eu.de4a.iem.core.DE4ACoreMarshaller;
-import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
+import eu.de4a.iem.core.jaxb.common.EventSubscripRequestItemType;
+import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.RequestEventSubscriptionType;
 import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
-import eu.de4a.kafkaclient.model.ELogMessage;
 
-public class PagePublicDE_IM_Expert extends AbstractPageDE
+public class PagePublicDE_Subscription_Expert extends AbstractPageDE
 {
-  // We're doing a DR-IM request
-  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR;
+  // We're doing a Subscription request
+  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.SUBS_REQ;
 
-  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_Expert.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_Subscription_Expert.class);
+
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
   @Nonnull
-  private static RequestExtractMultiEvidenceIMType _createDemoRequest ()
+  private static RequestEventSubscriptionType _createDemoRequest ()
   {
-    RequestExtractMultiEvidenceIMType aDemoRequest;
+    RequestEventSubscriptionType ret;
     {
-      // We want a natural person
+      // We want a subject person
       while (true)
       {
-        aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
+        ret = (RequestEventSubscriptionType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (ret.getEventSubscripRequestItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
           break;
       }
+      ret.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_NL.getParticipantID ());
+      ret.getDataOwner ().setAgentUrn (EMockDataOwner.T42_SE.getParticipantID ());
 
-      if (false)
-        aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
-      else
-        aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_SE.getParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T43_PT.getParticipantID ());
+      final EventSubscripRequestItemType item = ret.getEventSubscripRequestItemAtIndex (0);
+      item.setCanonicalEventCatalogUri (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVENT_CATALOGUE +
+                                        "::" +
+                                        EUseCase.COMPANY_REGISTRATION.getDocumentTypeID ().getValue ());
+      item.getDataRequestSubject ().setDataSubjectPerson (null);
+      item.getDataRequestSubject ().setDataSubjectCompany (new LegalPersonIdentifierType ());
+      item.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("SE/NL/5591674170");
+      item.getDataRequestSubject ().getDataSubjectCompany ().setLegalName ("LegalName-1602842249");
 
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
-                  .setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (1)
-                  .setCanonicalEvidenceTypeId (EUseCase.BIRTH.getDocumentTypeID ().getURIEncoded ());
-
-      final RequestEvidenceItemType item = aDemoRequest.getRequestEvidenceIMItemAtIndex (0);
-      if (false)
-        item.setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-      item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/SE/12345678");
     }
-    return aDemoRequest;
+    return ret;
   }
 
   static
@@ -129,9 +125,9 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
     });
   }
 
-  public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_Subscription_Expert (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "IM Exchange (Expert)", EPatternType.IM);
+    super (sID, "Subscription Exchange (Expert)", EPatternType.SUBSCRIPTION);
   }
 
   @Override
@@ -175,10 +171,10 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         else
         {
           // Send only valid documents
-          final RequestExtractMultiEvidenceIMType aParsedRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.parseMessage (sPayload);
+          final RequestEventSubscriptionType aParsedRequest = (RequestEventSubscriptionType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending IM request '" +
+                                "DemoUI sending Subscription request '" +
                                                   aParsedRequest.getRequestId () +
                                                   "' to '" +
                                                   sTargetURL +
@@ -198,6 +194,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
             aPost.setEntity (new StringEntity (sPayload,
                                                ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
+
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
           catch (final ExtendedHttpResponseException ex)
@@ -228,14 +225,14 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
               if (aResponseObj.isAck ())
               {
                 DE4AKafkaClient.send (EErrorLevel.INFO, "Read response as 'ResponseErrorType' and ACK");
-                aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
+                aResNL.addChild (success (div ("The request was accepted by the Connector.")));
               }
               else
               {
                 DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType' and FAILURE");
                 final HCUL aUL = new HCUL ();
                 aResponseObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
-                aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
+                aErrorBox.addChild (div ("The data could not be fetched from the Connector")).addChild (aUL);
               }
             }
             else
@@ -256,9 +253,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
 
     if (bShowForm)
     {
-      KafkaClientWrapper.send (EErrorLevel.INFO, ELogMessage.LOG_DE_PROCESS_STARTED, "[IM] DE4A pilot process started");
-
-      aNodeList.addChild (info ("This page lets you create arbitrary IM messages and send them to a WP5 Connector. This simulates the DE-DR interface."));
+      aNodeList.addChild (info ("This page lets you create arbitrary Event Subscription messages and send them to a WP5 Connector. This simulates the DE-DR and the DT-DO interface."));
 
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
@@ -290,7 +285,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
       }
 
       aForm.addChild (new HCHiddenField (CPageParam.PARAM_ACTION, CPageParam.ACTION_PERFORM));
-      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send IM request"));
+      aForm.addChild (new BootstrapSubmitButton ().setIcon (EDefaultIcon.YES).addChild ("Send Subscription request"));
     }
   }
 }

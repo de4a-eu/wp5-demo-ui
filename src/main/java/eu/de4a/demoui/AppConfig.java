@@ -18,10 +18,14 @@ package eu.de4a.demoui;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.annotation.UsedViaReflection;
+import com.helger.commons.url.SimpleURL;
 import com.helger.config.ConfigFactory;
 import com.helger.config.IConfig;
 import com.helger.scope.singleton.AbstractGlobalSingleton;
+
+import eu.de4a.demoui.pub.MenuPublic;
 
 /**
  * This class provides access to the settings as contained in the
@@ -32,7 +36,7 @@ import com.helger.scope.singleton.AbstractGlobalSingleton;
 public final class AppConfig extends AbstractGlobalSingleton
 {
   /** The name of the file containing the settings */
-  private static final IConfig s_aCF = ConfigFactory.getDefaultConfig ();
+  private static final IConfig CF = ConfigFactory.getDefaultConfig ();
 
   @Deprecated
   @UsedViaReflection
@@ -42,7 +46,7 @@ public final class AppConfig extends AbstractGlobalSingleton
   @Nonnull
   public static IConfig getConfig ()
   {
-    return s_aCF;
+    return CF;
   }
 
   @Nullable
@@ -74,9 +78,54 @@ public final class AppConfig extends AbstractGlobalSingleton
     return getConfig ().getAsString ("webapp.publicurl");
   }
 
-  @Nullable
   public static boolean isStatusEnabled ()
   {
     return getConfig ().getAsBoolean ("webapp.status.enabled", true);
+  }
+
+  public static boolean isKafkaEnabled ()
+  {
+    return getConfig ().getAsBoolean ("de4a.kafka.enabled", false);
+  }
+
+  @Nullable
+  public static String getKafkaEndpoint ()
+  {
+    return getConfig ().getAsString ("de4a.kafka.url");
+  }
+
+  @Nullable
+  public static String getDRBaseUrl ()
+  {
+    return getConfig ().getAsString ("webapp.dr.baseurl");
+  }
+
+  /**
+   * @return The participant ID that should be used for the DE. This PID must be
+   *         registered in an SMP to receive something. For localhost testing,
+   *         the identifier
+   *         <code>iso6523-actorid-upis::9999:demoui-localhost-it2</code> should
+   *         be used. It assumes a Connector running on
+   *         <code>localhost:8080</code> (the final certificate choice has not
+   *         been made).
+   */
+  @Nullable
+  public static String getDEParticipantID ()
+  {
+    return getConfig ().getAsString ("webapp.de.pid");
+  }
+
+  @Nullable
+  public static String getDEXmlWriteTo ()
+  {
+    return getConfig ().getAsString ("webapp.de.file.xml");
+  }
+
+  @Nonnull
+  @Nonempty
+  public static SimpleURL getDataEvaluatorURL ()
+  {
+    // No additional parameter
+    return new SimpleURL (getPublicURL () + "/public/menuitem-" + MenuPublic.MENU_DE_CHECK_EVIDENCE);
   }
 }

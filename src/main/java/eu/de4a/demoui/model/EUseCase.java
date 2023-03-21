@@ -22,45 +22,86 @@ import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.id.IHasID;
 import com.helger.commons.lang.EnumHelper;
 import com.helger.commons.name.IHasDisplayName;
+import com.helger.dcng.api.DcngConfig;
+import com.helger.dcng.api.DcngIdentifierFactory;
 import com.helger.peppolid.IDocumentTypeIdentifier;
-import com.helger.peppolid.factory.SimpleIdentifierFactory;
 
 public enum EUseCase implements IHasID <String>, IHasDisplayName
 {
-  HIGHER_EDUCATION_DIPLOMA (EPilot.STUDYING_ABROAD,
-                            "uc1",
+  HIGHER_EDUCATION_DIPLOMA (EPilot.T41_STUDYING_ABROAD,
+                            "higheredu",
                             "Application to public higher education",
                             EPatternType.USI,
                             EDataRequestSubjectType.PERSON,
-                            SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                           "HigherEducationDiploma")),
-  COMPANY_REGISTRATION (EPilot.DOING_BUSINESS_ABROAD,
+                            DcngConfig.getIdentifierFactory ()
+                                      .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                                     "HigherEducationDiploma:2.0")),
+  SECONDARY_EDUCATION_DIPLOMA (EPilot.T41_STUDYING_ABROAD,
+                               "secondaryedu",
+                               "Application to public secondary education",
+                               EPatternType.USI,
+                               EDataRequestSubjectType.PERSON,
+                               DcngConfig.getIdentifierFactory ()
+                                         .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                                        "SecondaryEducationDiploma:1.0")),
+  DISABILITY (EPilot.T41_STUDYING_ABROAD,
+              "disability",
+              "Application to something about Disability",
+              EPatternType.USI,
+              EDataRequestSubjectType.PERSON,
+              DcngConfig.getIdentifierFactory ()
+                        .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                       "DisabilityEvidence:1.0")),
+  LARGE_FAMILY (EPilot.T41_STUDYING_ABROAD,
+                "disability",
+                "Application to something about Large Family",
+                EPatternType.USI,
+                EDataRequestSubjectType.PERSON,
+                DcngConfig.getIdentifierFactory ()
+                          .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                         "LargeFamilyEvidence:1.0")),
+  COMPANY_REGISTRATION (EPilot.T42_DOING_BUSINESS_ABROAD,
                         "cr",
                         "Starting a business in another Member State",
                         EPatternType.IM,
                         EDataRequestSubjectType.COMPANY,
-                        SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                       "CompanyRegistration")),
-  BIRTH_EVIDENCE (EPilot.MOVING_ABROAD,
-                  "birth",
-                  "Birth Evidence",
-                  EPatternType.USI,
-                  EDataRequestSubjectType.PERSON,
-                  SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType", "BirthEvidence")),
-  DOMREG_EVIDENCE (EPilot.MOVING_ABROAD,
-                   "domreg",
-                   "Domicile Registration Evidence",
-                   EPatternType.USI,
-                   EDataRequestSubjectType.PERSON,
-                   SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                  "DomicileRegistrationEvidence")),
-  MARRIAGE_EVIDENCE (EPilot.MOVING_ABROAD,
-                     "marriage",
-                     "Marriage Evidence",
-                     EPatternType.USI,
-                     EDataRequestSubjectType.PERSON,
-                     SimpleIdentifierFactory.INSTANCE.createDocumentTypeIdentifier ("urn:de4a-eu:CanonicalEvidenceType",
-                                                                                    "MarriageEvidence"));
+                        DcngConfig.getIdentifierFactory ()
+                                  .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                                 "CompanyRegistration:1.0")),
+
+  COMPANY_REGISTRATION_IT1 (EPilot.T42_DOING_BUSINESS_ABROAD,
+                            "cr",
+                            "Starting a business in another Member State",
+                            EPatternType.IM_IT1,
+                            EDataRequestSubjectType.COMPANY,
+                            DcngConfig.getIdentifierFactory ()
+                                      .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                                     "CompanyRegistration")),
+
+  BIRTH (EPilot.T43_MOVING_ABROAD,
+         "birth",
+         "Birth Certificate",
+         EPatternType.USI,
+         EDataRequestSubjectType.PERSON,
+         DcngConfig.getIdentifierFactory ()
+                   .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                  "BirthCertificate:1.0")),
+  DOMICILE_REGISTRATION (EPilot.T43_MOVING_ABROAD,
+                         "domreg",
+                         "Residence Registration",
+                         EPatternType.USI,
+                         EDataRequestSubjectType.PERSON,
+                         DcngConfig.getIdentifierFactory ()
+                                   .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                                  "ResidenceRegistration:1.0")),
+  MARRIAGE (EPilot.T43_MOVING_ABROAD,
+            "marriage",
+            "Marriage Registration",
+            EPatternType.USI,
+            EDataRequestSubjectType.PERSON,
+            DcngConfig.getIdentifierFactory ()
+                      .createDocumentTypeIdentifier (DcngIdentifierFactory.DOCTYPE_SCHEME_CANONICAL_EVIDENCE,
+                                                     "MarriageEvidence:1.0"));
 
   private final EPilot m_ePilot;
   private final String m_sID;

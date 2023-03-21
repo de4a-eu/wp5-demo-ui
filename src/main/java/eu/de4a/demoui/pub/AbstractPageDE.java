@@ -16,17 +16,23 @@
 package eu.de4a.demoui.pub;
 
 import java.util.Locale;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
+import com.helger.commons.CGlobal;
 import com.helger.commons.ValueEnforcer;
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.builder.IBuilder;
 import com.helger.commons.collection.impl.CommonsArrayList;
+import com.helger.commons.concurrent.ThreadHelper;
+import com.helger.commons.datetime.PDTFactory;
 import com.helger.commons.datetime.PDTToString;
 import com.helger.commons.string.StringHelper;
 import com.helger.html.hc.IHCNode;
@@ -51,20 +57,24 @@ import com.helger.xml.serialize.write.EXMLSerializeIndent;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
-import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
 import eu.de4a.demoui.model.EPatternType;
+import eu.de4a.demoui.model.ResponseMapEvidence;
+import eu.de4a.demoui.model.ResponseMapRedirect;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
-import eu.de4a.iem.jaxb.common.idtypes.LegalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.idtypes.NaturalPersonIdentifierType;
-import eu.de4a.iem.jaxb.common.types.AgentType;
-import eu.de4a.iem.jaxb.common.types.CanonicalEvidenceType;
-import eu.de4a.iem.jaxb.common.types.DataRequestSubjectCVType;
-import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
+import eu.de4a.iem.cev.de4a.t42.DE4AT42Marshaller;
+import eu.de4a.iem.core.jaxb.common.AgentType;
+import eu.de4a.iem.core.jaxb.common.CanonicalEvidenceType;
+import eu.de4a.iem.core.jaxb.common.DataRequestSubjectCVType;
+import eu.de4a.iem.core.jaxb.common.LegalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.NaturalPersonIdentifierType;
+import eu.de4a.iem.core.jaxb.common.RedirectUserType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractEvidenceItemType;
+import eu.de4a.iem.core.jaxb.common.ResponseExtractMultiEvidenceType;
 import eu.de4a.iem.jaxb.t42.v0_6.ActivityType;
 import eu.de4a.iem.jaxb.t42.v0_6.AddressType;
 import eu.de4a.iem.jaxb.t42.v0_6.LegalEntityType;
-import eu.de4a.iem.xml.de4a.t42.v0_6.DE4AT42Marshaller;
 
 public abstract class AbstractPageDE extends AbstractAppWebPage
 {
@@ -79,13 +89,10 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     private final String m_sPID;
     private final String m_sName;
     private final String m_sCountryCode;
-    // Only for USI
-    private final String m_sRedirectURL;
 
     public Agent (@Nonnull @Nonempty final String sPID,
                   @Nonnull @Nonempty final String sName,
-                  @Nonnull @Nonempty final String sCountryCode,
-                  @Nullable final String sRedirectURL)
+                  @Nonnull @Nonempty final String sCountryCode)
     {
       ValueEnforcer.notEmpty (sPID, "PID");
       ValueEnforcer.notEmpty (sName, "Name");
@@ -93,7 +100,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       m_sPID = sPID;
       m_sName = sName;
       m_sCountryCode = sCountryCode;
-      m_sRedirectURL = sRedirectURL;
     }
 
     @Nonnull
@@ -117,12 +123,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       return m_sCountryCode;
     }
 
-    @Nullable
-    public String getRedirectURL ()
-    {
-      return m_sRedirectURL;
-    }
-
     @Nonnull
     public static Agent.Builder builder ()
     {
@@ -134,7 +134,6 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       private String m_sPID;
       private String m_sName;
       private String m_sCountryCode;
-      private String m_sRedirectURL;
 
       public Builder ()
       {}
@@ -161,50 +160,152 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
       }
 
       @Nonnull
-      public Builder redirectURL (@Nullable final String s)
-      {
-        m_sRedirectURL = s;
-        return this;
-      }
-
-      @Nonnull
       public Agent build ()
       {
-        return new Agent (m_sPID, m_sName, m_sCountryCode, m_sRedirectURL);
+        return new Agent (m_sPID, m_sName, m_sCountryCode);
       }
     }
   }
 
   @Nonnull
   @Nonempty
-  protected static final String getTargetURLMockDO (@Nullable final EPatternType ePattern)
+  protected static final String getDefaultTargetURL (@Nonnull final EPatternType ePattern)
   {
-    if (ePattern.isUSI ())
-      return CApp.MOCK_BASE_URL + EDemoDocument.USI1_REQ_DE_DR.getRelativeURL ();
-    return CApp.MOCK_BASE_URL + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+    final String sBaseUrl = AppConfig.getDRBaseUrl ();
+    switch (ePattern)
+    {
+      case IM:
+        return sBaseUrl + EDemoDocument.IM_REQ_DE_DR.getRelativeURL ();
+      case USI:
+        return sBaseUrl + EDemoDocument.USI_REQ_DE_DR.getRelativeURL ();
+      case IM_IT1:
+        return sBaseUrl + EDemoDocument.IM_REQ_DE_DR_IT1.getRelativeURL ();
+      case SUBSCRIPTION:
+        return sBaseUrl + EDemoDocument.SUBS_REQ.getRelativeURL ();
+      case NOTIFICATION:
+        return sBaseUrl + EDemoDocument.EVENT_NOTIFY.getRelativeURL ();
+      case LOOKUP:
+        return sBaseUrl + EDemoDocument.LOOKUP_REQ.getRelativeURL ();
+      default:
+        throw new IllegalStateException ("Unsupported pattern " + ePattern);
+    }
   }
 
-  @Nonnull
-  @Nonempty
-  protected static final String getTargetURLTestDR (@Nullable final EPatternType ePattern)
+  protected static final class USIRedirectSupplier implements Supplier <RedirectUserType>
   {
-    if (ePattern.isUSI ())
-      return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceUSI";
-    return CApp.CONNECTOR_BASE_URL + "/requestTransferEvidenceIM";
+    private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE.USIRedirectSupplier.class);
+    private final String m_sSentRequestID;
+
+    public USIRedirectSupplier (@Nonnull @Nonempty final String sSentRequestID)
+    {
+      ValueEnforcer.notEmpty (sSentRequestID, "SentRequestID");
+      m_sSentRequestID = sSentRequestID;
+    }
+
+    @Nullable
+    public RedirectUserType get ()
+    {
+      final long nStart = PDTFactory.getCurrentMillis ();
+      final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
+
+      final ResponseMapRedirect aMap = ResponseMapRedirect.getInstance ();
+      while (true)
+      {
+        final long nNow = PDTFactory.getCurrentMillis ();
+        // Don't remove here, so that something can be shown on the
+        // received redirects page
+        final RedirectUserType aMatch = aMap.removeAndGet (m_sSentRequestID);
+        if (aMatch != null)
+        {
+          if (LOGGER.isInfoEnabled ())
+            LOGGER.info ("Found a redirect URL for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return aMatch;
+        }
+
+        if (nNow > nEnd)
+        {
+          if (LOGGER.isWarnEnabled ())
+            LOGGER.warn ("Quit waiting for a redirect URL for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return null;
+        }
+
+        ThreadHelper.sleep (50);
+      }
+    }
   }
+
+  protected static final class IMEvidenceSupplier implements Supplier <ResponseExtractMultiEvidenceType>
+  {
+    private static final Logger LOGGER = LoggerFactory.getLogger (AbstractPageDE.IMEvidenceSupplier.class);
+    private final String m_sSentRequestID;
+
+    public IMEvidenceSupplier (@Nonnull @Nonempty final String sSentRequestID)
+    {
+      ValueEnforcer.notEmpty (sSentRequestID, "SentRequestID");
+      m_sSentRequestID = sSentRequestID;
+    }
+
+    @Nullable
+    public ResponseExtractMultiEvidenceType get ()
+    {
+      final long nStart = PDTFactory.getCurrentMillis ();
+      final long nEnd = nStart + 30 * CGlobal.MILLISECONDS_PER_SECOND;
+
+      final ResponseMapEvidence map = ResponseMapEvidence.getInstance ();
+      while (true)
+      {
+        final long nNow = PDTFactory.getCurrentMillis ();
+        // Don't remove here, so that something can be shown on the
+        // received redirects page
+        final ResponseExtractMultiEvidenceType aMatch = map.get (m_sSentRequestID);
+        if (aMatch != null)
+        {
+          if (LOGGER.isInfoEnabled ())
+            LOGGER.info ("Found a Response Evidence for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return aMatch;
+        }
+
+        if (nNow > nEnd)
+        {
+          if (LOGGER.isWarnEnabled ())
+            LOGGER.warn ("Quit waiting for a Response Evidence for request ID '" +
+                         m_sSentRequestID +
+                         "' after " +
+                         (nNow - nStart) +
+                         " milliseconds");
+          return null;
+        }
+
+        ThreadHelper.sleep (50);
+      }
+    }
+  }
+
+  protected static final int ERROR_SRC_MAX_LEN = 500;
 
   protected final EPatternType m_ePattern;
-  protected final String TARGET_URL_MOCK_DO;
-  protected final String TARGET_URL_TEST_DR;
+  protected final String m_sDefaultTargetURL;
 
-  public AbstractPageDE (@Nonnull @Nonempty final String sID,
-                         @Nonnull @Nonempty final String sDisplayName,
-                         @Nonnull final EPatternType ePattern)
+  protected AbstractPageDE (@Nonnull @Nonempty final String sID,
+                            @Nonnull @Nonempty final String sDisplayName,
+                            @Nonnull final EPatternType ePattern)
   {
     super (sID, sDisplayName);
+    ValueEnforcer.notNull (ePattern, "Pattern");
     m_ePattern = ePattern;
-    TARGET_URL_MOCK_DO = getTargetURLMockDO (ePattern);
-    TARGET_URL_TEST_DR = getTargetURLTestDR (ePattern);
+    m_sDefaultTargetURL = getDefaultTargetURL (ePattern);
   }
 
   @Nonnull
@@ -260,13 +361,16 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP, @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createNaturalPerson (@Nonnull final NaturalPersonIdentifierType aNP,
+                                                 @Nonnull final Locale aDisplayLocale)
   {
     final BootstrapTable aTable2 = new BootstrapTable (HCCol.fromString ("170"), HCCol.star ());
     aTable2.addBodyRow ().addCell ("Person Identifier:").addCell (_code (aNP.getPersonIdentifier ()));
     aTable2.addBodyRow ().addCell ("First Name:").addCell (_text (aNP.getFirstNameValue ()));
     aTable2.addBodyRow ().addCell ("Family Identifier:").addCell (_text (aNP.getFamilyNameValue ()));
-    aTable2.addBodyRow ().addCell ("Date of Birth:").addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
+    aTable2.addBodyRow ()
+           .addCell ("Date of Birth:")
+           .addCell (_text (PDTToString.getAsString (aNP.getDateOfBirthLocal (), aDisplayLocale)));
     if (aNP.getGender () != null)
       aTable2.addBodyRow ().addCell ("Gender:").addCell (_text (aNP.getGender ().value ()));
     if (StringHelper.hasText (aNP.getBirthNameValue ()))
@@ -279,7 +383,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS, @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createDRS (@Nonnull final DataRequestSubjectCVType aDRS,
+                                       @Nonnull final Locale aDisplayLocale)
   {
     if (aDRS == null)
       return _text (null);
@@ -289,7 +394,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
     if (aDRS.getDataSubjectPerson () != null)
     {
-      aTable.addBodyRow ().addCell ("Natural Person").addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
+      aTable.addBodyRow ()
+            .addCell ("Natural Person")
+            .addCell (_createNaturalPerson (aDRS.getDataSubjectPerson (), aDisplayLocale));
     }
     if (aDRS.getDataSubjectCompany () != null)
     {
@@ -297,7 +404,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     }
     if (aDRS.getDataSubjectRepresentative () != null)
     {
-      aTable.addBodyRow ().addCell ("Representative").addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
+      aTable.addBodyRow ()
+            .addCell ("Representative")
+            .addCell (_createNaturalPerson (aDRS.getDataSubjectRepresentative (), aDisplayLocale));
     }
     return aTable;
   }
@@ -307,7 +416,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   {
     final HCDiv aNaceCodes = new HCDiv ();
     if (a.hasNaceCodeEntries ())
-      aNaceCodes.addChild ("NACE codes: ").addChild (StringHelper.imploder ().source (a.getNaceCode ()).separator (", ").build ());
+      aNaceCodes.addChild ("NACE codes: ")
+                .addChild (StringHelper.imploder ().source (a.getNaceCode ()).separator (", ").build ());
 
     final HCDiv aActDesc = new HCDiv ();
     if (a.hasActivityDescriptionEntries ())
@@ -339,7 +449,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  private static IHCNode _createCE_DBA (@Nonnull final LegalEntityType aLegalEntity, @Nonnull final Locale aDisplayLocale)
+  private static IHCNode _createCE_DBA (@Nonnull final LegalEntityType aLegalEntity,
+                                        @Nonnull final Locale aDisplayLocale)
   {
     final BootstrapTable aTable = new BootstrapTable (HCCol.fromString ("180"), HCCol.star ());
     if (aLegalEntity.hasCompanyNameEntries ())
@@ -358,7 +469,9 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
     if (aLegalEntity.getCompanyActivity () != null)
     {
-      aTable.addBodyRow ().addCell ("Company Activity:").addCell (_createDBAActivity (aLegalEntity.getCompanyActivity ()));
+      aTable.addBodyRow ()
+            .addCell ("Company Activity:")
+            .addCell (_createDBAActivity (aLegalEntity.getCompanyActivity ()));
     }
 
     if (aLegalEntity.getRegistrationDate () != null)
@@ -424,17 +537,22 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
     {
       final HCNodeList aNL = new HCNodeList ();
       aNL.addChild (new HCDiv ().addChild ("Name: " +
-                                           aLegalEntity.getHasBranch ().getBranchName ().getLegalEntityLegalName ().getValue ()));
+                                           aLegalEntity.getHasBranch ()
+                                                       .getBranchName ()
+                                                       .getLegalEntityLegalName ()
+                                                       .getValue ()));
       aNL.addChild (new HCDiv ().addChild ("EUID: ").addChild (_code (aLegalEntity.getHasBranch ().getBranchEUID ())));
       if (aLegalEntity.getHasBranch ().getBranchActivity () != null)
         aNL.addChild (new HCDiv ().addChild ("Activity: ")
                                   .addChild (_createDBAActivity (aLegalEntity.getHasBranch ().getBranchActivity ())));
       if (aLegalEntity.getHasBranch ().getBranchRegistredAddress () != null)
         aNL.addChild (new HCDiv ().addChild ("Registered Address: ")
-                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ().getBranchRegistredAddress ())));
+                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ()
+                                                                             .getBranchRegistredAddress ())));
       if (aLegalEntity.getHasBranch ().getBranchPostalAddress () != null)
         aNL.addChild (new HCDiv ().addChild ("Postal Address: ")
-                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ().getBranchPostalAddress ())));
+                                  .addChild (_createDBAAddresss (aLegalEntity.getHasBranch ()
+                                                                             .getBranchPostalAddress ())));
       aTable.addBodyRow ().addCell ("Branch:").addCell (aNL);
     }
 
@@ -442,7 +560,8 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
   }
 
   @Nonnull
-  protected static IHCNode _createCE (@Nonnull final CanonicalEvidenceType aCanonicalEvidence, @Nonnull final Locale aDisplayLocale)
+  protected static IHCNode _createCE (@Nonnull final CanonicalEvidenceType aCanonicalEvidence,
+                                      @Nonnull final Locale aDisplayLocale)
   {
     final Element aElement = (Element) aCanonicalEvidence.getAny ();
 
@@ -477,36 +596,43 @@ public abstract class AbstractPageDE extends AbstractAppWebPage
 
   @Nonnull
   protected static IHCNode _createPreviewIM (@Nonnull final WebPageExecutionContext aWPEC,
-                                             @Nonnull final ResponseTransferEvidenceType aResponseObj)
+                                             @Nonnull final ResponseExtractMultiEvidenceType aResponseObj)
   {
     final Locale aDisplayLocale = aWPEC.getDisplayLocale ();
 
     final BootstrapViewForm aTable = new BootstrapViewForm ();
     aTable.setSplitting (BootstrapGridSpec.create (-1, -1, -1, 2, 2), BootstrapGridSpec.create (-1, -1, -1, 10, 10));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID").setCtrl (_code (aResponseObj.getRequestId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Specification ID").setCtrl (_code (aResponseObj.getSpecificationId ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Request ID")
+                                                  .setCtrl (_code (aResponseObj.getRequestId ())));
     aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Time stamp")
                                                   .setCtrl (_text (PDTToString.getAsString (aResponseObj.getTimeStamp (),
                                                                                             aDisplayLocale))));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Procedure ID").setCtrl (_code (aResponseObj.getProcedureId ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator").setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner").setCtrl (_createAgent (aResponseObj.getDataOwner ())));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
-                                                  .setCtrl (_createDRS (aResponseObj.getDataRequestSubject (), aDisplayLocale)));
-    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
-                                                  .setCtrl (_code (aResponseObj.getCanonicalEvidenceTypeId ())));
-    if (aResponseObj.getCanonicalEvidence () != null)
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Evaluator")
+                                                  .setCtrl (_createAgent (aResponseObj.getDataEvaluator ())));
+    aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Owner")
+                                                  .setCtrl (_createAgent (aResponseObj.getDataOwner ())));
+
+    for (final ResponseExtractEvidenceItemType aItem : aResponseObj.getResponseExtractEvidenceItem ())
     {
-      // TODO
-      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
-                                                    .setCtrl (_createCE (aResponseObj.getCanonicalEvidence (), aDisplayLocale)));
-    }
-    if (aResponseObj.getDomesticEvidenceList () != null && aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () > 0)
-    {
-      // TODO
-      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
-                                                    .setCtrl (_text (aResponseObj.getDomesticEvidenceList ().getDomesticEvidenceCount () +
-                                                                     " present, but not shown yet")));
+      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Data Request Subject")
+                                                    .setCtrl (_createDRS (aItem.getDataRequestSubject (),
+                                                                          aDisplayLocale)));
+      aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence Type ID")
+                                                    .setCtrl (_code (aItem.getCanonicalEvidenceTypeId ())));
+      if (aItem.getCanonicalEvidence () != null)
+      {
+        // TODO
+        aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Canonical Evidence")
+                                                      .setCtrl (_createCE (aItem.getCanonicalEvidence (),
+                                                                           aDisplayLocale)));
+      }
+      if (aItem.hasDomesticEvidenceEntries ())
+      {
+        // TODO
+        aTable.addFormGroup (new BootstrapFormGroup ().setLabel ("Domestic Evidences")
+                                                      .setCtrl (_text (aItem.getDomesticEvidenceCount () +
+                                                                       " present, but not shown yet")));
+      }
     }
     return aTable;
   }

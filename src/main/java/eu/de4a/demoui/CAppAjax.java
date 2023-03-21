@@ -28,7 +28,7 @@ import com.helger.photon.uictrls.datatables.ajax.AjaxExecutorDataTablesI18N;
  * @author Philip Helger
  */
 @Immutable
-public final class CAjax
+public final class CAppAjax
 {
   public static final IAjaxFunctionDeclaration DATATABLES = AjaxFunctionDeclaration.builder ("dataTables")
                                                                                    .executor (AjaxExecutorDataTables.class)
@@ -37,6 +37,6 @@ public final class CAjax
                                                                                         .executor (new AjaxExecutorDataTablesI18N (CApp.DEFAULT_LOCALE))
                                                                                         .build ();
 
-  private CAjax ()
+  private CAppAjax ()
   {}
 }

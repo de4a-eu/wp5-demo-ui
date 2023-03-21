@@ -15,4 +15,4 @@
 @REM
 
 @echo off
-docker run -d --name de4a-wp5-demoui -p 8888:8080 de4a-wp5-demoui
+docker run -d --name de4a-wp5-demoui -p 8090:8080 de4a-wp5-demoui

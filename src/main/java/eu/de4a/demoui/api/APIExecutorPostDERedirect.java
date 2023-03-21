@@ -19,6 +19,9 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.helger.commons.annotation.Nonempty;
 import com.helger.commons.error.level.EErrorLevel;
 import com.helger.commons.http.CHttp;
@@ -28,43 +31,53 @@ import com.helger.photon.api.IAPIExecutor;
 import com.helger.servlet.response.UnifiedResponse;
 import com.helger.web.scope.IRequestWebScopeWithoutResponse;
 
-import eu.de4a.iem.jaxb.common.types.RequestForwardEvidenceType;
-import eu.de4a.iem.xml.de4a.DE4AMarshaller;
-import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
+import eu.de4a.demoui.model.ResponseMapRedirect;
+import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.core.jaxb.common.RedirectUserType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 
-/**
- * Take USI response
- *
- * @author Philip Helger
- */
-public class APIExecutorPostUSIResponse implements IAPIExecutor
+public class APIExecutorPostDERedirect implements IAPIExecutor
 {
+  private static final Logger LOGGER = LoggerFactory.getLogger (APIExecutorPostDERedirect.class);
+
   public void invokeAPI (@Nonnull final IAPIDescriptor aAPIDescriptor,
                          @Nonnull @Nonempty final String sPath,
                          @Nonnull final Map <String, String> aPathVariables,
                          @Nonnull final IRequestWebScopeWithoutResponse aRequestScope,
                          @Nonnull final UnifiedResponse aUnifiedResponse) throws Exception
   {
-    DE4AKafkaClient.send (EErrorLevel.INFO, "Received async USI response");
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received redirect DE4A Redirect");
 
-    // Read all source bytes from request
-    final byte [] aPayloadBytes = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
+    final byte [] aPayload = StreamHelper.getAllBytes (aRequestScope.getRequest ().getInputStream ());
 
-    // Parse without a specific evidence
-    final RequestForwardEvidenceType aRequest = DE4AMarshaller.deUsiRequestMarshaller (IDE4ACanonicalEvidenceType.NONE)
-                                                              .read (aPayloadBytes);
-    if (aRequest == null)
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Received " + aPayload.length + " bytes");
+
+    // TODO why DT and not DR?
+    final DE4ACoreMarshaller <RedirectUserType> marshaller = DE4ACoreMarshaller.dtUSIRedirectUserMarshaller ();
+    final RedirectUserType aRedirectUserType = marshaller.read (aPayload);
+    if (aRedirectUserType == null)
     {
-      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse USI response");
+      DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to parse RedirectUserType response");
       aUnifiedResponse.setStatus (CHttp.HTTP_BAD_REQUEST).disableCaching ();
     }
     else
     {
-      // TODO store message
+      if (LOGGER.isInfoEnabled ())
+        LOGGER.info ("Unmarshalled payload as " + aRedirectUserType.getClass ().getSimpleName ());
 
-      DE4AKafkaClient.send (EErrorLevel.INFO, "Received USI response for " + aRequest.getRequestId ());
-      aUnifiedResponse.setStatus (CHttp.HTTP_NO_CONTENT).disableCaching ();
+      // store message
+      if (LOGGER.isDebugEnabled ())
+        LOGGER.debug ("Storing redirection message");
+
+      ResponseMapRedirect.getInstance ().register (aRedirectUserType);
+
+      // Just return 204 for OK no content
+      aUnifiedResponse.disableCaching ().setStatus (CHttp.HTTP_NO_CONTENT);
     }
+
+    if (LOGGER.isInfoEnabled ())
+      LOGGER.info ("Finished handling redirect DE4A message");
   }
 }

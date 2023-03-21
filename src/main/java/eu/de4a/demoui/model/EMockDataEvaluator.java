@@ -25,28 +25,28 @@ import com.helger.commons.name.IHasDisplayName;
 public enum EMockDataEvaluator implements IHasID <String>, IHasDisplayName
 {
   // T4.1
-  T41_ES (EPilot.STUDYING_ABROAD, "iso6523-actorid-upis::9999:esq6250003h-it2", "ES", "(UJI) Universitat Jaume I de Castellón"),
-  T41_PT (EPilot.STUDYING_ABROAD, "iso6523-actorid-upis::9999:pt990000101-it2", "PT", "Portuguese IST, University of Lisbon"),
-  T41_SI2 (EPilot.STUDYING_ABROAD, "iso6523-actorid-upis::9999:si000000018-it2", "SI", "(JSI) Institut Jozef Stefan"),
+  T41_ES (EPilot.T41_STUDYING_ABROAD, "iso6523-actorid-upis::9999:esq6250003h-it2", "ES", "(UJI) Universitat Jaume I de Castellón"),
+  T41_PT (EPilot.T41_STUDYING_ABROAD, "iso6523-actorid-upis::9999:pt990000101-it2", "PT", "Portuguese IST, University of Lisbon"),
+  T41_SI2 (EPilot.T41_STUDYING_ABROAD, "iso6523-actorid-upis::9999:si000000018-mock-it2", "SI", "(JSI) Institut Jozef Stefan"),
   // T4.2
-  T42_AT (EPilot.DOING_BUSINESS_ABROAD,
+  T42_AT (EPilot.T42_DOING_BUSINESS_ABROAD,
           "iso6523-actorid-upis::9999:at000000271-it2",
           "AT",
           "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort"),
-  T42_SE (EPilot.DOING_BUSINESS_ABROAD,
-          "iso6523-actorid-upis::9999:se000000013-it2",
+  T42_SE (EPilot.T42_DOING_BUSINESS_ABROAD,
+          "iso6523-actorid-upis::9999:se000000013-mock-it2",
           "SE",
           "(BVE) BOLAGSVERKET (Companies Registration Office)"),
-  T42_RO (EPilot.DOING_BUSINESS_ABROAD,
+  T42_RO (EPilot.T42_DOING_BUSINESS_ABROAD,
           "iso6523-actorid-upis::9999:ro000000006-it2",
           "RO",
           "(ORNC) Oficiul National B22 Al Registrului Comertului"),
-  T42_NL (EPilot.DOING_BUSINESS_ABROAD,
-          "iso6523-actorid-upis::9999:nl000000024-it2",
+  T42_NL (EPilot.T42_DOING_BUSINESS_ABROAD,
+          "iso6523-actorid-upis::9999:nl000000024-mock-it2",
           "NL",
           "(RVO) Rijksdienst voor Ondernemend Nederland (Netherlands Enterprise Agency)"),
   // T4.3
-  T43_LU (EPilot.MOVING_ABROAD,
+  T43_LU (EPilot.T43_MOVING_ABROAD,
           "iso6523-actorid-upis::9999:lu000000025-it2",
           "LU",
           "(CTIE) Centre des Technologies de l'Information de l'Etat (State Information Technology Center)");

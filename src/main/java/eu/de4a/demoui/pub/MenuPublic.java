@@ -31,13 +31,22 @@ import com.helger.photon.uicore.page.system.BasePageShowChildren;
 public final class MenuPublic
 {
   public static final String MENU_DE = "de";
-  public static final String MENU_DE_IM_USER = "de-im-user";
+
+  public static final String MENU_DE_IM_GUIDED = "de-im-guided";
   public static final String MENU_DE_IM_EXPERT = "de-im-expert";
-  public static final String MENU_DE_USI_USER = "de-usi-user";
+  public static final String MENU_DE_IM_EXPERT_BACKWARD = "de-im-expert-bw";
+  public static final String MENU_DE_USI_GUIDED = "de-usi-guided";
+  public static final String MENU_DE_USI_EXPERT = "de-usi-expert";
+  public static final String MENU_DE_SUBSCRIPTION_EXPERT = "de-subscription-expert";
+  public static final String MENU_DE_NOTIFICATION_EXPERT = "de-notification-expert";
+  public static final String MENU_DE_CHECK_EVIDENCE = "de-check-evidence";
+  public static final String MENU_DE_CHECK_EVENT = "de-evidence";
+  public static final String MENU_DE_CHECK_SUBSCRIPTION = "de-subscription";
+  public static final String MENU_DE_RECEIVED_REDIRECTS = "de-received-redirects";
 
   public static final String MENU_DEMO_UI = "demoui";
+  public static final String MENU_CREATE_RANDOM_MESSAGE = "createrandommsg";
   public static final String MENU_SEND_MESSAGE = "sendmessage";
-  public static final String MENU_EXAMPLE_MESSAGE = "examplemsg";
   public static final String MENU_VALIDATE_MESSAGE = "validatemsg";
 
   private MenuPublic ()
@@ -47,17 +56,32 @@ public final class MenuPublic
   {
     // DE stuff
     {
-      final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE, "Data Evaluator", aMenuTree));
-      aMenuTree.createItem (aDE, new PagePublicDE_IM_User (MENU_DE_IM_USER));
+      final IMenuItemPage aDE = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DE,
+                                                                                       "Data Evaluator",
+                                                                                       aMenuTree));
+      aMenuTree.createItem (aDE, new PagePublicDE_IM_Guided (MENU_DE_IM_GUIDED));
       aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert (MENU_DE_IM_EXPERT));
-      aMenuTree.createItem (aDE, new PagePublicDE_USI_User (MENU_DE_USI_USER));
+      aMenuTree.createItem (aDE, new PagePublicDE_IM_Expert_Backwards (MENU_DE_IM_EXPERT_BACKWARD));
+      aMenuTree.createSeparator (aDE);
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Guided (MENU_DE_USI_GUIDED));
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Expert (MENU_DE_USI_EXPERT));
+      aMenuTree.createSeparator (aDE);
+      aMenuTree.createItem (aDE, new PagePublicDE_Subscription_Expert (MENU_DE_SUBSCRIPTION_EXPERT));
+      aMenuTree.createItem (aDE, new PagePublicDE_Notification_Expert (MENU_DE_NOTIFICATION_EXPERT));
+      aMenuTree.createSeparator (aDE);
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Evidence (MENU_DE_CHECK_EVIDENCE));
+      aMenuTree.createItem (aDE, new PagePublicDE_Check_Notification (MENU_DE_CHECK_EVENT));
+      aMenuTree.createItem (aDE, new PagePublicDE_USI_Check_Subscription(MENU_DE_CHECK_SUBSCRIPTION));
+      aMenuTree.createItem (aDE, new PagePublicDE_ReceivedRedirects (MENU_DE_RECEIVED_REDIRECTS));
     }
 
     // Demo UI stuff
     {
-      final IMenuItemPage aDemoUI = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DEMO_UI, "Demo UI", aMenuTree));
+      final IMenuItemPage aDemoUI = aMenuTree.createRootItem (new BasePageShowChildren <> (MENU_DEMO_UI,
+                                                                                           "Supporting Actions",
+                                                                                           aMenuTree));
+      aMenuTree.createItem (aDemoUI, new PagePublicCreateRandomMessage (MENU_CREATE_RANDOM_MESSAGE));
       aMenuTree.createItem (aDemoUI, new PagePublicSendMessage (MENU_SEND_MESSAGE));
-      aMenuTree.createItem (aDemoUI, new PagePublicCreateRandomMessage (MENU_EXAMPLE_MESSAGE));
       aMenuTree.createItem (aDemoUI, new PagePublicValidateMessage (MENU_VALIDATE_MESSAGE));
     }
 

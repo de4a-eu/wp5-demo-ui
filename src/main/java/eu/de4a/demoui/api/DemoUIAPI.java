@@ -40,22 +40,38 @@ public final class DemoUIAPI
   {
     final IAPIExceptionMapper aExceptionMapper = new APIExceptionMapper ();
 
-    // POST /usi-response
-    {
-      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post (API_USI_RESPONSE), new APIExecutorPostUSIResponse ());
-      aDescriptor.setExceptionMapper (aExceptionMapper);
-      aAPIRegistry.registerAPI (aDescriptor);
-    }
-
-    // GET /usi-response
-    {
-      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get (API_USI_RESPONSE), new APIExecutorGetUSIResponse ());
-      aAPIRegistry.registerAPI (aDescriptor);
-    }
-
     // GET /status
     {
-      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get ("/status"), new APIExecutorGetStatus ());
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.get ("/status"),
+                                                           new APIExecutorGetStatus ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
+
+    // POST /de-inbound
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-inbound"),
+                                                           new APIExecutorPostDEInbound ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
+
+    // POST /de-redirect
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-redirect"),
+                                                           new APIExecutorPostDERedirect ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
+
+    // POST /de-notification
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-notification"),
+                                                           new APIExecutorPostDENotification ()).setExceptionMapper (aExceptionMapper);
+      aAPIRegistry.registerAPI (aDescriptor);
+    }
+    
+    // POST /de-subscription
+    {
+      final APIDescriptor aDescriptor = new APIDescriptor (APIPath.post ("/de-subscription"),
+                                                           new APIExecutorPostDESubscription ()).setExceptionMapper (aExceptionMapper);
       aAPIRegistry.registerAPI (aDescriptor);
     }
   }

@@ -22,9 +22,11 @@ import java.util.Locale;
 
 import javax.annotation.Nonnull;
 
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import com.helger.commons.annotation.Nonempty;
@@ -36,12 +38,12 @@ import com.helger.commons.string.StringHelper;
 import com.helger.commons.timing.StopWatch;
 import com.helger.commons.url.URLHelper;
 import com.helger.css.property.CCSSProperties;
+import com.helger.dcng.core.http.DcngHttpClientSettings;
 import com.helger.html.hc.html.forms.HCEdit;
 import com.helger.html.hc.html.forms.HCHiddenField;
 import com.helger.html.hc.html.forms.HCTextArea;
 import com.helger.html.hc.impl.HCNodeList;
 import com.helger.httpclient.HttpClientManager;
-import com.helger.httpclient.HttpClientSettings;
 import com.helger.httpclient.response.ResponseHandlerString;
 import com.helger.photon.app.html.PhotonCSS;
 import com.helger.photon.app.html.PhotonJS;
@@ -66,12 +68,11 @@ import com.helger.xml.serialize.read.DOMReaderSettings;
 import com.helger.xml.serialize.write.XMLWriter;
 import com.helger.xml.serialize.write.XMLWriterSettings;
 
-import eu.de4a.demoui.CApp;
+import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.model.EDemoDocument;
-import eu.de4a.demoui.model.EDemoDocumentType;
 import eu.de4a.demoui.ui.AbstractAppWebPage;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
+import eu.de4a.iem.core.DE4ACoreNamespaceContext;
 
 /**
  * Take a user provided message and send it
@@ -80,6 +81,7 @@ import eu.de4a.iem.xml.de4a.DE4ANamespaceContext;
  */
 public final class PagePublicSendMessage extends AbstractAppWebPage
 {
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicSendMessage.class);
   private static final String FIELD_MODE = "mode";
   private static final String FIELD_DEST_BASE_URL = "destbaseurl";
   private static final String FIELD_PAYLOAD = "payload";
@@ -154,11 +156,15 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
           final String sFinalURL = StringHelper.getConcatenatedOnDemand (sTargetBaseURL, eMode.getRelativeURL ());
           String sResponse = null;
           Exception aResponseEx = null;
-          final HttpClientSettings aHCS = new HttpClientSettings ();
+          final DcngHttpClientSettings aHCS = new DcngHttpClientSettings ();
           try (final HttpClientManager aHCM = HttpClientManager.create (aHCS))
           {
+            if (LOGGER.isInfoEnabled ())
+              LOGGER.info ("HTTP POST to '" + sFinalURL + "'");
+
             final HttpPost aPost = new HttpPost (sFinalURL);
-            aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setEntity (new StringEntity (sPayload,
+                                               ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             sResponse = aHCM.execute (aPost, new ResponseHandlerString ());
           }
           catch (final IOException ex)
@@ -201,7 +207,7 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
               // Reformat if necessary
               final String sFormatted = isFormatted ? sResponse
                                                     : XMLWriter.getNodeAsString (aDoc,
-                                                                                 new XMLWriterSettings ().setNamespaceContext (DE4ANamespaceContext.getInstance ()));
+                                                                                 new XMLWriterSettings ().setNamespaceContext (DE4ACoreNamespaceContext.getInstance ()));
               final HCPrismJS aPrism = new HCPrismJS (EPrismLanguage.MARKUP).addChild (sFormatted);
               for (final IPrismPlugin p : PRISM_PLUGINS)
                 aPrism.addPlugin (p);
@@ -232,8 +238,8 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
       {
         final HCExtSelect aSelect = new HCExtSelect (new RequestField (FIELD_MODE));
         for (final EDemoDocument e : EDemoDocument.values ())
-          if (e.getDocumentType () == EDemoDocumentType.REQUEST || e.getDocumentType () == EDemoDocumentType.IDK_REQUEST)
-            aSelect.addOption (e.getID (), e.getDisplayName () + (e.hasRelativeURL () ? " (" + e.getRelativeURL () + ")" : ""));
+          aSelect.addOption (e.getID (),
+                             e.getDisplayName () + (e.hasRelativeURL () ? " (" + e.getRelativeURL () + ")" : ""));
         aSelect.addOptionPleaseSelect (aDisplayLocale);
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Interface to test")
                                                      .setCtrl (aSelect)
@@ -241,11 +247,12 @@ public final class PagePublicSendMessage extends AbstractAppWebPage
       }
 
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target server base URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL, CApp.MOCK_BASE_URL)))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_DEST_BASE_URL,
+                                                                                           AppConfig.getPublicURL ())))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_DEST_BASE_URL))
                                                    .setHelpText (span ("The URL to which the request should be send. Use this to send a request to your server for testing purposes if you like." +
                                                                        " The suffix of the Interface to test is added to this path." +
-                                                                       " The endpoint must be able to handle HTTP POST calls. Use ").addChild (code (CApp.CONNECTOR_BASE_URL))
+                                                                       " The endpoint must be able to handle HTTP POST calls. Use ").addChild (code (AppConfig.getPublicURL ()))
                                                                                                                                     .addChild (" for the connector IDK request.")));
 
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("XML message to send")

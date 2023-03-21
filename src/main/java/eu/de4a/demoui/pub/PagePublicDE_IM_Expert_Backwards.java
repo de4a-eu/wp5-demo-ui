@@ -66,58 +66,48 @@ import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppHttpClientSettings;
 import eu.de4a.demoui.KafkaClientWrapper;
 import eu.de4a.demoui.model.EDemoDocument;
-import eu.de4a.demoui.model.EMockDataEvaluator;
 import eu.de4a.demoui.model.EMockDataOwner;
 import eu.de4a.demoui.model.EPatternType;
 import eu.de4a.demoui.model.EUseCase;
 import eu.de4a.demoui.model.IDemoDocument;
+import eu.de4a.demoui.model.ResponseMapEvidence;
 import eu.de4a.demoui.ui.AppCommonUI;
-import eu.de4a.iem.core.DE4ACoreMarshaller;
-import eu.de4a.iem.core.jaxb.common.RequestEvidenceItemType;
-import eu.de4a.iem.core.jaxb.common.RequestExtractMultiEvidenceIMType;
-import eu.de4a.iem.core.jaxb.common.ResponseErrorType;
+import eu.de4a.iem.jaxb.common.types.RequestTransferEvidenceUSIIMDRType;
+import eu.de4a.iem.jaxb.common.types.ResponseTransferEvidenceType;
+//import eu.de4a.iem.core.DE4ACoreMarshaller;
+import eu.de4a.iem.xml.de4a.DE4AMarshaller;
+import eu.de4a.iem.xml.de4a.IDE4ACanonicalEvidenceType;
 import eu.de4a.kafkaclient.DE4AKafkaClient;
 import eu.de4a.kafkaclient.model.ELogMessage;
 
-public class PagePublicDE_IM_Expert extends AbstractPageDE
+public class PagePublicDE_IM_Expert_Backwards extends AbstractPageDE
 {
   // We're doing a DR-IM request
-  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR;
+  private static final IDemoDocument DEMO_DOC_TYPE = EDemoDocument.IM_REQ_DE_DR_IT1;
 
-  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_Expert.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger (PagePublicDE_IM_Expert_Backwards.class);
   private static final String FIELD_TARGET_URL = "targeturl";
   private static final String FIELD_PAYLOAD = "payload";
+  private static final String FIELD_RESPONSE = "response";
 
   private static final AjaxFunctionDeclaration CREATE_NEW_REQUEST;
 
   @Nonnull
-  private static RequestExtractMultiEvidenceIMType _createDemoRequest ()
+  private static RequestTransferEvidenceUSIIMDRType _createDemoRequest ()
   {
-    RequestExtractMultiEvidenceIMType aDemoRequest;
+    RequestTransferEvidenceUSIIMDRType aDemoRequest;
     {
-      // We want a natural person
+      // We want a legal person
       while (true)
       {
-        aDemoRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.createDemoRequest ();
-        if (aDemoRequest.getRequestEvidenceIMItemAtIndex (0).getDataRequestSubject ().getDataSubjectPerson () != null)
+        aDemoRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.createDemoRequest ();
+        if (aDemoRequest.getDataRequestSubject ().getDataSubjectCompany () != null)
           break;
       }
-
-      if (false)
-        aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
-      else
-        aDemoRequest.getDataEvaluator ().setAgentUrn (EMockDataEvaluator.T42_SE.getParticipantID ());
-      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T43_PT.getParticipantID ());
-
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (0)
-                  .setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-      aDemoRequest.getRequestEvidenceIMItemAtIndex (1)
-                  .setCanonicalEvidenceTypeId (EUseCase.BIRTH.getDocumentTypeID ().getURIEncoded ());
-
-      final RequestEvidenceItemType item = aDemoRequest.getRequestEvidenceIMItemAtIndex (0);
-      if (false)
-        item.setCanonicalEvidenceTypeId (EUseCase.MARRIAGE.getDocumentTypeID ().getURIEncoded ());
-      item.getDataRequestSubject ().getDataSubjectPerson ().setPersonIdentifier ("PT/SE/12345678");
+      aDemoRequest.getDataEvaluator ().setAgentUrn (AppConfig.getDEParticipantID ());
+      aDemoRequest.getDataOwner ().setAgentUrn (EMockDataOwner.T42_AT.getParticipantID ());
+      aDemoRequest.getDataRequestSubject ().getDataSubjectCompany ().setLegalPersonIdentifier ("AT/NL/???");
+      aDemoRequest.setCanonicalEvidenceTypeId (EUseCase.COMPANY_REGISTRATION_IT1.getDocumentTypeID ().getURIEncoded ());
     }
     return aDemoRequest;
   }
@@ -129,9 +119,9 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
     });
   }
 
-  public PagePublicDE_IM_Expert (@Nonnull @Nonempty final String sID)
+  public PagePublicDE_IM_Expert_Backwards (@Nonnull @Nonempty final String sID)
   {
-    super (sID, "IM Exchange (Expert)", EPatternType.IM);
+    super (sID, "IM (Backward compatibility)", EPatternType.IM_IT1);
   }
 
   @Override
@@ -175,14 +165,10 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         else
         {
           // Send only valid documents
-          final RequestExtractMultiEvidenceIMType aParsedRequest = (RequestExtractMultiEvidenceIMType) DEMO_DOC_TYPE.parseMessage (sPayload);
+          final RequestTransferEvidenceUSIIMDRType aParsedRequest = (RequestTransferEvidenceUSIIMDRType) DEMO_DOC_TYPE.parseMessage (sPayload);
 
           DE4AKafkaClient.send (EErrorLevel.INFO,
-                                "DemoUI sending IM request '" +
-                                                  aParsedRequest.getRequestId () +
-                                                  "' to '" +
-                                                  sTargetURL +
-                                                  "'");
+                                "DemoUI sending IM request '" + aParsedRequest.getRequestId () + "' to '" + sTargetURL + "'");
 
           final StopWatch aSW = StopWatch.createdStarted ();
 
@@ -195,8 +181,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
 
             // Start HTTP POST
             final HttpPost aPost = new HttpPost (sTargetURL);
-            aPost.setEntity (new StringEntity (sPayload,
-                                               ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
+            aPost.setEntity (new StringEntity (sPayload, ContentType.APPLICATION_XML.withCharset (StandardCharsets.UTF_8)));
             aResponseBytes = aHCM.execute (aPost, new ResponseHandlerByteArray ());
             DE4AKafkaClient.send (EErrorLevel.INFO, "Response content received (" + aResponseBytes.length + " bytes)");
           }
@@ -206,8 +191,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
                      .addChild (div ("HTTP response: " + ex.getMessagePartStatusLine ()));
             aResponseBytes = ex.getResponseBody ();
             if (aResponseBytes != null)
-              DE4AKafkaClient.send (EErrorLevel.INFO,
-                                    "Error response content received (" + aResponseBytes.length + " bytes)");
+              DE4AKafkaClient.send (EErrorLevel.INFO, "Error response content received (" + aResponseBytes.length + " bytes)");
           }
           catch (final IOException ex)
           {
@@ -222,19 +206,39 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
           if (aResponseBytes != null)
           {
             // Try reading the data as the default response
-            final ResponseErrorType aResponseObj = DE4ACoreMarshaller.defResponseMarshaller ().read (aResponseBytes);
-            if (aResponseObj != null)
+            final DE4AMarshaller <ResponseTransferEvidenceType> m = DE4AMarshaller.drImResponseMarshaller (IDE4ACanonicalEvidenceType.NONE)
+                                                                                  .formatted ();
+            final ResponseTransferEvidenceType aTransferEvidence = m.read (aResponseBytes);
+            if (aTransferEvidence != null)
             {
-              if (aResponseObj.isAck ())
+              DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType'");
+
+              // if no errors and canonical evidence is received
+              if (aTransferEvidence.getErrorList () == null && aTransferEvidence.getCanonicalEvidence () != null)
               {
-                DE4AKafkaClient.send (EErrorLevel.INFO, "Read response as 'ResponseErrorType' and ACK");
+                final HCTextArea responseXML = new HCTextArea (new RequestField (FIELD_RESPONSE,
+                                                                                 m.getAsString (aTransferEvidence))).setRows (25)
+                                                                                                                    .setCols (150)
+                                                                                                                    .setReadOnly (true)
+                                                                                                                    .addClass (CBootstrapCSS.TEXT_MONOSPACE)
+                                                                                                                    .addClass (CBootstrapCSS.FORM_CONTROL);
+
+                aNodeList.addChild (responseXML);
+
+                // clean evidence map after showing synchronous response
+                ResponseMapEvidence.getInstance ().cleanMap ();
+
+                return;
+              }
+
+              if (aTransferEvidence.getErrorList ().hasNoErrorEntries ())
+              {
                 aResNL.addChild (success (div ("The request was accepted by the DR. The response will be received asynchronously.")));
               }
               else
               {
-                DE4AKafkaClient.send (EErrorLevel.WARN, "Read response as 'ResponseErrorType' and FAILURE");
                 final HCUL aUL = new HCUL ();
-                aResponseObj.getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
+                aTransferEvidence.getErrorList ().getError ().forEach (x -> aUL.addItem ("[" + x.getCode () + "] " + x.getText ()));
                 aErrorBox.addChild (div ("The data could not be fetched from the Data Owner")).addChild (aUL);
               }
             }
@@ -243,8 +247,8 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
               // Unknown payload.
               String sFirstBytes = new String (aResponseBytes, StandardCharsets.UTF_8);
               DE4AKafkaClient.send (EErrorLevel.ERROR, "Failed to interpret synchronous response:\n" + sFirstBytes);
-              if (sFirstBytes.length () > ERROR_SRC_MAX_LEN)
-                sFirstBytes = sFirstBytes.substring (0, ERROR_SRC_MAX_LEN);
+              if (sFirstBytes.length () > 100)
+                sFirstBytes = sFirstBytes.substring (0, 100);
               aErrorBox.addChild (div ("The return data has an unsupported format. The payload starts with ").addChild (code (sFirstBytes)));
             }
           }
@@ -263,8 +267,7 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
       final BootstrapForm aForm = aNodeList.addAndReturnChild (new BootstrapForm (aWPEC));
       aForm.setSplitting (BootstrapGridSpec.create (-1, -1, 2, 2, 2), BootstrapGridSpec.create (-1, -1, 10, 10, 10));
       aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Target URL")
-                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL,
-                                                                                           m_sDefaultTargetURL)))
+                                                   .setCtrl (new HCEdit (new RequestField (FIELD_TARGET_URL, m_sDefaultTargetURL)))
                                                    .setHelpText (span ("The URL to send the request to. Use something like ").addChild (code (m_sDefaultTargetURL))
                                                                                                                              .addChild (" for the test DE4A Connector"))
                                                    .setErrorList (aFormErrors.getListOfField (FIELD_TARGET_URL)));
@@ -277,15 +280,14 @@ public class PagePublicDE_IM_Expert extends AbstractPageDE
         aJSAppend.body ().add (JQuery.idRef (aTA).val (aJSAppendData));
 
         final JSPackage aOnClick = new JSPackage ();
-        aOnClick.add (new JQueryAjaxBuilder ().url (CREATE_NEW_REQUEST.getInvocationURL (aRequestScope))
-                                              .success (aJSAppend)
-                                              .build ());
+        aOnClick.add (new JQueryAjaxBuilder ().url (CREATE_NEW_REQUEST.getInvocationURL (aRequestScope)).success (aJSAppend).build ());
         aForm.addFormGroup (new BootstrapFormGroup ().setLabelMandatory ("Payload")
                                                      .setCtrl (aTA,
                                                                new BootstrapButton ().addChild ("Other message")
                                                                                      .setIcon (EDefaultIcon.REFRESH)
                                                                                      .setOnClick (aOnClick))
-                                                     .setHelpText ("The message you want to send. By default a randomly generated message is created")
+                                                     .setHelpText (div ("The message you want to send. By default a randomly generated message is created."),
+                                                                   div ("Note: the sender DE Participant ID is hard coded"))
                                                      .setErrorList (aFormErrors.getListOfField (FIELD_PAYLOAD)));
       }
 

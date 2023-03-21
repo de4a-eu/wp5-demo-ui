@@ -33,7 +33,7 @@ import com.helger.photon.core.menu.MenuTree;
 
 import eu.de4a.demoui.AppConfig;
 import eu.de4a.demoui.AppSecurity;
-import eu.de4a.demoui.CAjax;
+import eu.de4a.demoui.CAppAjax;
 import eu.de4a.demoui.CApp;
 import eu.de4a.demoui.api.APIExecutorGetStatus;
 import eu.de4a.demoui.api.DemoUIAPI;
@@ -92,9 +92,12 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
     VendorInfo.setVendorLocation ("Vienna, Austria");
     VendorInfo.setInceptionYear (2021);
 
-    DE4AKafkaSettings.setKafkaEnabled (true);
-    DE4AKafkaSettings.setKafkaTopic ("wp5-demoui");
-    DE4AKafkaSettings.defaultProperties ().put ("bootstrap.servers", "de4a-dev-kafka.egovlab.eu:9092");
+    if (AppConfig.isKafkaEnabled ())
+    {
+      DE4AKafkaSettings.setKafkaEnabled (true);
+      DE4AKafkaSettings.setKafkaTopic ("wp5-demoui-it2");
+      DE4AKafkaSettings.defaultProperties ().put ("bootstrap.servers", AppConfig.getKafkaEndpoint ());
+    }
   }
 
   @Override
@@ -107,8 +110,8 @@ public final class AppWebAppListener extends WebAppListenerBootstrap
   @Override
   protected void initAjax (@Nonnull final IAjaxRegistry aAjaxRegistry)
   {
-    aAjaxRegistry.registerFunction (CAjax.DATATABLES);
-    aAjaxRegistry.registerFunction (CAjax.DATATABLES_I18N);
+    aAjaxRegistry.registerFunction (CAppAjax.DATATABLES);
+    aAjaxRegistry.registerFunction (CAppAjax.DATATABLES_I18N);
   }
 
   @Override

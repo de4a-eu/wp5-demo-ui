@@ -30,11 +30,10 @@ import com.helger.commons.string.StringHelper;
 public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
 {
   // T4.1
-  T41_ES (EPilot.STUDYING_ABROAD,
-          "iso6523-actorid-upis::9999:ess2833002e-it2",
+  T41_ES (EPilot.T41_STUDYING_ABROAD,
+          "iso6523-actorid-upis::9999:ess2833002e-mock-it2",
           "ES",
           "(MPTFP-SGAD) Secretaría General de Administración Digital",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
           MDSPerson.builder ()
                    .id ("53377873W")
                    .firstName ("Francisco José")
@@ -42,55 +41,58 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
                    .birthday (1984, Month.JULY, 24)
                    .build (),
           null),
-  T41_PT (EPilot.STUDYING_ABROAD,
+  T41_PT (EPilot.T41_STUDYING_ABROAD,
           "iso6523-actorid-upis::9999:pt990000101-it2",
           "PT",
           "Portuguese IST, University of Lisbon",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
-          MDSPerson.builder ().id ("123456789").firstName ("Alice").familyName ("Alves").birthday (1997, Month.JANUARY, 1).build (),
+          MDSPerson.builder ()
+                   .id ("123456789")
+                   .firstName ("Alice")
+                   .familyName ("Alves")
+                   .birthday (1997, Month.JANUARY, 1)
+                   .build (),
           null),
-  T41_SI (EPilot.STUDYING_ABROAD,
+  T41_SI (EPilot.T41_STUDYING_ABROAD,
           "iso6523-actorid-upis::9999:si000000016-it2",
           "SI",
           "(MIZS) Ministrstvo za Izobrazevanje, Znanost in Sport (Ministry of Education, Science and Sport)",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
-          MDSPerson.builder ().id ("123456").firstName ("Marjeta").familyName ("Maček").birthday (1999, Month.SEPTEMBER, 16).build (),
+          MDSPerson.builder ()
+                   .id ("123456")
+                   .firstName ("Marjeta")
+                   .familyName ("Maček")
+                   .birthday (1999, Month.SEPTEMBER, 16)
+                   .build (),
           null),
   // T4.2
-  T42_AT (EPilot.DOING_BUSINESS_ABROAD,
-          "iso6523-actorid-upis::9999:at000000271-it2",
+  T42_AT (EPilot.T42_DOING_BUSINESS_ABROAD,
+          "iso6523-actorid-upis::9999:at000000271-mock-it2",
           "AT",
           "(BMDW) Bundesministerium für Digitalisierung und Wirtschaftsstandort",
           null,
-          null,
           MDSCompany.builder ().id ("???").name ("Carl-Markus Piswanger e.U.").build ()),
-  T42_SE (EPilot.DOING_BUSINESS_ABROAD,
-          "iso6523-actorid-upis::9999:se000000013-it2",
+  T42_SE (EPilot.T42_DOING_BUSINESS_ABROAD,
+          "iso6523-actorid-upis::9999:se000000013-mock-it2",
           "SE",
           "(BVE) BOLAGSVERKET (Companies Registration Office)",
           null,
-          null,
           MDSCompany.builder ().id ("5591674170").name ("Företag Ett AB").build ()),
-  T42_RO (EPilot.DOING_BUSINESS_ABROAD,
+  T42_RO (EPilot.T42_DOING_BUSINESS_ABROAD,
           "iso6523-actorid-upis::9999:ro000000006-it2",
           "RO",
           "(ORNC) Oficiul National B22 Al Registrului Comertului",
           null,
-          null,
           MDSCompany.builder ().id ("J40/12487/1998").name ("ELVILA SA").build ()),
-  T42_NL (EPilot.DOING_BUSINESS_ABROAD,
+  T42_NL (EPilot.T42_DOING_BUSINESS_ABROAD,
           "iso6523-actorid-upis::9999:nl990000106-it2",
           "NL",
           "(KVK) Chamber of Commerce of Netherlands",
           null,
-          null,
           MDSCompany.builder ().id ("90000471").name ("Regional Tris-ice Coöperatie").build ()),
   // T4.3
-  T43_ES (EPilot.MOVING_ABROAD,
-          "iso6523-actorid-upis::9999:ess2833002e-it2",
+  T43_ES (EPilot.T43_MOVING_ABROAD,
+          "iso6523-actorid-upis::9999:ess2833002e-it1",
           "ES",
           "(MPTFP-SGAD) Secretaría General de Administración Digital",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
           MDSPerson.builder ()
                    .id ("99999142H")
                    .firstName ("Nombre")
@@ -98,19 +100,44 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
                    .birthday (1984, Month.JULY, 24)
                    .build (),
           null),
-  T43_PT (EPilot.MOVING_ABROAD,
-          "iso6523-actorid-upis::9999:pt000000026-it2",
+  T43_PT (EPilot.T43_MOVING_ABROAD,
+          "iso6523-actorid-upis::9999:pt000000026-mock-it2",
           "PT",
           "(AMA IP) Agencia para a Modernizacao Administrativa IP (Administration Modernization Agency)",
-          "https://pre-smp-dr-de4a.redsara.es/de4a-it2-mock-connector/preview/index",
-          MDSPerson.builder ().id ("12345678").firstName ("Stavros").familyName ("Karakolis").birthday (1987, Month.DECEMBER, 17).build (),
-          null);
+          MDSPerson.builder ()
+                   .id ("12345678")
+                   .firstName ("Stavros")
+                   .familyName ("Karakolis")
+                   .birthday (1987, Month.DECEMBER, 17)
+                   .build (),
+          null),
+  MOCK_DO_MA (EPilot.T43_MOVING_ABROAD,
+              "iso6523-actorid-upis::9999:mock-do-localhost-it2",
+              "ES",
+              "Mocked DO (Localhost)",
+              MDSPerson.builder ()
+                       .id ("87654320")
+                       .firstName ("Stavros")
+                       .familyName ("Karakolis")
+                       .birthday (1987, Month.JANUARY, 1)
+                       .build (),
+              MDSCompany.builder ().id ("87654320").name ("Acme Mock Limited").build ()),
+  MOCK_DO_SA (EPilot.T41_STUDYING_ABROAD,
+              "iso6523-actorid-upis::9999:mock-do-localhost-it2",
+              "ES",
+              "Mocked DO (Localhost)",
+              MDSPerson.builder ()
+                       .id ("87654320")
+                       .firstName ("Stavros")
+                       .familyName ("Karakolis")
+                       .birthday (1987, Month.JANUARY, 1)
+                       .build (),
+              MDSCompany.builder ().id ("87654320").name ("Acme Mock Limited").build ());
 
   private final EPilot m_ePilot;
   private final String m_sParticipantID;
   private final String m_sCountryCode;
   private final String m_sDisplayName;
-  private String m_sUSIRedirectURL;
   private final MDSPerson m_aPerson;
   private final MDSCompany m_aCompany;
 
@@ -118,7 +145,6 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
                   @Nonnull @Nonempty final String sParticipantID,
                   @Nonnull @Nonempty final String sCountryCode,
                   @Nonnull @Nonempty final String sDisplayName,
-                  @Nullable final String sUSIRedirectURL,
                   @Nullable final MDSPerson aPerson,
                   @Nullable final MDSCompany aCompany)
   {
@@ -127,7 +153,6 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
     m_sParticipantID = sParticipantID;
     m_sCountryCode = sCountryCode;
     m_sDisplayName = sDisplayName;
-    m_sUSIRedirectURL = sUSIRedirectURL;
     // Either or must be set
     m_aPerson = aPerson;
     m_aCompany = aCompany;
@@ -165,12 +190,6 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
     return m_sDisplayName;
   }
 
-  @Nullable
-  public String getUSIRedirectURL ()
-  {
-    return m_sUSIRedirectURL;
-  }
-
   @Nonnull
   @Nonempty
   public String getCountryCode ()
@@ -197,7 +216,8 @@ public enum EMockDataOwner implements IHasID <String>, IHasDisplayName
   }
 
   @Nullable
-  public static EMockDataOwner getFromPilotAndPIDOrNull (@Nullable final EPilot ePilot, @Nullable final String sParticipantID)
+  public static EMockDataOwner getFromPilotAndPIDOrNull (@Nullable final EPilot ePilot,
+                                                         @Nullable final String sParticipantID)
   {
     if (ePilot != null && StringHelper.hasText (sParticipantID))
       for (final EMockDataOwner e : values ())

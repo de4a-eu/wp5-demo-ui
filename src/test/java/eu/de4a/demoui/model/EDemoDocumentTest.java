@@ -39,7 +39,7 @@ public class EDemoDocumentTest
       LOGGER.info (e.name ());
       assertSame (e, EDemoDocument.getFromIDOrNull (e.getID ()));
       for (int i = 0; i < 100; ++i)
-        assertNotNull (e.getDemoMessageAsString ());
+        assertNotNull ("Failed to serialize " + e, e.getDemoMessageAsString ());
     }
   }
 }
