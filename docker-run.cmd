@@ -1,5 +1,10 @@
 @REM
-@REM Copyright (C) 2021 DE4A
+@REM Copyright (C) 2023, Partners of the EU funded DE4A project consortium
+@REM   (https://www.de4a.eu/consortium), under Grant Agreement No.870635
+@REM Author:
+@REM   Austrian Federal Computing Center (BRZ)
+@REM   Spanish Ministry of Economic Affairs and Digital Transformation -
+@REM     General Secretariat for Digital Administration (MAETD - SGAD)
 @REM
 @REM Licensed under the Apache License, Version 2.0 (the "License");
 @REM you may not use this file except in compliance with the License.
